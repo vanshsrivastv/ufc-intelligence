@@ -1,0 +1,41 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage/
+
+# turbo
+.turbo/
+
+# next.js
+apps/web/.next/
+apps/web/out/
+
+# nest
+apps/api/dist/
+
+# production
+build/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# misc
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+
+# prisma
+packages/database/prisma/migrations/dev.db*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/

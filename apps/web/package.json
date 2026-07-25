@@ -1,0 +1,39 @@
+{
+  "name": "@ufc-intelligence/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tanstack/react-query": "^5.59.0",
+    "zustand": "^5.0.0",
+    "recharts": "^2.12.7",
+    "framer-motion": "^11.11.0",
+    "@ufc-intelligence/types": "*",
+    "@ufc-intelligence/ui-tokens": "*",
+    "@ufc-intelligence/database": "*",
+    "next-auth": "5.0.0-beta.25",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "^5.6.0",
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.47",
+    "autoprefixer": "^10.4.20",
+    "vitest": "^2.1.0",
+    "@testing-library/react": "^16.0.1"
+  }
+}

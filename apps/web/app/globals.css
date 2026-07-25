@@ -1,0 +1,15 @@
+@import "../../../packages/ui-tokens/src/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary font-sans;
+  }
+
+  ::selection {
+    @apply bg-gold-500 text-text-on-gold;
+  }
+}

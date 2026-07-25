@@ -1,0 +1,166 @@
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { prisma } from "@ufc-intelligence/database";
+import type {
+  FighterDetailDto,
+  FighterSummaryDto,
+  PaginatedResult,
+} from "@ufc-intelligence/types";
+import { ListFightersDto } from "./dto/list-fighters.dto";
+
+@Injectable()
+export class FightersService {
+  async list(query: ListFightersDto): Promise<PaginatedResult<FighterSummaryDto>> {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+
+    const where = {
+      ...(query.weightClass ? { weightClass: { name: query.weightClass } } : {}),
+      ...(query.search
+        ? { name: { contains: query.search, mode: "insensitive" as const } }
+        : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      prisma.fighter.findMany({
+        where,
+        include: { weightClass: true },
+        orderBy: { name: "asc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prisma.fighter.count({ where }),
+    ]);
+
+    return {
+      items: rows.map(toSummaryDto),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  async getBySlug(slug: string): Promise<FighterDetailDto> {
+    const fighter = await prisma.fighter.findUnique({
+      where: { slug },
+      include: {
+        weightClass: true,
+        fightStats: true,
+        fightsAsA: {
+          include: { fighterA: true, fighterB: true, weightClass: true },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        },
+        fightsAsB: {
+          include: { fighterA: true, fighterB: true, weightClass: true },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        },
+      },
+    });
+
+    if (!fighter) {
+      throw new NotFoundException(`Fighter with slug "${slug}" not found`);
+    }
+
+    // Career totals are computed from per-fight totals (round = 0), not
+    // recomputed from per-round rows here — that aggregation belongs to the
+    // ingestion module's post-processing step (architecture.md §8), which
+    // keeps this read path fast.
+    const totals = fighter.fightStats.filter((s) => s.round === 0);
+    const totalStrikesAttempted = totals.reduce((sum, s) => sum + s.sigStrikesAttempted, 0);
+    const totalStrikesLanded = totals.reduce((sum, s) => sum + s.sigStrikesLanded, 0);
+    const allFights = [...fighter.fightsAsA, ...fighter.fightsAsB];
+    const wins = allFights.filter((f) => f.winnerId === fighter.id);
+    const koTkoWins = wins.filter((f) => f.method === "KO" || f.method === "TKO").length;
+    const submissionWins = wins.filter((f) => f.method === "SUBMISSION").length;
+    const decisionWins = wins.filter((f) => f.method.startsWith("DECISION")).length;
+
+    const recentFights = [...fighter.fightsAsA, ...fighter.fightsAsB]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 5);
+
+    return {
+      id: fighter.id,
+      slug: fighter.slug,
+      name: fighter.name,
+      nickname: fighter.nickname,
+      dob: fighter.dob?.toISOString() ?? null,
+      nationality: fighter.nationality,
+      heightCm: fighter.heightCm,
+      reachCm: fighter.reachCm,
+      gym: fighter.gym,
+      coach: fighter.coach,
+      photoUrl: fighter.photoUrl,
+      rank: null, // populated by a join against the current Ranking row — added when the rankings module lands
+      record: {
+        wins: fighter.wins,
+        losses: fighter.losses,
+        draws: fighter.draws,
+        noContests: fighter.noContests,
+      },
+      weightClass: fighter.weightClass
+        ? {
+            id: fighter.weightClass.id,
+            name: fighter.weightClass.name,
+            weightLimitLbs: fighter.weightClass.weightLimitLbs,
+            isWomens: fighter.weightClass.isWomens,
+          }
+        : null,
+      careerStats: {
+        sigStrikesLandedPerMin: 0, // requires total fight-time data — wired up once the ingestion module lands
+        sigStrikeAccuracyPct:
+          totalStrikesAttempted > 0
+            ? Math.round((totalStrikesLanded / totalStrikesAttempted) * 1000) / 10
+            : 0,
+        takedownAvgPer15Min: 0,
+        takedownDefensePct: 0,
+        submissionAvgPer15Min: 0,
+        koTkoWins,
+        submissionWins,
+        decisionWins,
+      },
+      recentFights: recentFights.map((f) => ({
+        id: f.id,
+        fighterA: toSummaryDto(f.fighterA as any),
+        fighterB: toSummaryDto(f.fighterB as any),
+        weightClass: null,
+        isTitleFight: f.isTitleFight,
+        cardPosition: f.cardPosition,
+        status: f.status,
+        method: f.method,
+        round: f.round,
+        time: f.time,
+        winnerId: f.winnerId,
+      })),
+    };
+  }
+}
+
+export function toSummaryDto(fighter: {
+  id: string;
+  slug: string;
+  name: string;
+  nickname: string | null;
+  photoUrl: string | null;
+  wins: number;
+  losses: number;
+  draws: number;
+  noContests: number;
+  weightClass?: { id: string; name: string; weightLimitLbs: number; isWomens: boolean } | null;
+}): FighterSummaryDto {
+  return {
+    id: fighter.id,
+    slug: fighter.slug,
+    name: fighter.name,
+    nickname: fighter.nickname,
+    photoUrl: fighter.photoUrl,
+    rank: null,
+    record: {
+      wins: fighter.wins,
+      losses: fighter.losses,
+      draws: fighter.draws,
+      noContests: fighter.noContests,
+    },
+    weightClass: fighter.weightClass ?? null,
+  };
+}

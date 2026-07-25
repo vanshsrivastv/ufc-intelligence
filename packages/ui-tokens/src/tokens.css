@@ -1,0 +1,71 @@
+/*
+ * UFC Intelligence — Design Tokens
+ * Source of truth: /docs/design-system.md
+ * Concept: Premium Black + Gold Luxury
+ *
+ * Import this file once in apps/web/app/globals.css.
+ * Never hardcode these values directly in components — reference the
+ * variable so a future token change propagates everywhere automatically.
+ */
+
+:root {
+  /* --- Base surfaces --- */
+  --color-bg-primary: #0a0a0b;
+  --color-bg-elevated: #141412;
+  --color-bg-elevated-2: #1c1c19;
+  --color-bg-overlay: rgba(10, 10, 11, 0.85);
+
+  /* --- Gold accent ramp --- */
+  --color-gold-100: #f5e6c8;
+  --color-gold-300: #e8c572;
+  --color-gold-500: #c9a050;
+  --color-gold-700: #8a6a2f;
+  --color-gold-900: #3c2f14;
+
+  /* --- Text --- */
+  --color-text-primary: #f2f0ea;
+  --color-text-secondary: #b4b2a9;
+  --color-text-muted: #6e6c63;
+  --color-text-on-gold: #1a1408;
+
+  /* --- Semantic --- */
+  --color-live: #a32d2d;
+  --color-success: #4e7a4a;
+  --color-danger: #a32d2d;
+
+  /* --- Borders --- */
+  --color-border: #2a2620;
+  --color-border-strong: #3c2f14;
+
+  /* --- Spacing (8px base unit) --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* --- Radius --- */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-full: 999px;
+
+  /* --- Typography --- */
+  --font-display: "Fraunces", "Canela", Georgia, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --text-display-lg: 48px;
+  --text-display-md: 32px;
+  --text-heading-lg: 24px;
+  --text-heading-md: 18px;
+  --text-body-lg: 16px;
+  --text-body-md: 14px;
+  --text-caption: 12px;
+
+  /* --- Motion --- */
+  --transition-standard: 300ms ease-out;
+  --transition-fast: 150ms ease-out;
+}

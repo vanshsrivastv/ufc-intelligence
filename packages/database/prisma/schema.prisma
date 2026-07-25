@@ -1,0 +1,231 @@
+// UFC Intelligence — Prisma schema
+// Mirrors the schema laid out in /docs/architecture.md §4
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EventStatus {
+  UPCOMING
+  LIVE
+  COMPLETED
+}
+
+enum FightStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum FightMethod {
+  KO
+  TKO
+  SUBMISSION
+  DECISION_UNANIMOUS
+  DECISION_SPLIT
+  DECISION_MAJORITY
+  DQ
+  NO_CONTEST
+  PENDING
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model WeightClass {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  weightLimitLbs Int
+  isWomens       Boolean  @default(false)
+
+  fighters Fighter[]
+  fights   Fight[]
+  rankings Ranking[]
+
+  @@map("weight_classes")
+}
+
+model Fighter {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  nickname      String?
+  dob           DateTime?
+  nationality   String?
+  heightCm      Int?
+  reachCm       Int?
+  gym           String?
+  coach         String?
+  stance        String?
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  draws         Int      @default(0)
+  noContests    Int      @default(0)
+  photoUrl      String?
+
+  weightClassId String?
+  weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
+
+  fightsAsA     Fight[]      @relation("FighterA")
+  fightsAsB     Fight[]      @relation("FighterB")
+  fightsWon     Fight[]      @relation("FightWinner")
+  fightStats    FightStat[]
+  rankings      Ranking[]
+  favoritedBy   UserFavorite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([weightClassId])
+  @@map("fighters")
+}
+
+model Event {
+  id      String      @id @default(cuid())
+  slug    String      @unique
+  name    String
+  date    DateTime
+  venue   String?
+  city    String?
+  country String?
+  status  EventStatus @default(UPCOMING)
+
+  fights Fight[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+  @@map("events")
+}
+
+model Fight {
+  id            String      @id @default(cuid())
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  weightClassId String?
+  weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
+
+  fighterAId String
+  fighterA   Fighter @relation("FighterA", fields: [fighterAId], references: [id])
+  fighterBId String
+  fighterB   Fighter @relation("FighterB", fields: [fighterBId], references: [id])
+
+  isTitleFight Boolean     @default(false)
+  cardPosition Int         @default(0) // 1 = main event, ascending down the card
+  status       FightStatus @default(SCHEDULED)
+  method       FightMethod @default(PENDING)
+  round        Int?
+  time         String? // mm:ss within the finishing round
+
+  winnerId String?
+  winner   Fighter? @relation("FightWinner", fields: [winnerId], references: [id])
+
+  stats       FightStat[]
+  predictions Prediction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@index([fighterAId])
+  @@index([fighterBId])
+  @@map("fights")
+}
+
+model FightStat {
+  id      String @id @default(cuid())
+  fightId String
+  fight   Fight  @relation(fields: [fightId], references: [id], onDelete: Cascade)
+
+  fighterId String
+  fighter   Fighter @relation(fields: [fighterId], references: [id])
+
+  round Int // 0 = fight totals, 1+ = per-round
+
+  sigStrikesLanded     Int @default(0)
+  sigStrikesAttempted  Int @default(0)
+  takedownsLanded      Int @default(0)
+  takedownsAttempted   Int @default(0)
+  controlTimeSeconds   Int @default(0)
+  knockdowns           Int @default(0)
+  submissionAttempts   Int @default(0)
+
+  @@unique([fightId, fighterId, round])
+  @@index([fighterId])
+  @@map("fight_stats")
+}
+
+model Ranking {
+  id            String @id @default(cuid())
+  weightClassId String
+  weightClass   WeightClass @relation(fields: [weightClassId], references: [id])
+
+  fighterId String
+  fighter   Fighter @relation(fields: [fighterId], references: [id])
+
+  rank          Int // 0 = champion
+  effectiveDate DateTime @default(now())
+
+  @@unique([weightClassId, fighterId, effectiveDate])
+  @@index([weightClassId, rank])
+  @@map("rankings")
+}
+
+model Prediction {
+  id      String @id @default(cuid())
+  fightId String
+  fight   Fight  @relation(fields: [fightId], references: [id], onDelete: Cascade)
+
+  modelVersion String
+
+  winnerProbabilityA Float
+  winnerProbabilityB Float
+  koProbability       Float
+  subProbability      Float
+  decisionProbability Float
+  confidenceScore     Float
+
+  topFactors Json // e.g. [{ factor: "takedown_defense", direction: "A", weight: 0.31 }]
+
+  generatedAt DateTime @default(now())
+
+  @@index([fightId, modelVersion])
+  @@map("predictions")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  passwordHash String
+  displayName String?
+  role        UserRole @default(USER)
+
+  favorites UserFavorite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model UserFavorite {
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fighterId String
+  fighter   Fighter @relation(fields: [fighterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, fighterId])
+  @@map("user_favorites")
+}
