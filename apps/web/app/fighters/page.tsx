@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { FighterCard } from "@/components/ui/fighter-card";
+import { FighterListSearch } from "@/components/ui/fighter-list-search";
 import { getFavoritedFighterIds } from "@/lib/favorites";
 
 export default async function FightersPage({
   searchParams,
 }: {
-  searchParams: { page?: string };
+  searchParams: Promise<{ page?: string; search?: string }>;
 }) {
-  const page = Number(searchParams.page ?? "1") || 1;
+  const params = await searchParams;
+  const page = Number(params.page ?? "1") || 1;
+  const search = params.search?.trim() || undefined;
   const [result, favoritedIds] = await Promise.all([
-    api.fighters.list({ page }),
+    api.fighters.list({ page, search }),
     getFavoritedFighterIds(),
   ]);
 
@@ -24,6 +27,10 @@ export default async function FightersPage({
       <p className="mt-1 text-body-md text-text-secondary">
         {result.total} fighters
       </p>
+
+      <div className="mt-6">
+        <FighterListSearch />
+      </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {result.items.map((fighter) => (
@@ -43,13 +50,13 @@ export default async function FightersPage({
 
       {totalPages > 1 && (
         <div className="mt-10 flex items-center justify-center gap-2">
-          <PageLink page={page - 1} disabled={page <= 1}>
+          <PageLink page={page - 1} search={search} disabled={page <= 1}>
             Previous
           </PageLink>
           <span className="px-3 text-xs text-text-secondary">
             Page {page} of {totalPages}
           </span>
-          <PageLink page={page + 1} disabled={page >= totalPages}>
+          <PageLink page={page + 1} search={search} disabled={page >= totalPages}>
             Next
           </PageLink>
         </div>
@@ -60,10 +67,12 @@ export default async function FightersPage({
 
 function PageLink({
   page,
+  search,
   disabled,
   children,
 }: {
   page: number;
+  search?: string;
   disabled: boolean;
   children: React.ReactNode;
 }) {
@@ -75,9 +84,12 @@ function PageLink({
     );
   }
 
+  const params = new URLSearchParams({ page: String(page) });
+  if (search) params.set("search", search);
+
   return (
     <Link
-      href={`/fighters?page=${page}`}
+      href={`/fighters?${params.toString()}`}
       className="rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary transition-standard hover:border-gold-500 hover:text-gold-300"
     >
       {children}

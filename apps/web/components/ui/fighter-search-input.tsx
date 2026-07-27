@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { FighterSummaryDto } from "@ufc-intelligence/types";
+import { api } from "@/lib/api-client";
 
 export function FighterSearchInput({
   label,
@@ -13,7 +14,7 @@ export function FighterSearchInput({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FighterSummaryDto[]>([]);
   const [selected, setSelected] = useState<FighterSummaryDto | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (!query || selected) {
@@ -22,11 +23,12 @@ export function FighterSearchInput({
     }
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/fighters?search=${encodeURIComponent(query)}&pageSize=6`,
-      );
-      const data = await res.json();
-      setResults(data.items ?? []);
+      try {
+        const data = await api.fighters.list({ search: query, pageSize: 6 });
+        setResults(data.items ?? []);
+      } catch {
+        setResults([]);
+      }
     }, 300);
   }, [query, selected]);
 

@@ -49,6 +49,23 @@ function parseIntSafe(raw: string): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
+// UFC Stats leaves these as "0.0" for fighters with no recorded rate (not
+// missing data specifically, but not meaningfully different from "unknown"
+// for a debut fighter) — treat literal 0 the same as blank/unparseable so
+// the frontend can show "not enough data" instead of a misleading "0.0".
+function parseRateSafe(raw: string): number | null {
+  const n = parseFloat(raw);
+  if (Number.isNaN(n) || n === 0) return null;
+  return n;
+}
+
+function parsePercentSafe(raw: string): number | null {
+  const match = raw?.match(/(\d+(\.\d+)?)/);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return n === 0 ? null : n;
+}
+
 // ---------- weight class lookup ----------
 
 const WEIGHT_LIMITS: Record<string, number> = {
@@ -127,6 +144,14 @@ interface FighterRow {
   Wins: string;
   Losses: string;
   Draws: string;
+  SLpM: string;
+  Str_Acc: string;
+  SApM: string;
+  Str_Def: string;
+  TD_Avg: string;
+  TD_Acc: string;
+  TD_Def: string;
+  Sub_Avg: string;
   Fighter_URL: string;
 }
 
@@ -206,6 +231,14 @@ async function main() {
         wins: parseIntSafe(row.Wins),
         losses: parseIntSafe(row.Losses),
         draws: parseIntSafe(row.Draws),
+        sigStrikesLandedPerMin: parseRateSafe(row.SLpM),
+        sigStrikeAccuracyPct: parsePercentSafe(row.Str_Acc),
+        sigStrikesAbsorbedPerMin: parseRateSafe(row.SApM),
+        sigStrikeDefensePct: parsePercentSafe(row.Str_Def),
+        takedownAvgPer15Min: parseRateSafe(row.TD_Avg),
+        takedownAccuracyPct: parsePercentSafe(row.TD_Acc),
+        takedownDefensePct: parsePercentSafe(row.TD_Def),
+        submissionAvgPer15Min: parseRateSafe(row.Sub_Avg),
       },
     });
 

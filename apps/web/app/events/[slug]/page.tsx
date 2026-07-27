@@ -6,9 +6,10 @@ import type { FightSummaryDto } from "@ufc-intelligence/types";
 export default async function EventDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const event = await api.events.getBySlug(params.slug).catch(() => null);
+  const { slug } = await params;
+  const event = await api.events.getBySlug(slug).catch(() => null);
 
   if (!event) {
     notFound();

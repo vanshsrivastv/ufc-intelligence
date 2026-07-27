@@ -1,9 +1,20 @@
 import Link from "next/link";
-import { statsApi } from "@/lib/stats-api";
-import type { LeaderboardEntry } from "@/lib/stats-api";
+import { api } from "@/lib/api-client";
+import type { LeaderboardEntry } from "@/lib/api-client";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default async function StatisticsPage() {
-  const lb = await statsApi.getLeaderboards();
+  let lb;
+  try {
+    lb = await api.stats.getLeaderboards();
+  } catch {
+    return (
+      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
+        <h1 className="font-display text-heading-lg text-text-primary">Statistics</h1>
+        <EmptyState message="Couldn't load statistics right now — try refreshing in a moment." />
+      </main>
+    );
+  }
   const { methodBreakdown } = lb;
 
   const koPct = methodBreakdown.total > 0 ? Math.round((methodBreakdown.koTko / methodBreakdown.total) * 100) : 0;
@@ -44,13 +55,13 @@ export default async function StatisticsPage() {
           </p>
           <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-bg-elevated-2">
             <div className="h-full bg-gold-300" style={{ width: `${koPct}%` }} />
-            <div className="h-full bg-[#8A7A55]" style={{ width: `${subPct}%` }} />
+            <div className="h-full bg-gold-700" style={{ width: `${subPct}%` }} />
             <div className="h-full bg-text-secondary" style={{ width: `${decPct}%` }} />
           </div>
           <div className="mt-4 flex flex-wrap gap-6">
-            <MethodLegend color="#E8C572" label="KO/TKO" pct={koPct} />
-            <MethodLegend color="#8A7A55" label="Submission" pct={subPct} />
-            <MethodLegend color="#B4B2A9" label="Decision" pct={decPct} />
+            <MethodLegend colorClass="bg-gold-300" label="KO/TKO" pct={koPct} />
+            <MethodLegend colorClass="bg-gold-700" label="Submission" pct={subPct} />
+            <MethodLegend colorClass="bg-text-secondary" label="Decision" pct={decPct} />
           </div>
           <p className="mt-2 text-xs text-text-muted">
             Based on {methodBreakdown.total.toLocaleString()} decided fights.
@@ -100,10 +111,18 @@ function Leaderboard({
   );
 }
 
-function MethodLegend({ color, label, pct }: { color: string; label: string; pct: number }) {
+function MethodLegend({
+  colorClass,
+  label,
+  pct,
+}: {
+  colorClass: string;
+  label: string;
+  pct: number;
+}) {
   return (
     <div className="flex items-center gap-2">
-      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
+      <span className={`h-2.5 w-2.5 rounded-full ${colorClass}`} />
       <span className="text-xs text-text-secondary">
         {label} — {pct}%
       </span>

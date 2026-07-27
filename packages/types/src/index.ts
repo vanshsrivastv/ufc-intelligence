@@ -41,11 +41,13 @@ export interface FighterDetailDto extends FighterSummaryDto {
 }
 
 export interface FighterCareerStats {
-  sigStrikesLandedPerMin: number;
-  sigStrikeAccuracyPct: number;
-  takedownAvgPer15Min: number;
-  takedownDefensePct: number;
-  submissionAvgPer15Min: number;
+  // null = not enough recorded data to compute this rate, rather than a
+  // real zero — the frontend should render these as "—", not "0".
+  sigStrikesLandedPerMin: number | null;
+  sigStrikeAccuracyPct: number | null;
+  takedownAvgPer15Min: number | null;
+  takedownDefensePct: number | null;
+  submissionAvgPer15Min: number | null;
   koTkoWins: number;
   submissionWins: number;
   decisionWins: number;

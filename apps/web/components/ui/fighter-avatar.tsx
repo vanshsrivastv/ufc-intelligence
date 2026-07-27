@@ -8,9 +8,14 @@ function initials(name: string): string {
 }
 
 // Deterministic per-name so the same fighter always gets the same tone,
-// rather than a random color that'd shift on every render.
+// rather than a random color that'd shift on every render. References the
+// same tokens as tokens.css/ui-tokens rather than duplicating raw hex here.
 function toneFor(name: string): string {
-  const tones = ["#8A6A2F", "#6E6C63", "#3C2F14"];
+  const tones = [
+    "var(--color-gold-700)",
+    "var(--color-text-secondary)",
+    "var(--color-gold-900)",
+  ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % tones.length;
   return tones[hash];

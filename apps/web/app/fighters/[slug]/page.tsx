@@ -7,9 +7,10 @@ import { FighterAvatar } from "@/components/ui/fighter-avatar";
 export default async function FighterDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const fighter = await api.fighters.getBySlug(params.slug).catch(() => null);
+  const { slug } = await params;
+  const fighter = await api.fighters.getBySlug(slug).catch(() => null);
 
   if (!fighter) {
     notFound();
@@ -25,9 +26,16 @@ export default async function FighterDetailPage({
         </div>
 
         <div>
-          <h1 className="font-display text-display-md text-text-primary">
-            {fighter.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-display-md text-text-primary">
+              {fighter.name}
+            </h1>
+            {fighter.rank !== null && (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gold-300 font-display text-sm font-medium text-text-on-gold">
+                {fighter.rank === 0 ? "C" : fighter.rank}
+              </span>
+            )}
+          </div>
           {fighter.nickname && (
             <p className="mt-1 text-body-lg text-gold-300">
               &ldquo;{fighter.nickname}&rdquo;
@@ -38,10 +46,14 @@ export default async function FighterDetailPage({
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Stat label="Sig. strike accuracy" value={`${fighter.careerStats.sigStrikeAccuracyPct}%`} />
+            <Stat label="Sig. strike accuracy" value={formatPct(fighter.careerStats.sigStrikeAccuracyPct)} />
+            <Stat label="Strikes landed / min" value={formatRate(fighter.careerStats.sigStrikesLandedPerMin)} />
+            <Stat label="Takedown avg / 15 min" value={formatRate(fighter.careerStats.takedownAvgPer15Min)} />
+            <Stat label="Takedown defense" value={formatPct(fighter.careerStats.takedownDefensePct)} />
             <Stat label="Height" value={fighter.heightCm ? `${fighter.heightCm} cm` : "—"} />
             <Stat label="Reach" value={fighter.reachCm ? `${fighter.reachCm} cm` : "—"} />
             <Stat label="Nationality" value={fighter.nationality ?? "—"} />
+            <Stat label="Submission avg / 15 min" value={formatRate(fighter.careerStats.submissionAvgPer15Min)} />
           </div>
 
           <div className="mt-12">
@@ -79,6 +91,14 @@ export default async function FighterDetailPage({
       </div>
     </main>
   );
+}
+
+function formatPct(value: number | null): string {
+  return value === null ? "—" : `${value}%`;
+}
+
+function formatRate(value: number | null): string {
+  return value === null ? "—" : value.toFixed(1);
 }
 
 function Stat({ label, value }: { label: string; value: string }) {

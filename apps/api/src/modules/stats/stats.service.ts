@@ -49,16 +49,36 @@ export class StatsService {
       take: 150,
       select: { id: true, slug: true, name: true },
     });
-    const streaks: { id: string; slug: string; name: string; streak: number }[] = [];
-    for (const fighter of winStreakCandidates) {
-      const fights = await prisma.fight.findMany({
-        where: {
-          status: "COMPLETED",
-          OR: [{ fighterAId: fighter.id }, { fighterBId: fighter.id }],
-        },
-        include: { event: { select: { date: true } } },
-        orderBy: { event: { date: "asc" } },
-      });
+    const candidateIds = winStreakCandidates.map((f) => f.id);
+    const candidateIdSet = new Set(candidateIds);
+    // Single query covering all 150 candidates instead of one query per
+    // fighter — the previous version issued up to 150 sequential
+    // round-trips per request.
+    const candidateFights = await prisma.fight.findMany({
+      where: {
+        status: "COMPLETED",
+        OR: [{ fighterAId: { in: candidateIds } }, { fighterBId: { in: candidateIds } }],
+      },
+      select: {
+        fighterAId: true,
+        fighterBId: true,
+        winnerId: true,
+        event: { select: { date: true } },
+      },
+      orderBy: { event: { date: "asc" } },
+    });
+
+    const fightsByFighter = new Map<string, typeof candidateFights>();
+    for (const fight of candidateFights) {
+      for (const fid of [fight.fighterAId, fight.fighterBId]) {
+        if (!candidateIdSet.has(fid)) continue;
+        if (!fightsByFighter.has(fid)) fightsByFighter.set(fid, []);
+        fightsByFighter.get(fid)!.push(fight);
+      }
+    }
+
+    const streaks = winStreakCandidates.map((fighter) => {
+      const fights = fightsByFighter.get(fighter.id) ?? [];
       let current = 0;
       let best = 0;
       for (const fight of fights) {
@@ -69,8 +89,8 @@ export class StatsService {
           current = 0;
         }
       }
-      streaks.push({ ...fighter, streak: best });
-    }
+      return { ...fighter, streak: best };
+    });
     const longestWinStreak = streaks.sort((a, b) => b.streak - a.streak).slice(0, 10);
 
     // Most title fights — a fighter can be on either side of the Fight

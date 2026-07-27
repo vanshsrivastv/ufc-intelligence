@@ -62,6 +62,13 @@ export class FightersService {
       throw new NotFoundException(`Fighter with slug "${slug}" not found`);
     }
 
+    // Most recent Ranking row for this fighter, if any (rankings module
+    // landed after this comment was originally written — now wired up).
+    const latestRanking = await prisma.ranking.findFirst({
+      where: { fighterId: fighter.id },
+      orderBy: { effectiveDate: "desc" },
+    });
+
     // Career totals are computed from per-fight totals (round = 0), not
     // recomputed from per-round rows here — that aggregation belongs to the
     // ingestion module's post-processing step (architecture.md §8), which
@@ -91,7 +98,7 @@ export class FightersService {
       gym: fighter.gym,
       coach: fighter.coach,
       photoUrl: fighter.photoUrl,
-      rank: null, // populated by a join against the current Ranking row — added when the rankings module lands
+      rank: latestRanking?.rank ?? null,
       record: {
         wins: fighter.wins,
         losses: fighter.losses,
@@ -107,14 +114,18 @@ export class FightersService {
           }
         : null,
       careerStats: {
-        sigStrikesLandedPerMin: 0, // requires total fight-time data — wired up once the ingestion module lands
+        // Prefer the dataset-sourced career rate (fighters.csv, via
+        // import-dataset.ts); fall back to computing accuracy from
+        // recorded FightStat totals if the dataset value is missing.
+        sigStrikesLandedPerMin: fighter.sigStrikesLandedPerMin ?? null,
         sigStrikeAccuracyPct:
-          totalStrikesAttempted > 0
+          fighter.sigStrikeAccuracyPct ??
+          (totalStrikesAttempted > 0
             ? Math.round((totalStrikesLanded / totalStrikesAttempted) * 1000) / 10
-            : 0,
-        takedownAvgPer15Min: 0,
-        takedownDefensePct: 0,
-        submissionAvgPer15Min: 0,
+            : null),
+        takedownAvgPer15Min: fighter.takedownAvgPer15Min ?? null,
+        takedownDefensePct: fighter.takedownDefensePct ?? null,
+        submissionAvgPer15Min: fighter.submissionAvgPer15Min ?? null,
         koTkoWins,
         submissionWins,
         decisionWins,

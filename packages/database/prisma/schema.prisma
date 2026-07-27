@@ -71,6 +71,18 @@ model Fighter {
   noContests    Int      @default(0)
   photoUrl      String?
 
+  // Career averages sourced directly from the UFC Stats dataset import
+  // (packages/database/prisma/import-dataset.ts). Nullable because not
+  // every historical fighter has enough recorded fight-time for these.
+  sigStrikesLandedPerMin Float? // SLpM
+  sigStrikeAccuracyPct   Float? // Str_Acc
+  sigStrikesAbsorbedPerMin Float? // SApM
+  sigStrikeDefensePct    Float? // Str_Def
+  takedownAvgPer15Min    Float? // TD_Avg
+  takedownAccuracyPct    Float? // TD_Acc
+  takedownDefensePct     Float? // TD_Def
+  submissionAvgPer15Min  Float? // Sub_Avg
+
   weightClassId String?
   weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
 

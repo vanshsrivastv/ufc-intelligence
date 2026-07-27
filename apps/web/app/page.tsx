@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { Users, Swords, CalendarDays, Layers } from "lucide-react";
-import { statsApi } from "@/lib/stats-api";
+import { api, type StatsOverview, type ChampionSummary } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 
 export default async function HomePage() {
-  const [overview, champions] = await Promise.all([
-    statsApi.getOverview(),
-    statsApi.getChampions(),
-  ]);
+  let overview: StatsOverview = { fighters: 0, fights: 0, events: 0, weightClasses: 0 };
+  let champions: ChampionSummary[] = [];
+  let statsUnavailable = false;
+  try {
+    [overview, champions] = await Promise.all([
+      api.stats.getOverview(),
+      api.stats.getChampions(),
+    ]);
+  } catch {
+    statsUnavailable = true;
+  }
 
   return (
     <main className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
@@ -28,6 +35,12 @@ export default async function HomePage() {
         </Link>
       </section>
 
+      {statsUnavailable ? (
+        <p className="mt-6 text-center text-body-md text-text-muted">
+          Live stats are unavailable right now — try refreshing in a moment.
+        </p>
+      ) : (
+        <>
       {/* Stats row */}
       <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard icon={Users} label="Fighters" value={overview.fighters} />
@@ -67,6 +80,8 @@ export default async function HomePage() {
           )}
         </div>
       </section>
+        </>
+      )}
 
       {/* Prediction spotlight */}
       <section className="mt-10 rounded-lg border border-gold-900 bg-bg-elevated p-6">

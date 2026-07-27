@@ -11,7 +11,7 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
@@ -35,13 +35,54 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface StatsOverview {
+  fighters: number;
+  fights: number;
+  events: number;
+  weightClasses: number;
+}
+
+export interface ChampionSummary {
+  fighterId: string;
+  slug: string;
+  name: string;
+  photoUrl: string | null;
+  weightClass: string;
+  record: string;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  slug: string;
+  name: string;
+  wins?: number;
+  finishes?: number;
+  kos?: number;
+  submissions?: number;
+  streak?: number;
+  titleFights?: number;
+  accuracyPct?: number;
+}
+
+export interface Leaderboards {
+  mostWins: LeaderboardEntry[];
+  mostFinishes: LeaderboardEntry[];
+  mostKOWins: LeaderboardEntry[];
+  mostSubmissionWins: LeaderboardEntry[];
+  longestWinStreak: LeaderboardEntry[];
+  mostTitleFights: LeaderboardEntry[];
+  bestStrikeAccuracy: LeaderboardEntry[];
+  methodBreakdown: { koTko: number; submission: number; decision: number; total: number };
+}
+
 export const api = {
   fighters: {
-    list: (params?: { search?: string; weightClass?: string; page?: number }) => {
+    list: (params?: { search?: string; weightClass?: string; page?: number; pageSize?: number }) => {
       const query = new URLSearchParams();
       if (params?.search) query.set("search", params.search);
       if (params?.weightClass) query.set("weightClass", params.weightClass);
       if (params?.page) query.set("page", String(params.page));
+      if (params?.pageSize) query.set("pageSize", String(params.pageSize));
       const qs = query.toString();
       return request<PaginatedResult<FighterSummaryDto>>(
         `/fighters${qs ? `?${qs}` : ""}`,
@@ -72,5 +113,10 @@ export const api = {
       request<PredictionDto>(
         `/predictions/matchup?fighterA=${encodeURIComponent(fighterA)}&fighterB=${encodeURIComponent(fighterB)}`,
       ),
+  },
+  stats: {
+    getOverview: () => request<StatsOverview>("/stats/overview"),
+    getChampions: () => request<ChampionSummary[]>("/stats/champions"),
+    getLeaderboards: () => request<Leaderboards>("/stats/leaderboards"),
   },
 };

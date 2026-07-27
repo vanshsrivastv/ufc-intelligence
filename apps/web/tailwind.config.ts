@@ -42,6 +42,15 @@ const config: Config = {
         display: ["var(--font-display)"],
         sans: ["var(--font-sans)"],
       },
+      fontSize: {
+        "display-lg": "var(--text-display-lg)",
+        "display-md": "var(--text-display-md)",
+        "heading-lg": "var(--text-heading-lg)",
+        "heading-md": "var(--text-heading-md)",
+        "body-lg": "var(--text-body-lg)",
+        "body-md": "var(--text-body-md)",
+        caption: "var(--text-caption)",
+      },
       borderRadius: {
         sm: "var(--radius-sm)",
         md: "var(--radius-md)",

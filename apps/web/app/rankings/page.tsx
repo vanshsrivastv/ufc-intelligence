@@ -4,10 +4,11 @@ import { api } from "@/lib/api-client";
 export default async function RankingsPage({
   searchParams,
 }: {
-  searchParams: { weightClass?: string };
+  searchParams: Promise<{ weightClass?: string }>;
 }) {
+  const params = await searchParams;
   const weightClasses = await api.rankings.listWeightClasses();
-  const activeClass = searchParams.weightClass ?? weightClasses[0]?.name;
+  const activeClass = params.weightClass ?? weightClasses[0]?.name;
   const rankings = activeClass ? await api.rankings.list(activeClass) : [];
 
   return (
