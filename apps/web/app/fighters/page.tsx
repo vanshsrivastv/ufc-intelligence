@@ -1,15 +1,20 @@
+import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { FighterCard } from "@/components/ui/fighter-card";
 import { getFavoritedFighterIds } from "@/lib/favorites";
 
-// Server component — fetched at request time on the server, so the
-// listing page is fast and SEO-indexable without a client-side loading
-// spinner for the initial view.
-export default async function FightersPage() {
+export default async function FightersPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const page = Number(searchParams.page ?? "1") || 1;
   const [result, favoritedIds] = await Promise.all([
-    api.fighters.list({ page: 1 }),
+    api.fighters.list({ page }),
     getFavoritedFighterIds(),
   ]);
+
+  const totalPages = Math.ceil(result.total / result.pageSize);
 
   return (
     <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
@@ -35,6 +40,47 @@ export default async function FightersPage() {
           No fighters yet — run the database seed to bootstrap sample data.
         </p>
       )}
+
+      {totalPages > 1 && (
+        <div className="mt-10 flex items-center justify-center gap-2">
+          <PageLink page={page - 1} disabled={page <= 1}>
+            Previous
+          </PageLink>
+          <span className="px-3 text-xs text-text-secondary">
+            Page {page} of {totalPages}
+          </span>
+          <PageLink page={page + 1} disabled={page >= totalPages}>
+            Next
+          </PageLink>
+        </div>
+      )}
     </main>
+  );
+}
+
+function PageLink({
+  page,
+  disabled,
+  children,
+}: {
+  page: number;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  if (disabled) {
+    return (
+      <span className="rounded-md border border-border px-3 py-1.5 text-xs text-text-muted opacity-40">
+        {children}
+      </span>
+    );
+  }
+
+  return (
+    <Link
+      href={`/fighters?page=${page}`}
+      className="rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary transition-standard hover:border-gold-500 hover:text-gold-300"
+    >
+      {children}
+    </Link>
   );
 }

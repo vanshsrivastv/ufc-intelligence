@@ -4,6 +4,7 @@ import type {
   FighterDetailDto,
   FighterSummaryDto,
   PaginatedResult,
+  PredictionDto,
   RankingEntryDto,
   WeightClassDto,
 } from "@ufc-intelligence/types";
@@ -65,5 +66,11 @@ export const api = {
     listWeightClasses: () => request<WeightClassDto[]>("/rankings/weight-classes"),
     list: (weightClass: string) =>
       request<RankingEntryDto[]>(`/rankings?weightClass=${encodeURIComponent(weightClass)}`),
+  },
+  predictions: {
+    getMatchup: (fighterA: string, fighterB: string) =>
+      request<PredictionDto>(
+        `/predictions/matchup?fighterA=${encodeURIComponent(fighterA)}&fighterB=${encodeURIComponent(fighterB)}`,
+      ),
   },
 };

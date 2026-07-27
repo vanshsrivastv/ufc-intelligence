@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { api } from "@/lib/api-client";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FighterAvatar } from "@/components/ui/fighter-avatar";
 
 export default async function FighterDetailPage({
   params,
@@ -19,7 +20,9 @@ export default async function FighterDetailPage({
   return (
     <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
       <div className="grid gap-8 md:grid-cols-[320px_1fr]">
-        <div className="h-[400px] rounded-lg bg-bg-elevated" />
+       <div className="h-[400px] overflow-hidden rounded-lg bg-bg-elevated">
+          <FighterAvatar name={fighter.name} photoUrl={fighter.photoUrl} />
+        </div>
 
         <div>
           <h1 className="font-display text-display-md text-text-primary">

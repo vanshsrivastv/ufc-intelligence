@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { FighterSummaryDto } from "@ufc-intelligence/types";
 import { FavoriteButton } from "./favorite-button";
+import { FighterAvatar } from "./fighter-avatar";
 
 export function FighterCard({
   fighter,
@@ -18,15 +19,7 @@ export function FighterCard({
       className="group block rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-gold-500 hover:shadow-[0_0_0_1px_var(--color-gold-500),0_0_12px_rgba(201,160,80,0.15)]"
     >
       <div className="mb-3 h-24 w-full overflow-hidden rounded-md bg-bg-elevated-2">
-        {fighter.photoUrl && (
-          <Image
-            src={fighter.photoUrl}
-            alt={fighter.name}
-            width={200}
-            height={96}
-            className="h-full w-full object-cover"
-          />
-        )}
+        <FighterAvatar name={fighter.name} photoUrl={fighter.photoUrl} />
       </div>
 
       <div className="flex items-center justify-between">

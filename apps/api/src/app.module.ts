@@ -6,6 +6,8 @@ import { LoggerModule } from "nestjs-pino";
 import { FightersModule } from "./modules/fighters/fighters.module";
 import { EventsModule } from "./modules/events/events.module";
 import { RankingsModule } from "./modules/rankings/rankings.module";
+import { PredictionsModule } from "./modules/predictions/predictions.module";
+import { StatsModule } from "./modules/stats/stats.module";
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { RankingsModule } from "./modules/rankings/rankings.module";
     FightersModule,
     EventsModule,
     RankingsModule,
+    PredictionsModule,
+    StatsModule,
   ],
   providers: [
     {
