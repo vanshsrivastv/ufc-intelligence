@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { QueryProvider } from "@/lib/query-provider";
 import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
+import { BackToTop } from "@/components/layout/back-to-top";
 import "./globals.css";
 import { AuthSessionProvider } from "@/lib/session-provider";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
             <Nav />
             <div className="flex-1">{children}</div>
             <Footer />
+            <BackToTop />
           </QueryProvider>
         </AuthSessionProvider>
       </body>
