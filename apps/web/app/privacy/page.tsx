@@ -27,8 +27,8 @@ export default function PrivacyPage() {
         </Section>
         <Section title="Contact">
           Questions about this policy can be sent to{" "}
-          <a href="mailto:contact@ufc-intelligence.dev" className="text-gold-300 hover:text-gold-100">
-            contact@ufc-intelligence.dev
+          <a href="mailto:srivastavavansh2007@gmail.com" className="text-gold-300 hover:text-gold-100">
+            srivastavavansh2007@gmail.com
           </a>
           .
         </Section>

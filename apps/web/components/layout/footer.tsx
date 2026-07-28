@@ -24,14 +24,14 @@ export function Footer() {
           </p>
           <div className="mt-4 flex items-center gap-3">
             <a
-              href="mailto:contact@ufc-intelligence.dev"
+              href="mailto:srivastavavansh2007@gmail.com"
               aria-label="Email us"
               className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-text-secondary transition-standard hover:border-gold-500 hover:text-gold-300"
             >
               <Mail size={15} strokeWidth={1.75} />
             </a>
             <a
-              href="https://github.com/"
+              href="https://github.com/vanshsrivastv"
               target="_blank"
               rel="noreferrer noopener"
               aria-label="GitHub repository"
