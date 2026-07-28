@@ -37,6 +37,11 @@
   --color-border: #2a2620;
   --color-border-strong: #3c2f14;
 
+  /* --- Glass panels (used over page-atmosphere background photos) --- */
+  --color-glass-panel: rgba(20, 20, 18, 0.55);
+  --color-glass-panel-strong: rgba(28, 28, 25, 0.72);
+  --color-glass-border: rgba(232, 197, 114, 0.18);
+
   /* --- Spacing (8px base unit) --- */
   --space-1: 4px;
   --space-2: 8px;

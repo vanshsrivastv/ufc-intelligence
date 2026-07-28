@@ -27,6 +27,10 @@ export const colors = {
 
   border: "#2A2620",
   borderStrong: "#3C2F14",
+
+  glassPanel: "rgba(20, 20, 18, 0.55)",
+  glassPanelStrong: "rgba(28, 28, 25, 0.72)",
+  glassBorder: "rgba(232, 197, 114, 0.18)",
 } as const;
 
 export const chartPalette = {

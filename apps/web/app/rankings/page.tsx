@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { api } from "@/lib/api-client";
+import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 
 export default async function RankingsPage({
   searchParams,
@@ -12,25 +13,29 @@ export default async function RankingsPage({
   const rankings = activeClass ? await api.rankings.list(activeClass) : [];
 
   return (
-    <main className="mx-auto max-w-[900px] px-4 py-12 md:px-8">
-      <h1 className="font-display text-heading-lg text-text-primary">
-        Rankings
-      </h1>
+    <>
+      <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
+      <main className="mx-auto max-w-[900px] px-4 py-12 md:px-8">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+        <h1 className="font-display text-heading-lg text-text-primary">
+          Rankings
+        </h1>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {weightClasses.map((wc) => (
-          <Link
-            key={wc.id}
-            href={`/rankings?weightClass=${encodeURIComponent(wc.name)}`}
-            className={`rounded-md border px-3 py-1.5 text-xs transition-standard ${
-              wc.name === activeClass
-                ? "border-gold-500 text-gold-300"
-                : "border-border text-text-secondary hover:border-border-strong"
-            }`}
-          >
-            {wc.name}
-          </Link>
-        ))}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {weightClasses.map((wc) => (
+            <Link
+              key={wc.id}
+              href={`/rankings?weightClass=${encodeURIComponent(wc.name)}`}
+              className={`rounded-md border px-3 py-1.5 text-xs transition-standard ${
+                wc.name === activeClass
+                  ? "border-gold-500 text-gold-300"
+                  : "border-border text-text-secondary hover:border-border-strong"
+              }`}
+            >
+              {wc.name}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {weightClasses.length === 0 && (
@@ -39,7 +44,7 @@ export default async function RankingsPage({
         </p>
       )}
 
-      <div className="mt-8 divide-y divide-border rounded-lg border border-border bg-bg-elevated">
+      <div className="mt-8 divide-y divide-border rounded-lg border border-glass bg-glass backdrop-blur-xl">
         {rankings.length === 0 && weightClasses.length > 0 && (
           <p className="p-4 text-body-md text-text-muted">
             No rankings recorded yet for {activeClass}.
@@ -66,6 +71,7 @@ export default async function RankingsPage({
           </Link>
         ))}
       </div>
-    </main>
+      </main>
+    </>
   );
 }

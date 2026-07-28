@@ -36,6 +36,11 @@ const config: Config = {
         border: {
           DEFAULT: "var(--color-border)",
           strong: "var(--color-border-strong)",
+          glass: "var(--color-glass-border)",
+        },
+        glass: {
+          DEFAULT: "var(--color-glass-panel)",
+          strong: "var(--color-glass-panel-strong)",
         },
       },
       fontFamily: {

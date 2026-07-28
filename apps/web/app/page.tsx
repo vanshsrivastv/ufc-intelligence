@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Users, Swords, CalendarDays, Layers } from "lucide-react";
 import { api, type StatsOverview, type ChampionSummary } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
+import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 
 export default async function HomePage() {
   let overview: StatsOverview = { fighters: 0, fights: 0, events: 0, weightClasses: 0 };
@@ -17,23 +18,25 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
-      {/* Hero */}
-      <section className="rounded-lg border border-border bg-bg-elevated p-10 text-center">
-        <h1 className="font-display text-display-lg text-text-primary">
-          UFC Intelligence
-        </h1>
-        <p className="mx-auto mt-3 max-w-lg text-body-lg text-text-secondary">
-          Career-deep fighter stats, real event history, and explainable fight
-          predictions — in one place.
-        </p>
-        <Link
-          href="/fighters"
-          className="mt-6 inline-block rounded-md bg-gold-300 px-6 py-3 font-sans text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
-        >
-          Browse fighters
-        </Link>
-      </section>
+    <>
+      <PageAtmosphere src="/images/octagon.jpg" alt="" focalPosition="50% 40%" />
+      <main className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
+        {/* Hero */}
+        <section className="rounded-lg border border-glass bg-glass p-10 text-center backdrop-blur-xl">
+          <h1 className="font-display text-display-lg text-text-primary">
+            UFC Intelligence
+          </h1>
+          <p className="mx-auto mt-3 max-w-lg text-body-lg text-text-secondary">
+            Career-deep fighter stats, real event history, and explainable fight
+            predictions — in one place.
+          </p>
+          <Link
+            href="/fighters"
+            className="mt-6 inline-block rounded-md bg-gold-300 px-6 py-3 font-sans text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
+          >
+            Browse fighters
+          </Link>
+        </section>
 
       {statsUnavailable ? (
         <p className="mt-6 text-center text-body-md text-text-muted">
@@ -59,7 +62,7 @@ export default async function HomePage() {
             <Link
               key={c.fighterId}
               href={`/fighters/${c.slug}`}
-              className="flex min-w-[160px] flex-col items-center gap-2 rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-gold-500"
+              className="flex min-w-[160px] flex-col items-center gap-2 rounded-lg border border-glass bg-glass p-4 backdrop-blur-xl transition-standard hover:border-gold-500"
             >
               <div className="h-16 w-16 overflow-hidden rounded-full border border-border-strong">
                 <FighterAvatar name={c.name} photoUrl={c.photoUrl} />
@@ -83,27 +86,28 @@ export default async function HomePage() {
         </>
       )}
 
-      {/* Prediction spotlight */}
-      <section className="mt-10 rounded-lg border border-gold-900 bg-bg-elevated p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="font-display text-heading-md text-text-primary">
-              Curious how a fight would go?
-            </p>
-            <p className="mt-1 text-body-md text-text-secondary">
-              Pick any two fighters and get an explainable win-probability
-              breakdown, built from real career data.
-            </p>
+        {/* Prediction spotlight */}
+        <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-display text-heading-md text-text-primary">
+                Curious how a fight would go?
+              </p>
+              <p className="mt-1 text-body-md text-text-secondary">
+                Pick any two fighters and get an explainable win-probability
+                breakdown, built from real career data.
+              </p>
+            </div>
+            <Link
+              href="/predictions"
+              className="whitespace-nowrap rounded-md bg-gold-300 px-5 py-2.5 text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
+            >
+              Try it
+            </Link>
           </div>
-          <Link
-            href="/predictions"
-            className="whitespace-nowrap rounded-md bg-gold-300 px-5 py-2.5 text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
-          >
-            Try it
-          </Link>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }
 
@@ -117,7 +121,7 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-bg-elevated p-4">
+    <div className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-xl">
       <Icon size={18} strokeWidth={1.5} className="text-gold-300" />
       <p className="mt-2 font-display text-2xl font-medium tabular-nums text-text-primary">
         {value.toLocaleString()}

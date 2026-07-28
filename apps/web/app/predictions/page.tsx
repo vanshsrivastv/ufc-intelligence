@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FighterSearchInput } from "@/components/ui/fighter-search-input";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
+import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { api } from "@/lib/api-client";
 import type { FighterSummaryDto, PredictionDto } from "@ufc-intelligence/types";
 
@@ -32,31 +33,35 @@ export default function PredictionsPage() {
   const pctB = prediction ? Math.round(prediction.winnerProbabilityB * 100) : 50;
 
   return (
-    <main className="mx-auto max-w-[760px] px-4 py-12 md:px-8">
-      <h1 className="font-display text-heading-lg text-text-primary">
-        Fantasy Matchup Predictor
-      </h1>
-      <p className="mt-2 text-body-md text-text-secondary">
-        Pick any two fighters for an explainable win-probability breakdown, built from real career stats.
-      </p>
+    <>
+      <PageAtmosphere src="/images/conor-mcgregor.jpg" alt="" focalPosition="50% 15%" />
+      <main className="mx-auto max-w-[760px] px-4 py-12 md:px-8">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+        <h1 className="font-display text-heading-lg text-text-primary">
+          Fantasy Matchup Predictor
+        </h1>
+        <p className="mt-2 text-body-md text-text-secondary">
+          Pick any two fighters for an explainable win-probability breakdown, built from real career stats.
+        </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        <FighterSearchInput label="Fighter A" onSelect={setFighterA} />
-        <FighterSearchInput label="Fighter B" onSelect={setFighterB} />
+        <div className="mt-6 grid grid-cols-2 gap-4">
+          <FighterSearchInput label="Fighter A" onSelect={setFighterA} />
+          <FighterSearchInput label="Fighter B" onSelect={setFighterB} />
+        </div>
+
+        <button
+          onClick={handlePredict}
+          disabled={!fighterA || !fighterB || loading}
+          className="mt-6 w-full rounded-md bg-gold-300 py-2.5 text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100 disabled:opacity-40"
+        >
+          {loading ? "Analyzing..." : "Predict this fight"}
+        </button>
+
+        {error && <p className="mt-4 text-xs text-danger">{error}</p>}
       </div>
 
-      <button
-        onClick={handlePredict}
-        disabled={!fighterA || !fighterB || loading}
-        className="mt-6 w-full rounded-md bg-gold-300 py-2.5 text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100 disabled:opacity-40"
-      >
-        {loading ? "Analyzing..." : "Predict this fight"}
-      </button>
-
-      {error && <p className="mt-4 text-xs text-danger">{error}</p>}
-
       {fighterA && fighterB && (
-        <div className="mt-10 rounded-lg border border-border bg-bg-elevated p-6">
+        <div className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
           {/* Fighter vs fighter header */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-1 flex-col items-center gap-3">
@@ -125,7 +130,8 @@ export default function PredictionsPage() {
           )}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 
