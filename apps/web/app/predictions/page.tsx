@@ -36,7 +36,7 @@ export default function PredictionsPage() {
     <>
       <PageAtmosphere src="/images/conor-mcgregor.jpg" alt="" focalPosition="50% 15%" />
       <main className="mx-auto max-w-[760px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
         <h1 className="font-display text-heading-lg text-text-primary">
           Fantasy Matchup Predictor
         </h1>
@@ -61,7 +61,7 @@ export default function PredictionsPage() {
       </div>
 
       {fighterA && fighterB && (
-        <div className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+        <div className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
           {/* Fighter vs fighter header */}
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-1 flex-col items-center gap-3">

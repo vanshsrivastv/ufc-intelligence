@@ -43,6 +43,10 @@ const config: Config = {
           strong: "var(--color-glass-panel-strong)",
         },
       },
+      boxShadow: {
+        glass:
+          "inset 0 1px 0 var(--color-glass-highlight), 0 8px 32px rgba(0, 0, 0, 0.35)",
+      },
       fontFamily: {
         display: ["var(--font-display)"],
         sans: ["var(--font-sans)"],

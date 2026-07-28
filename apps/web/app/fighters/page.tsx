@@ -24,7 +24,7 @@ export default async function FightersPage({
     <>
       <PageAtmosphere src="/images/jj.jpg" alt="" focalPosition="50% 20%" />
       <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
         <h1 className="font-display text-heading-lg text-text-primary">
           Fighters
         </h1>

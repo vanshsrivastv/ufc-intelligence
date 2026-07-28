@@ -16,7 +16,7 @@ export default async function RankingsPage({
     <>
       <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
       <main className="mx-auto max-w-[900px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
         <h1 className="font-display text-heading-lg text-text-primary">
           Rankings
         </h1>
@@ -44,7 +44,7 @@ export default async function RankingsPage({
         </p>
       )}
 
-      <div className="mt-8 divide-y divide-border rounded-lg border border-glass bg-glass backdrop-blur-xl">
+      <div className="mt-8 divide-y divide-border rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
         {rankings.length === 0 && weightClasses.length > 0 && (
           <p className="p-4 text-body-md text-text-muted">
             No rankings recorded yet for {activeClass}.

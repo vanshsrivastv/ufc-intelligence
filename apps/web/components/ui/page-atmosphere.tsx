@@ -22,17 +22,23 @@ export function PageAtmosphere({
         fill
         sizes="100vw"
         priority
-        className="object-cover opacity-20 blur-[1px]"
+        className="object-cover opacity-30"
         style={{ objectPosition: focalPosition }}
       />
+      {/* Flat scrim, uniform top to bottom — keeps text contrast consistent
+          wherever the viewport happens to be scrolled to, instead of only
+          protecting the very top of the page. */}
+      <div className="absolute inset-0 bg-bg-primary/50" />
+      {/* Edge fade only at the very top (nav) and bottom, so the photo stays
+          visible through the entire middle of the viewport at every scroll
+          position rather than collapsing to solid a few hundred px down. */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 55% at 50% 0%, transparent 0%, var(--color-bg-primary) 78%)",
+            "linear-gradient(180deg, var(--color-bg-primary) 0%, transparent 16%, transparent 84%, var(--color-bg-primary) 100%)",
         }}
       />
-      <div className="absolute inset-0 bg-bg-primary/60" />
     </div>
   );
 }

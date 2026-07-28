@@ -22,7 +22,7 @@ export default async function HomePage() {
       <PageAtmosphere src="/images/octagon.jpg" alt="" focalPosition="50% 40%" />
       <main className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
         {/* Hero */}
-        <section className="rounded-lg border border-glass bg-glass p-10 text-center backdrop-blur-xl">
+        <section className="rounded-lg border border-glass bg-glass p-10 text-center backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
           <h1 className="font-display text-display-lg text-text-primary">
             UFC Intelligence
           </h1>
@@ -62,7 +62,7 @@ export default async function HomePage() {
             <Link
               key={c.fighterId}
               href={`/fighters/${c.slug}`}
-              className="flex min-w-[160px] flex-col items-center gap-2 rounded-lg border border-glass bg-glass p-4 backdrop-blur-xl transition-standard hover:border-gold-500"
+              className="flex min-w-[160px] flex-col items-center gap-2 rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
             >
               <div className="h-16 w-16 overflow-hidden rounded-full border border-border-strong">
                 <FighterAvatar name={c.name} photoUrl={c.photoUrl} />
@@ -87,7 +87,7 @@ export default async function HomePage() {
       )}
 
         {/* Prediction spotlight */}
-        <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-xl">
+        <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-display text-heading-md text-text-primary">
@@ -121,7 +121,7 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-xl">
+    <div className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
       <Icon size={18} strokeWidth={1.5} className="text-gold-300" />
       <p className="mt-2 font-display text-2xl font-medium tabular-nums text-text-primary">
         {value.toLocaleString()}
