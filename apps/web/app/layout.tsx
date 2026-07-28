@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { QueryProvider } from "@/lib/query-provider";
 import { Nav } from "@/components/layout/nav";
+import { Footer } from "@/components/layout/footer";
 import "./globals.css";
 import { AuthSessionProvider } from "@/lib/session-provider";
 
@@ -17,11 +18,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-     <body>
+     <body className="flex min-h-screen flex-col">
         <AuthSessionProvider>
           <QueryProvider>
             <Nav />
-            {children}
+            <div className="flex-1">{children}</div>
+            <Footer />
           </QueryProvider>
         </AuthSessionProvider>
       </body>
