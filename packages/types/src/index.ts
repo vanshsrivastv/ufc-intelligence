@@ -100,6 +100,9 @@ export interface RankingEntryDto {
   rank: number; // 0 = champion
   fighter: FighterSummaryDto;
   effectiveDate: string;
+  // Derived from fight recency relative to the dataset's own most recent
+  // event (not wall-clock time) — see RankingsService.computeActivityStatus.
+  status: "active" | "inactive";
 }
 
 export interface FightStatRoundDto {

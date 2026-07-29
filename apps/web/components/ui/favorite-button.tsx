@@ -38,6 +38,12 @@ export function FavoriteButton({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fighterId }),
       });
+      if (res.status === 401) {
+        setFavorited(!next);
+        toast("Sign in to save favorites.", "error");
+        router.push("/signin");
+        return;
+      }
       if (!res.ok) throw new Error("Request failed");
       toast(next ? "Added to favorites" : "Removed from favorites", "success");
       // The /favorites page is a server component fetched via the router
