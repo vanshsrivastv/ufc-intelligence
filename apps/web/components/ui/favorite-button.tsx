@@ -40,6 +40,11 @@ export function FavoriteButton({
       });
       if (!res.ok) throw new Error("Request failed");
       toast(next ? "Added to favorites" : "Removed from favorites", "success");
+      // The /favorites page is a server component fetched via the router
+      // cache — without this, navigating there can show a stale snapshot
+      // from before this toggle (e.g. if the nav link was prefetched
+      // earlier in the session).
+      router.refresh();
     } catch {
       // Roll back the optimistic update so the UI matches what the server
       // actually has.
