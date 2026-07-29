@@ -16,7 +16,7 @@ export function FighterCard({
   return (
     <Link
       href={`/fighters/${fighter.slug}`}
-      className="group block rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-gold-500 hover:shadow-[0_0_0_1px_var(--color-gold-500),0_0_12px_rgba(201,160,80,0.15)]"
+      className="group block rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:-translate-y-0.5 hover:border-gold-500 hover:shadow-[0_0_0_1px_var(--color-gold-500),0_0_12px_rgba(201,160,80,0.15)]"
     >
       <div className="mb-3 h-24 w-full overflow-hidden rounded-md bg-bg-elevated-2">
         <FighterAvatar name={fighter.name} photoUrl={fighter.photoUrl} />

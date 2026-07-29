@@ -3,6 +3,7 @@ import { QueryProvider } from "@/lib/query-provider";
 import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
 import { BackToTop } from "@/components/layout/back-to-top";
+import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 import { AuthSessionProvider } from "@/lib/session-provider";
 
@@ -22,10 +23,12 @@ export default function RootLayout({
      <body className="flex min-h-screen flex-col">
         <AuthSessionProvider>
           <QueryProvider>
-            <Nav />
-            <div className="flex-1">{children}</div>
-            <Footer />
-            <BackToTop />
+            <ToastProvider>
+              <Nav />
+              <div className="flex-1">{children}</div>
+              <Footer />
+              <BackToTop />
+            </ToastProvider>
           </QueryProvider>
         </AuthSessionProvider>
       </body>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useToast } from "./toast-provider";
 
 export function FavoriteButton({
   fighterId,
@@ -14,6 +15,7 @@ export function FavoriteButton({
 }) {
   const { data: session } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
   const [favorited, setFavorited] = useState(initiallyFavorited);
   const [celebrating, setCelebrating] = useState(false);
 
@@ -30,11 +32,20 @@ export function FavoriteButton({
     setFavorited(next);
     if (next) setCelebrating(true);
 
-    await fetch("/api/favorites", {
-      method: next ? "POST" : "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fighterId }),
-    });
+    try {
+      const res = await fetch("/api/favorites", {
+        method: next ? "POST" : "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fighterId }),
+      });
+      if (!res.ok) throw new Error("Request failed");
+      toast(next ? "Added to favorites" : "Removed from favorites", "success");
+    } catch {
+      // Roll back the optimistic update so the UI matches what the server
+      // actually has.
+      setFavorited(!next);
+      toast("Couldn't update favorites — try again.", "error");
+    }
   }
 
   const gold = "#E8C572";

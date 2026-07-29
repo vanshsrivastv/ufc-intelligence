@@ -11,7 +11,7 @@ export function EventCard({ event }: { event: EventSummaryDto }) {
   return (
     <Link
       href={`/events/${event.slug}`}
-      className="group block rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-gold-500"
+      className="group block rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:-translate-y-0.5 hover:border-gold-500 hover:shadow-[0_0_0_1px_var(--color-gold-500),0_0_12px_rgba(201,160,80,0.15)]"
     >
       <div className="flex items-center justify-between">
         <p className="font-display text-[16px] font-medium text-text-primary">
