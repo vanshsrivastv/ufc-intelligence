@@ -11,7 +11,8 @@
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
-    "import-data": "tsx prisma/import-dataset.ts"
+    "import-data": "tsx prisma/import-dataset.ts",
+    "seed-rankings": "tsx prisma/seed-rankings.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
