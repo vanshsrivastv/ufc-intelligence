@@ -148,6 +148,58 @@ export class StatsService {
       })
       .filter((x): x is NonNullable<typeof x> => x !== null);
 
+    // Youngest/oldest current champions — one row per division (rank 0,
+    // most recent effectiveDate), filtered to fighters with a known DOB.
+    const champions = await prisma.ranking.findMany({
+      where: { rank: 0 },
+      include: { fighter: { select: { id: true, slug: true, name: true, dob: true } } },
+      orderBy: { effectiveDate: "desc" },
+      distinct: ["weightClassId"],
+    });
+    const now = new Date();
+    const ageOf = (dob: Date): number => {
+      let age = now.getFullYear() - dob.getFullYear();
+      const monthDelta = now.getMonth() - dob.getMonth();
+      if (monthDelta < 0 || (monthDelta === 0 && now.getDate() < dob.getDate())) age--;
+      return age;
+    };
+    const championsWithAge = champions
+      .filter((c) => c.fighter.dob !== null)
+      .map((c) => ({
+        id: c.fighter.id,
+        slug: c.fighter.slug,
+        name: c.fighter.name,
+        age: ageOf(c.fighter.dob!),
+      }));
+    const youngestChampions = [...championsWithAge].sort((a, b) => a.age - b.age).slice(0, 10);
+    const oldestChampions = [...championsWithAge].sort((a, b) => b.age - a.age).slice(0, 10);
+
+    // Most active fighters — total completed fights, either side of the
+    // Fight row, tallied in memory (same pattern as mostTitleFights above).
+    const allCompletedFights = await prisma.fight.findMany({
+      where: { status: "COMPLETED" },
+      select: { fighterAId: true, fighterBId: true },
+    });
+    const fightCounts = new Map<string, number>();
+    for (const f of allCompletedFights) {
+      fightCounts.set(f.fighterAId, (fightCounts.get(f.fighterAId) ?? 0) + 1);
+      fightCounts.set(f.fighterBId, (fightCounts.get(f.fighterBId) ?? 0) + 1);
+    }
+    const topActiveIds = Array.from(fightCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([id]) => id);
+    const activeFighters = await prisma.fighter.findMany({
+      where: { id: { in: topActiveIds } },
+      select: { id: true, slug: true, name: true },
+    });
+    const mostActiveFighters = topActiveIds
+      .map((id) => {
+        const fighter = activeFighters.find((f) => f.id === id);
+        return fighter ? { ...fighter, fights: fightCounts.get(id)! } : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
     // Method-of-victory breakdown for the donut/bar
     const methodCounts = await prisma.fight.groupBy({
       by: ["method"],
@@ -173,6 +225,9 @@ export class StatsService {
       longestWinStreak,
       mostTitleFights,
       bestStrikeAccuracy,
+      youngestChampions,
+      oldestChampions,
+      mostActiveFighters,
       methodBreakdown: { koTko, submission, decision, total: koTko + submission + decision },
     };
   }

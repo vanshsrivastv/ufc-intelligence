@@ -37,6 +37,19 @@ export default async function StatisticsPage() {
         <Leaderboard title="Most KO/TKO wins" entries={lb.mostKOWins} valueKey="kos" />
         <Leaderboard title="Most submission wins" entries={lb.mostSubmissionWins} valueKey="submissions" />
         <Leaderboard title="Most title fights" entries={lb.mostTitleFights} valueKey="titleFights" />
+        <Leaderboard title="Most active fighters" entries={lb.mostActiveFighters} valueKey="fights" />
+        <Leaderboard
+          title="Youngest champions"
+          entries={lb.youngestChampions}
+          valueKey="age"
+          suffix=" yrs"
+        />
+        <Leaderboard
+          title="Oldest champions"
+          entries={lb.oldestChampions}
+          valueKey="age"
+          suffix=" yrs"
+        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -84,7 +97,7 @@ function Leaderboard({
   suffix?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-bg-elevated p-4">
+    <div className="rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-border-strong">
       <p className="font-display text-heading-md text-text-primary">{title}</p>
       <div className="mt-3 flex flex-col gap-1">
         {entries.map((entry, i) => (

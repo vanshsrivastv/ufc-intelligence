@@ -62,6 +62,8 @@ export interface LeaderboardEntry {
   streak?: number;
   titleFights?: number;
   accuracyPct?: number;
+  age?: number;
+  fights?: number;
 }
 
 export interface Leaderboards {
@@ -72,6 +74,9 @@ export interface Leaderboards {
   longestWinStreak: LeaderboardEntry[];
   mostTitleFights: LeaderboardEntry[];
   bestStrikeAccuracy: LeaderboardEntry[];
+  youngestChampions: LeaderboardEntry[];
+  oldestChampions: LeaderboardEntry[];
+  mostActiveFighters: LeaderboardEntry[];
   methodBreakdown: { koTko: number; submission: number; decision: number; total: number };
 }
 
