@@ -82,10 +82,23 @@ export interface Leaderboards {
 
 export const api = {
   fighters: {
-    list: (params?: { search?: string; weightClass?: string; page?: number; pageSize?: number }) => {
+    list: (params?: {
+      search?: string;
+      weightClass?: string;
+      gender?: "men" | "women";
+      activity?: "active" | "inactive";
+      championOnly?: boolean;
+      sort?: "name_asc" | "recent" | "oldest";
+      page?: number;
+      pageSize?: number;
+    }) => {
       const query = new URLSearchParams();
       if (params?.search) query.set("search", params.search);
       if (params?.weightClass) query.set("weightClass", params.weightClass);
+      if (params?.gender) query.set("gender", params.gender);
+      if (params?.activity) query.set("activity", params.activity);
+      if (params?.championOnly) query.set("championOnly", "true");
+      if (params?.sort) query.set("sort", params.sort);
       if (params?.page) query.set("page", String(params.page));
       if (params?.pageSize) query.set("pageSize", String(params.pageSize));
       const qs = query.toString();

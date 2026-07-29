@@ -28,16 +28,27 @@ export function FighterCard({
         </p>
         <FavoriteButton fighterId={fighter.id} initiallyFavorited={initiallyFavorited} />
       </div>
+      {fighter.nickname && (
+        <p className="mt-0.5 truncate text-xs italic text-text-muted">
+          &ldquo;{fighter.nickname}&rdquo;
+        </p>
+      )}
       <p className="mt-0.5 text-xs text-text-secondary">
         {record} {fighter.weightClass ? `· ${fighter.weightClass.name}` : ""}
       </p>
 
       {fighter.rank !== null && (
         <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
-          <span className="text-[11px] text-text-secondary">Rank</span>
-          <span className="text-[11px] font-medium text-gold-300">
-            #{fighter.rank}
+          <span className="text-[11px] text-text-secondary">
+            {fighter.rank === 0 ? "" : "Rank"}
           </span>
+          {fighter.rank === 0 ? (
+            <span className="rounded-sm bg-gold-900 px-2 py-0.5 text-[10px] font-medium text-gold-300">
+              Champion
+            </span>
+          ) : (
+            <span className="text-[11px] font-medium text-gold-300">#{fighter.rank}</span>
+          )}
         </div>
       )}
     </Link>

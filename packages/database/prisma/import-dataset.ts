@@ -254,6 +254,7 @@ async function main() {
   const weightClassCache = new Map<string, string>();
   const eventCache = new Map<string, string>();
   const fighterWeightClassVotes = new Map<string, Map<string, number>>();
+  const fighterLastFightDate = new Map<string, Date>();
   const cardPositionCounters = new Map<string, number>();
 
   let fightsImported = 0;
@@ -368,6 +369,14 @@ async function main() {
       votes.set(weightClassId, (votes.get(weightClassId) ?? 0) + 1);
     }
 
+    const fightDate = new Date(dateKey);
+    if (!Number.isNaN(fightDate.getTime())) {
+      for (const fid of [fighterAId, fighterBId]) {
+        const current = fighterLastFightDate.get(fid);
+        if (!current || fightDate > current) fighterLastFightDate.set(fid, fightDate);
+      }
+    }
+
     fightsImported++;
     if (fightsImported % 1000 === 0) console.log(`  ...${fightsImported} fights imported`);
   }
@@ -376,17 +385,20 @@ async function main() {
     `Imported ${fightsImported} fights (${fightsSkippedNoFighter} skipped — fighter name not found).`,
   );
 
-  console.log("Assigning primary weight class per fighter...");
+  console.log("Assigning primary weight class and last-fight date per fighter...");
   let assigned = 0;
   for (const [fighterId, votes] of fighterWeightClassVotes) {
     const [topWeightClassId] = Array.from(votes.entries()).sort((a, b) => b[1] - a[1])[0];
     await prisma.fighter.update({
       where: { id: fighterId },
-      data: { weightClassId: topWeightClassId },
+      data: {
+        weightClassId: topWeightClassId,
+        lastFightDate: fighterLastFightDate.get(fighterId) ?? null,
+      },
     });
     assigned++;
   }
-  console.log(`Assigned weight class for ${assigned} fighters.`);
+  console.log(`Assigned weight class and last-fight date for ${assigned} fighters.`);
 
   if (unmappedWeightClasses.size > 0) {
     console.warn("Unrecognized weight class strings (weightLimitLbs set to 0):", [

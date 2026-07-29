@@ -13,18 +13,54 @@ export class FightersService {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
 
+    let championOnlyIds: string[] | undefined;
+    if (query.championOnly) {
+      const champions = await prisma.ranking.findMany({
+        where: { rank: 0 },
+        orderBy: { effectiveDate: "desc" },
+        distinct: ["weightClassId"],
+        select: { fighterId: true },
+      });
+      championOnlyIds = champions.map((c) => c.fighterId);
+    }
+
+    let activityCutoff: Date | undefined;
+    if (query.activity) {
+      const mostRecentEvent = await prisma.event.findFirst({
+        orderBy: { date: "desc" },
+        select: { date: true },
+      });
+      const cutoff = new Date(mostRecentEvent?.date ?? new Date());
+      cutoff.setMonth(cutoff.getMonth() - 18);
+      activityCutoff = cutoff;
+    }
+
     const where = {
       ...(query.weightClass ? { weightClass: { name: query.weightClass } } : {}),
+      ...(query.gender ? { weightClass: { isWomens: query.gender === "women" } } : {}),
       ...(query.search
         ? { name: { contains: query.search, mode: "insensitive" as const } }
         : {}),
+      ...(championOnlyIds ? { id: { in: championOnlyIds } } : {}),
+      ...(activityCutoff
+        ? query.activity === "active"
+          ? { lastFightDate: { gte: activityCutoff } }
+          : { OR: [{ lastFightDate: { lt: activityCutoff } }, { lastFightDate: null }] }
+        : {}),
     };
+
+    const orderBy =
+      query.sort === "recent"
+        ? { createdAt: "desc" as const }
+        : query.sort === "oldest"
+          ? { createdAt: "asc" as const }
+          : { name: "asc" as const };
 
     const [rows, total] = await Promise.all([
       prisma.fighter.findMany({
         where,
         include: { weightClass: true },
-        orderBy: { name: "asc" },
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

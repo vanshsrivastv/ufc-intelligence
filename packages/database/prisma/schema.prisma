@@ -83,6 +83,11 @@ model Fighter {
   takedownDefensePct     Float? // TD_Def
   submissionAvgPer15Min  Float? // Sub_Avg
 
+  // Cached from the most recent completed fight's event date at import
+  // time (see import-dataset.ts) so Active/Retired filtering doesn't
+  // require scanning fight history on every request.
+  lastFightDate DateTime?
+
   weightClassId String?
   weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
 
