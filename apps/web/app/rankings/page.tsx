@@ -1,6 +1,7 @@
 import { api } from "@/lib/api-client";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { RankingsBoard } from "@/components/ui/rankings-board";
+import { sortDivisions } from "@/lib/ranking-divisions";
 
 export default async function RankingsPage({
   searchParams,
@@ -9,7 +10,8 @@ export default async function RankingsPage({
 }) {
   const params = await searchParams;
   const weightClasses = await api.rankings.listWeightClasses();
-  const activeClass = params.weightClass ?? weightClasses[0]?.name ?? null;
+  const divisions = sortDivisions(weightClasses);
+  const activeClass = params.weightClass ?? divisions[0]?.name ?? null;
   const rankings = activeClass ? await api.rankings.list(activeClass) : [];
 
   return (
