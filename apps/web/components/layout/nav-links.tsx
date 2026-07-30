@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Calendar, Trophy, Sparkles, BarChart3 } from "lucide-react";
+import { Home, Users, Calendar, Trophy, Sparkles, BarChart3, GitCompare } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/fighters", label: "Fighters", icon: Users },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/rankings", label: "Rankings", icon: Trophy },
+  { href: "/compare", label: "Compare", icon: GitCompare },
   { href: "/predictions", label: "Predictions", icon: Sparkles },
   { href: "/statistics", label: "Statistics", icon: BarChart3 },
 ];

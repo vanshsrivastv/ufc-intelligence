@@ -46,6 +46,7 @@ export interface FighterCareerStats {
   sigStrikesLandedPerMin: number | null;
   sigStrikeAccuracyPct: number | null;
   takedownAvgPer15Min: number | null;
+  takedownAccuracyPct: number | null;
   takedownDefensePct: number | null;
   submissionAvgPer15Min: number | null;
   koTkoWins: number;

@@ -160,6 +160,7 @@ export class FightersService {
             ? Math.round((totalStrikesLanded / totalStrikesAttempted) * 1000) / 10
             : null),
         takedownAvgPer15Min: fighter.takedownAvgPer15Min ?? null,
+        takedownAccuracyPct: fighter.takedownAccuracyPct ?? null,
         takedownDefensePct: fighter.takedownDefensePct ?? null,
         submissionAvgPer15Min: fighter.submissionAvgPer15Min ?? null,
         koTkoWins,
