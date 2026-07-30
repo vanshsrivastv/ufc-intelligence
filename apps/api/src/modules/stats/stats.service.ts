@@ -30,6 +30,93 @@ export class StatsService {
     }));
   }
 
+  async getDashboard() {
+    const [upcomingEvents, headliner, trendingFighters] = await Promise.all([
+      this.getUpcomingEvents(3),
+      this.getHeadliner(),
+      this.getTrendingFighters(6),
+    ]);
+    return { upcomingEvents, headliner, trendingFighters };
+  }
+
+  private async getUpcomingEvents(limit: number) {
+    const events = await prisma.event.findMany({
+      where: { status: "UPCOMING" },
+      orderBy: { date: "asc" },
+      take: limit,
+    });
+    return events.map((e) => ({
+      id: e.id,
+      slug: e.slug,
+      name: e.name,
+      date: e.date.toISOString(),
+      venue: e.venue,
+      city: e.city,
+    }));
+  }
+
+  // The featured upcoming fight — the next event's main event (lowest
+  // cardPosition). An objective pick from the schedule, not an editorial
+  // "fight of the week" call, since there's no such judgment data source.
+  private async getHeadliner() {
+    const nextEvent = await prisma.event.findFirst({
+      where: { status: "UPCOMING" },
+      orderBy: { date: "asc" },
+    });
+    if (!nextEvent) return null;
+
+    const mainEvent = await prisma.fight.findFirst({
+      where: { eventId: nextEvent.id },
+      include: { fighterA: true, fighterB: true, weightClass: true },
+      orderBy: { cardPosition: "asc" },
+    });
+    if (!mainEvent) return null;
+
+    return {
+      fightId: mainEvent.id,
+      eventName: nextEvent.name,
+      eventDate: nextEvent.date.toISOString(),
+      isTitleFight: mainEvent.isTitleFight,
+      weightClass: mainEvent.weightClass?.name ?? null,
+      fighterA: {
+        slug: mainEvent.fighterA.slug,
+        name: mainEvent.fighterA.name,
+        photoUrl: mainEvent.fighterA.photoUrl,
+      },
+      fighterB: {
+        slug: mainEvent.fighterB.slug,
+        name: mainEvent.fighterB.name,
+        photoUrl: mainEvent.fighterB.photoUrl,
+      },
+    };
+  }
+
+  // "Trending" = currently top-3-ranked fighters, sorted by most recent
+  // fight activity — a real, honest proxy since no popularity/view metric
+  // exists in this dataset.
+  private async getTrendingFighters(limit: number) {
+    const topRanked = await prisma.ranking.findMany({
+      where: { rank: { lte: 3 } },
+      orderBy: { effectiveDate: "desc" },
+      distinct: ["fighterId"],
+      include: { fighter: true, weightClass: true },
+    });
+
+    const sorted = topRanked
+      .filter((r) => r.fighter.lastFightDate !== null)
+      .sort((a, b) => b.fighter.lastFightDate!.getTime() - a.fighter.lastFightDate!.getTime())
+      .slice(0, limit);
+
+    return sorted.map((r) => ({
+      slug: r.fighter.slug,
+      name: r.fighter.name,
+      photoUrl: r.fighter.photoUrl,
+      weightClass: r.weightClass.name,
+      rank: r.rank,
+      lastFightDate: r.fighter.lastFightDate!.toISOString(),
+    }));
+  }
+
   async getLeaderboards() {
     const mostWins = await prisma.fighter.findMany({
       orderBy: { wins: "desc" },

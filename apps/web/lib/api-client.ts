@@ -81,6 +81,46 @@ export interface Leaderboards {
   methodBreakdown: { koTko: number; submission: number; decision: number; total: number };
 }
 
+export interface UpcomingEventSummary {
+  id: string;
+  slug: string;
+  name: string;
+  date: string;
+  venue: string | null;
+  city: string | null;
+}
+
+export interface HeadlinerFighter {
+  slug: string;
+  name: string;
+  photoUrl: string | null;
+}
+
+export interface Headliner {
+  fightId: string;
+  eventName: string;
+  eventDate: string;
+  isTitleFight: boolean;
+  weightClass: string | null;
+  fighterA: HeadlinerFighter;
+  fighterB: HeadlinerFighter;
+}
+
+export interface TrendingFighter {
+  slug: string;
+  name: string;
+  photoUrl: string | null;
+  weightClass: string;
+  rank: number;
+  lastFightDate: string;
+}
+
+export interface DashboardData {
+  upcomingEvents: UpcomingEventSummary[];
+  headliner: Headliner | null;
+  trendingFighters: TrendingFighter[];
+}
+
 export const api = {
   fighters: {
     list: (params?: {
@@ -147,5 +187,6 @@ export const api = {
     getOverview: () => request<StatsOverview>("/stats/overview"),
     getChampions: () => request<ChampionSummary[]>("/stats/champions"),
     getLeaderboards: () => request<Leaderboards>("/stats/leaderboards"),
+    getDashboard: () => request<DashboardData>("/stats/dashboard"),
   },
 };

@@ -19,4 +19,9 @@ export class StatsController {
   getLeaderboards() {
     return this.statsService.getLeaderboards();
   }
+
+  @Get("dashboard")
+  getDashboard() {
+    return this.statsService.getDashboard();
+  }
 }

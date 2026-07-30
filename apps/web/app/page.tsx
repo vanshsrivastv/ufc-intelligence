@@ -1,17 +1,25 @@
 import Link from "next/link";
-import { Users, Swords, CalendarDays, Layers } from "lucide-react";
-import { api, type StatsOverview, type ChampionSummary } from "@/lib/api-client";
+import { Users, Swords, CalendarDays, Layers, TrendingUp } from "lucide-react";
+import {
+  api,
+  type StatsOverview,
+  type ChampionSummary,
+  type DashboardData,
+} from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
+import { CountdownTimer } from "@/components/ui/countdown-timer";
 
 export default async function HomePage() {
   let overview: StatsOverview = { fighters: 0, fights: 0, events: 0, weightClasses: 0 };
   let champions: ChampionSummary[] = [];
+  let dashboard: DashboardData = { upcomingEvents: [], headliner: null, trendingFighters: [] };
   let statsUnavailable = false;
   try {
-    [overview, champions] = await Promise.all([
+    [overview, champions, dashboard] = await Promise.all([
       api.stats.getOverview(),
       api.stats.getChampions(),
+      api.stats.getDashboard(),
     ]);
   } catch {
     statsUnavailable = true;
@@ -85,6 +93,96 @@ export default async function HomePage() {
       </section>
         </>
       )}
+
+        {/* Headliner / fight countdown */}
+        {dashboard.headliner && (
+          <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-caption text-text-secondary">
+                  {dashboard.headliner.eventName}
+                  {dashboard.headliner.isTitleFight ? " · Title Fight" : ""}
+                  {dashboard.headliner.weightClass ? ` · ${dashboard.headliner.weightClass}` : ""}
+                </p>
+                <Link
+                  href={`/fights/${dashboard.headliner.fightId}`}
+                  className="mt-1 block font-display text-heading-md text-text-primary transition-standard hover:text-gold-300"
+                >
+                  {dashboard.headliner.fighterA.name} vs {dashboard.headliner.fighterB.name}
+                </Link>
+              </div>
+              <CountdownTimer targetDate={dashboard.headliner.eventDate} />
+            </div>
+          </section>
+        )}
+
+        {/* Upcoming events */}
+        {dashboard.upcomingEvents.length > 0 && (
+          <section className="mt-10">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-heading-md text-text-primary">
+                Upcoming events
+              </h2>
+              <Link
+                href="/events?status=UPCOMING"
+                className="text-xs text-text-secondary transition-standard hover:text-gold-300"
+              >
+                See all →
+              </Link>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {dashboard.upcomingEvents.map((e) => (
+                <Link
+                  key={e.id}
+                  href={`/events/${e.slug}`}
+                  className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
+                >
+                  <p className="font-display text-body-lg text-text-primary">{e.name}</p>
+                  <p className="mt-1 text-xs text-text-secondary">
+                    {new Date(e.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    {e.venue ? ` · ${e.venue}` : ""}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Trending fighters */}
+        {dashboard.trendingFighters.length > 0 && (
+          <section className="mt-10">
+            <h2 className="flex items-center gap-2 font-display text-heading-md text-text-primary">
+              <TrendingUp size={16} strokeWidth={1.75} className="text-gold-300" />
+              Trending fighters
+            </h2>
+            <p className="mt-1 text-xs text-text-muted">
+              Top-3-ranked fighters with the most recent fight activity.
+            </p>
+            <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+              {dashboard.trendingFighters.map((f) => (
+                <Link
+                  key={f.slug}
+                  href={`/fighters/${f.slug}`}
+                  className="flex min-w-[150px] flex-col items-center gap-2 rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
+                >
+                  <div className="h-14 w-14 overflow-hidden rounded-full border border-border-strong">
+                    <FighterAvatar name={f.name} photoUrl={f.photoUrl} />
+                  </div>
+                  <p className="text-center text-body-md font-medium text-text-primary">
+                    {f.name}
+                  </p>
+                  <p className="text-xs text-text-secondary">
+                    {f.weightClass} · {f.rank === 0 ? "Champion" : `#${f.rank}`}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Prediction spotlight */}
         <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
