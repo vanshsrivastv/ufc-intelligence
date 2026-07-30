@@ -18,12 +18,22 @@ export class EventsService {
 
     const where = {
       ...(query.status ? { status: query.status } : {}),
+      ...(query.search
+        ? { name: { contains: query.search, mode: "insensitive" as const } }
+        : {}),
     };
+
+    const orderBy =
+      query.sort === "date_desc"
+        ? { date: "desc" as const }
+        : query.sort === "recent"
+          ? { createdAt: "desc" as const }
+          : { date: "asc" as const };
 
     const [rows, total] = await Promise.all([
       prisma.event.findMany({
         where,
-        orderBy: { date: "asc" },
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

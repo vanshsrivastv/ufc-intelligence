@@ -110,9 +110,16 @@ export const api = {
       request<FighterDetailDto>(`/fighters/${slug}`),
   },
   events: {
-    list: (params?: { status?: "UPCOMING" | "LIVE" | "COMPLETED"; page?: number }) => {
+    list: (params?: {
+      status?: "UPCOMING" | "LIVE" | "COMPLETED";
+      search?: string;
+      sort?: "date_asc" | "date_desc" | "recent";
+      page?: number;
+    }) => {
       const query = new URLSearchParams();
       if (params?.status) query.set("status", params.status);
+      if (params?.search) query.set("search", params.search);
+      if (params?.sort) query.set("sort", params.sort);
       if (params?.page) query.set("page", String(params.page));
       const qs = query.toString();
       return request<PaginatedResult<EventSummaryDto>>(
