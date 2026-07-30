@@ -4,8 +4,13 @@ import { useState } from "react";
 import { FighterSearchInput } from "@/components/ui/fighter-search-input";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
 import type { FighterSummaryDto, PredictionDto } from "@ufc-intelligence/types";
+
+// undefined = unknown weight class, don't restrict on it
+function genderOf(fighter: FighterSummaryDto): "men" | "women" | undefined {
+  return fighter.weightClass ? (fighter.weightClass.isWomens ? "women" : "men") : undefined;
+}
 
 export default function PredictionsPage() {
   const [fighterA, setFighterA] = useState<FighterSummaryDto | null>(null);
@@ -13,6 +18,15 @@ export default function PredictionsPage() {
   const [prediction, setPrediction] = useState<PredictionDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function pickA(fighter: FighterSummaryDto) {
+    setFighterA(fighter);
+    // Clear B if it's now a cross-gender matchup — a fresh A pick takes
+    // priority over a stale B pick from a different division.
+    if (fighterB && genderOf(fighter) && genderOf(fighterB) && genderOf(fighter) !== genderOf(fighterB)) {
+      setFighterB(null);
+    }
+  }
 
   async function handlePredict() {
     if (!fighterA || !fighterB) return;
@@ -22,8 +36,12 @@ export default function PredictionsPage() {
     try {
       const result = await api.predictions.getMatchup(fighterA.slug, fighterB.slug);
       setPrediction(result);
-    } catch {
-      setError("Couldn't generate a prediction for that matchup.");
+    } catch (e) {
+      setError(
+        e instanceof ApiError && e.status === 400
+          ? e.message
+          : "Couldn't generate a prediction for that matchup.",
+      );
     } finally {
       setLoading(false);
     }
@@ -45,9 +63,12 @@ export default function PredictionsPage() {
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-4">
-          <FighterSearchInput label="Fighter A" onSelect={setFighterA} />
-          <FighterSearchInput label="Fighter B" onSelect={setFighterB} />
+          <FighterSearchInput label="Fighter A" onSelect={pickA} genderFilter={fighterB ? genderOf(fighterB) : undefined} />
+          <FighterSearchInput label="Fighter B" onSelect={setFighterB} genderFilter={fighterA ? genderOf(fighterA) : undefined} />
         </div>
+        <p className="mt-2 text-xs text-text-muted">
+          Fighters are matched within the same gender division.
+        </p>
 
         <button
           onClick={handlePredict}

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { prisma } from "@ufc-intelligence/database";
 import type { PredictionDto, PredictionFactor } from "@ufc-intelligence/types";
 
@@ -23,6 +23,8 @@ interface Category {
 @Injectable()
 export class PredictionsService {
   async getMatchup(fighterASlug: string, fighterBSlug: string): Promise<PredictionDto> {
+    await this.assertSameGender(fighterASlug, fighterBSlug);
+
     const [a, b] = await Promise.all([
       this.buildFeatures(fighterASlug),
       this.buildFeatures(fighterBSlug),
@@ -101,6 +103,31 @@ export class PredictionsService {
       topFactors,
       generatedAt: new Date().toISOString(),
     };
+  }
+
+  private async assertSameGender(slugA: string, slugB: string): Promise<void> {
+    const [a, b] = await Promise.all([
+      prisma.fighter.findUnique({
+        where: { slug: slugA },
+        select: { weightClass: { select: { isWomens: true } } },
+      }),
+      prisma.fighter.findUnique({
+        where: { slug: slugB },
+        select: { weightClass: { select: { isWomens: true } } },
+      }),
+    ]);
+    if (!a) throw new NotFoundException(`Fighter with slug "${slugA}" not found`);
+    if (!b) throw new NotFoundException(`Fighter with slug "${slugB}" not found`);
+
+    const genderA = a.weightClass?.isWomens ?? null;
+    const genderB = b.weightClass?.isWomens ?? null;
+    // null = unknown division, don't block on it — only reject when both
+    // are known and actually differ.
+    if (genderA !== null && genderB !== null && genderA !== genderB) {
+      throw new BadRequestException(
+        "Predictions must compare fighters in the same gender division.",
+      );
+    }
   }
 
   private async buildFeatures(slug: string): Promise<FighterFeatures> {

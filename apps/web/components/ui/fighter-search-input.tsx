@@ -7,9 +7,11 @@ import { api } from "@/lib/api-client";
 export function FighterSearchInput({
   label,
   onSelect,
+  genderFilter,
 }: {
   label: string;
   onSelect: (fighter: FighterSummaryDto) => void;
+  genderFilter?: "men" | "women";
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FighterSummaryDto[]>([]);
@@ -24,13 +26,13 @@ export function FighterSearchInput({
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
-        const data = await api.fighters.list({ search: query, pageSize: 6 });
+        const data = await api.fighters.list({ search: query, gender: genderFilter, pageSize: 6 });
         setResults(data.items ?? []);
       } catch {
         setResults([]);
       }
     }, 300);
-  }, [query, selected]);
+  }, [query, selected, genderFilter]);
 
   function handlePick(fighter: FighterSummaryDto) {
     setSelected(fighter);

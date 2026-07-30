@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { GitCompare } from "lucide-react";
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api-client";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
@@ -44,6 +46,14 @@ export default async function FighterDetailPage({
           <p className="mt-2 text-body-md text-text-secondary">
             {record} {fighter.weightClass ? `· ${fighter.weightClass.name}` : ""}
           </p>
+
+          <Link
+            href={`/compare?fighters=${fighter.slug}`}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary transition-standard hover:border-gold-500 hover:text-gold-300"
+          >
+            <GitCompare size={14} strokeWidth={1.75} />
+            Compare with another fighter
+          </Link>
 
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Stat label="Sig. strike accuracy" value={formatPct(fighter.careerStats.sigStrikeAccuracyPct)} />

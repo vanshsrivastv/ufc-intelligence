@@ -17,12 +17,19 @@ export default async function ComparePage({
 
   let fighterA = null;
   let fighterB = null;
-  if (slugA && slugB) {
-    [fighterA, fighterB] = await Promise.all([
-      api.fighters.getBySlug(slugA).catch(() => null),
-      api.fighters.getBySlug(slugB).catch(() => null),
-    ]);
+  if (slugA) {
+    fighterA = await api.fighters.getBySlug(slugA).catch(() => null);
   }
+  if (slugB) {
+    fighterB = await api.fighters.getBySlug(slugB).catch(() => null);
+  }
+
+  const genderMismatch =
+    fighterA &&
+    fighterB &&
+    fighterA.weightClass &&
+    fighterB.weightClass &&
+    fighterA.weightClass.isWomens !== fighterB.weightClass.isWomens;
 
   return (
     <main className="mx-auto max-w-[900px] px-4 py-12 md:px-8">
@@ -34,10 +41,14 @@ export default async function ComparePage({
       </p>
 
       <div className="mt-6">
-        <ComparePicker />
+        <ComparePicker lockedA={slugB ? undefined : (fighterA ?? undefined)} />
       </div>
 
-      {fighterA && fighterB && (
+      {fighterA && fighterB && genderMismatch && (
+        <EmptyState message="Fighters can only be compared within the same gender division." />
+      )}
+
+      {fighterA && fighterB && !genderMismatch && (
         <div className="mt-10">
           <CompareFaceOff fighterA={fighterA} fighterB={fighterB} />
         </div>
