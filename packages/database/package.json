@@ -12,11 +12,13 @@
     "studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
     "import-data": "tsx prisma/import-dataset.ts",
-    "seed-rankings": "tsx prisma/seed-rankings.ts"
+    "seed-rankings": "tsx prisma/seed-rankings.ts",
+    "scrape-upcoming": "tsx prisma/scrape-upcoming.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
-    "papaparse": "^5.4.1"
+    "papaparse": "^5.4.1",
+    "cheerio": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
