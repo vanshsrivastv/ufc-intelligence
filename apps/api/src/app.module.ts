@@ -5,6 +5,7 @@ import { APP_GUARD } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
 import { FightersModule } from "./modules/fighters/fighters.module";
 import { EventsModule } from "./modules/events/events.module";
+import { FightsModule } from "./modules/fights/fights.module";
 import { RankingsModule } from "./modules/rankings/rankings.module";
 import { PredictionsModule } from "./modules/predictions/predictions.module";
 import { StatsModule } from "./modules/stats/stats.module";
@@ -29,6 +30,7 @@ import { StatsModule } from "./modules/stats/stats.module";
     ]),
     FightersModule,
     EventsModule,
+    FightsModule,
     RankingsModule,
     PredictionsModule,
     StatsModule,

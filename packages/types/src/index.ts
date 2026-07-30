@@ -97,6 +97,30 @@ export interface EventDetailDto extends EventSummaryDto {
   fights: FightSummaryDto[];
 }
 
+export interface PreviousMeetingDto {
+  id: string;
+  eventName: string;
+  date: string;
+  method: FightMethod;
+  winnerId: string | null;
+}
+
+export interface FightDetailDto {
+  id: string;
+  event: { slug: string; name: string; date: string };
+  weightClass: WeightClassDto | null;
+  isTitleFight: boolean;
+  status: FightStatus;
+  method: FightMethod;
+  round: number | null;
+  time: string | null;
+  fighterA: FighterSummaryDto;
+  fighterB: FighterSummaryDto;
+  winnerId: string | null;
+  stats: FightStatRoundDto[];
+  previousMeetings: PreviousMeetingDto[];
+}
+
 export interface RankingEntryDto {
   rank: number; // 0 = champion
   fighter: FighterSummaryDto;

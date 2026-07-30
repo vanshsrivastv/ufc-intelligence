@@ -3,6 +3,7 @@ import type {
   EventSummaryDto,
   FighterDetailDto,
   FighterSummaryDto,
+  FightDetailDto,
   PaginatedResult,
   PredictionDto,
   RankingEntryDto,
@@ -127,6 +128,9 @@ export const api = {
       );
     },
     getBySlug: (slug: string) => request<EventDetailDto>(`/events/${slug}`),
+  },
+  fights: {
+    getById: (id: string) => request<FightDetailDto>(`/fights/${id}`),
   },
   rankings: {
     listWeightClasses: () => request<WeightClassDto[]>("/rankings/weight-classes"),

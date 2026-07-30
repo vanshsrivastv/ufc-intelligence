@@ -111,7 +111,7 @@ function FightRow({ fight }: { fight: FightSummaryDto }) {
   const bWon = isCompleted && fight.winnerId === fight.fighterB.id;
 
   return (
-    <div className="p-4">
+    <div className="p-4 transition-standard hover:bg-bg-elevated-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {fight.isTitleFight && (
@@ -123,10 +123,14 @@ function FightRow({ fight }: { fight: FightSummaryDto }) {
             <span className="text-[11px] text-text-secondary">{fight.weightClass.name}</span>
           )}
         </div>
-        <span className="text-[11px] text-text-muted">
+        <Link
+          href={`/fights/${fight.id}`}
+          className="text-[11px] text-text-muted transition-standard hover:text-gold-300"
+        >
           {isCompleted ? METHOD_LABEL[fight.method] ?? fight.method : "Scheduled"}
           {isCompleted && fight.round ? ` · R${fight.round}${fight.time ? ` ${fight.time}` : ""}` : ""}
-        </span>
+          {" · Details →"}
+        </Link>
       </div>
 
       <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
