@@ -14,6 +14,16 @@
 // scrape full fighter bios/career stats here — that's what the Kaggle
 // re-import already handles well; this script's only job is "what's on
 // the calendar that the last import didn't know about."
+//
+// PPV/numbered events (ufc-329, ufc-330, ...) get reduced-detail treatment:
+// their own /event/<slug> pages returned a large block of obfuscated,
+// dynamically script-injecting JavaScript when fetched directly here —
+// behavior consistent with either an aggressive bot-mitigation cloak or a
+// compromised third-party script, not a normal template difference. This
+// script never requests those specific pages. Instead it pulls name, date,
+// and main-card matchups for them from the (verified clean) /events
+// listing page alone — no weight class, no prelims for that subset, which
+// is the tradeoff for not touching a page that behaved like that.
 import * as cheerio from "cheerio";
 import crypto from "crypto";
 import { PrismaClient, FightMethod } from "@prisma/client";
@@ -106,15 +116,42 @@ interface ScrapedEvent {
   prelims: ScrapedBout[];
 }
 
-async function getEventSlugs(): Promise<string[]> {
+interface EventPreview {
+  slug: string;
+  name: string;
+  timestamp: string | null;
+  mainCardLabels: string[]; // e.g. "McGregor vs Holloway"
+}
+
+// The /events listing page itself carries enough to build a reduced
+// record for every event, including PPV/numbered ones whose own detail
+// page we deliberately never request (see file header).
+async function getEventPreviews(): Promise<EventPreview[]> {
   const html = await fetchHtml(`${BASE_URL}/events`);
   const $ = cheerio.load(html);
-  const slugs = new Set<string>();
-  $('a[href^="/event/"]').each((_, el) => {
-    const href = $(el).attr("href");
-    if (href) slugs.add(href.replace(/^\/event\//, "").split("?")[0].split("#")[0]);
+  const previews: EventPreview[] = [];
+
+  $(".c-card-event--result").each((_, el) => {
+    const $el = $(el);
+    const link = $el.find(".c-card-event--result__headline a").first();
+    const href = link.attr("href");
+    if (!href) return;
+    const slug = href.replace(/^\/event\//, "").split("?")[0].split("#")[0];
+    const name = link.text().trim();
+    const timestamp =
+      $el.find(".c-card-event--result__date[data-main-card-timestamp]").first().attr("data-main-card-timestamp") ??
+      null;
+
+    const mainCardLabels: string[] = [];
+    $el.find('.fight-card-tickets[data-fight-card-name="Main Card"]').each((__, boutEl) => {
+      const label = $(boutEl).attr("data-fight-label");
+      if (label) mainCardLabels.push(label);
+    });
+
+    if (slug && name) previews.push({ slug, name, timestamp, mainCardLabels });
   });
-  return Array.from(slugs);
+
+  return previews;
 }
 
 function extractBouts($: cheerio.CheerioAPI, container: cheerio.Cheerio<any>): ScrapedBout[] {
@@ -192,51 +229,97 @@ async function findOrCreateFighter(name: string): Promise<string> {
   return created.id;
 }
 
+// PPV/numbered events (ufc-329, ufc-330, ...) and other specially-branded
+// cards don't follow the "ufc-fight-night-*" slug pattern. Their own
+// detail pages returned a large block of obfuscated, dynamically
+// script-injecting JavaScript when fetched directly - behavior consistent
+// with either an aggressive bot-mitigation cloak or a compromised
+// third-party script, not a normal template variation. This script never
+// requests those pages. Only the (verified clean) /events listing page is
+// used for them, which carries enough for a reduced record: event name,
+// date, and main-card matchups by name - no weight class, no prelims.
+function isFightNightSlug(slug: string): boolean {
+  return /^ufc-fight-night-/.test(slug);
+}
+
 async function main() {
-  console.log(`Fetching upcoming event list from ${BASE_URL}/events ...`);
-  const slugs = await getEventSlugs();
-  console.log(`Found ${slugs.length} event link(s).`);
+  console.log(`Fetching event list from ${BASE_URL}/events ...`);
+  const previews = await getEventPreviews();
+  console.log(`Found ${previews.length} event(s) on the listing page.`);
 
   let eventsProcessed = 0;
   let fightsUpserted = 0;
 
-  for (const slug of slugs) {
-    await sleep(CRAWL_DELAY_MS);
-    let detail: ScrapedEvent | null;
-    try {
-      detail = await getEventDetail(slug);
-    } catch (err) {
-      console.warn(`  Skipping ${slug}: ${(err as Error).message}`);
-      continue;
-    }
-    if (!detail || !detail.date) continue;
-    if (detail.date.getTime() < Date.now() - 24 * 60 * 60 * 1000) continue; // skip already-past events
+  for (const preview of previews) {
+    const fightNight = isFightNightSlug(preview.slug);
+    let scraped: ScrapedEvent | null = null;
 
-    console.log(`Processing: ${detail.name} (${detail.date.toISOString().slice(0, 10)})`);
+    if (fightNight) {
+      await sleep(CRAWL_DELAY_MS);
+      try {
+        scraped = await getEventDetail(preview.slug);
+      } catch (err) {
+        console.warn(`  Skipping ${preview.slug} detail page: ${(err as Error).message}`);
+      }
+    }
+
+    if (!scraped) {
+      // Listing-page-only path - used for every PPV/numbered event, and
+      // as a fallback if a Fight Night detail page fetch failed above.
+      if (!preview.timestamp) continue;
+      const date = new Date(Number(preview.timestamp) * 1000);
+      const mainCard: ScrapedBout[] = preview.mainCardLabels
+        .map((label) => {
+          const parts = label.split(/\s+vs\.?\s+/i);
+          if (parts.length !== 2) return null;
+          return { fighterA: parts[0].trim(), fighterB: parts[1].trim(), weightClassRaw: "" };
+        })
+        .filter((b): b is ScrapedBout => b !== null);
+      if (mainCard.length === 0) continue;
+      scraped = {
+        slug: preview.slug,
+        name: preview.name,
+        date,
+        venue: null,
+        city: null,
+        country: null,
+        mainCard,
+        prelims: [],
+      };
+    }
+
+    if (!scraped.date) continue;
+    if (scraped.date.getTime() < Date.now() - 24 * 60 * 60 * 1000) continue; // skip already-past events
+
+    console.log(
+      `Processing: ${scraped.name} (${scraped.date.toISOString().slice(0, 10)})${
+        fightNight ? "" : " [listing-page data only]"
+      }`,
+    );
 
     const event = await prisma.event.upsert({
-      where: { slug: detail.slug },
+      where: { slug: scraped.slug },
       update: {
-        name: detail.name,
-        date: detail.date,
-        venue: detail.venue,
-        city: detail.city,
-        country: detail.country,
+        name: scraped.name,
+        date: scraped.date,
+        venue: scraped.venue,
+        city: scraped.city,
+        country: scraped.country,
         status: "UPCOMING",
       },
       create: {
-        slug: detail.slug,
-        name: detail.name,
-        date: detail.date,
-        venue: detail.venue,
-        city: detail.city,
-        country: detail.country,
+        slug: scraped.slug,
+        name: scraped.name,
+        date: scraped.date,
+        venue: scraped.venue,
+        city: scraped.city,
+        country: scraped.country,
         status: "UPCOMING",
       },
     });
 
     let cardPosition = 0;
-    for (const bout of [...detail.mainCard, ...detail.prelims]) {
+    for (const bout of [...scraped.mainCard, ...scraped.prelims]) {
       cardPosition++;
       const wc = parseWeightClass(bout.weightClassRaw);
       const weightClass = await prisma.weightClass.upsert({
