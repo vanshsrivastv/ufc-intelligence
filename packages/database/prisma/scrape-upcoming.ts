@@ -206,14 +206,12 @@ async function getEventDetail(slug: string): Promise<ScrapedEvent | null> {
 
 // The /events listing page (used for PPV/numbered events - see file
 // header) labels bouts with shortened display names, e.g. "Makhachev vs
-// Machado Garry" rather than "Islam Makhachev vs Ian Machado Garry". An
+// Machado Garry" rather than "Islam Makhachev vs Ian Machado Garry" -
+// sometimes shortened further still, dropping the site's own "extra"
+// name component entirely (e.g. "Machado Garry" for a fighter whose
+// dataset record might just be under a different first name). An
 // exact-name match against those would miss the real, fully-populated
-// fighter row and silently create a duplicate empty stub instead - which
-// is exactly what happened before this fix. This checks whether the
-// scraped name matches the trailing words of an existing fighter's full
-// name, and only accepts it if exactly one existing fighter qualifies -
-// ambiguous matches fall through to stub creation rather than risk
-// linking to the wrong person.
+// fighter row and silently create a duplicate empty stub instead.
 function isTrailingNameMatch(scraped: string, existingFullName: string): boolean {
   const scrapedWords = normalizeName(scraped).split(/\s+/).filter(Boolean);
   const existingWords = normalizeName(existingFullName).split(/\s+/).filter(Boolean);
@@ -221,34 +219,90 @@ function isTrailingNameMatch(scraped: string, existingFullName: string): boolean
   return existingWords.slice(-scrapedWords.length).join(" ") === scrapedWords.join(" ");
 }
 
+function lastWordMatch(scraped: string, existingFullName: string): boolean {
+  const scrapedLast = normalizeName(scraped).split(/\s+/).filter(Boolean).pop();
+  const existingLast = normalizeName(existingFullName).split(/\s+/).filter(Boolean).pop();
+  return Boolean(scrapedLast) && scrapedLast === existingLast;
+}
+
+interface FighterLookupRow {
+  id: string;
+  name: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  dob: Date | null;
+  heightCm: number | null;
+  reachCm: number | null;
+  weightClassId: string | null;
+}
+
+function isEmptyStub(f: FighterLookupRow): boolean {
+  return (
+    f.wins === 0 &&
+    f.losses === 0 &&
+    f.draws === 0 &&
+    f.dob === null &&
+    f.heightCm === null &&
+    f.reachCm === null &&
+    f.weightClassId === null
+  );
+}
+
 async function findOrCreateFighter(name: string): Promise<string> {
   const key = normalizeName(name);
-  const existing = await prisma.fighter.findFirst({
-    where: { name: { equals: name, mode: "insensitive" } },
+  const all = await prisma.fighter.findMany({
+    select: {
+      id: true,
+      name: true,
+      wins: true,
+      losses: true,
+      draws: true,
+      dob: true,
+      heightCm: true,
+      reachCm: true,
+      weightClassId: true,
+    },
   });
-  if (existing) return existing.id;
 
-  // Fallback: fuzzy match against all fighters by normalized name, in case
-  // of punctuation/diacritic differences between ufc.com and the imported
-  // dataset (same approach as seed-rankings.ts).
-  const all = await prisma.fighter.findMany({ select: { id: true, name: true } });
-  const fuzzy = all.find((f) => normalizeName(f.name) === key);
-  if (fuzzy) return fuzzy.id;
+  // Real, data-populated fighters are checked FIRST and take priority
+  // over any existing empty stub - important on a re-run, since a stub
+  // from an earlier mismatch (e.g. "Makhachev") is itself an exact-name
+  // match and would otherwise keep winning forever, never giving a
+  // smarter match against the real "Islam Makhachev" a chance to run.
+  const real = all.filter((f) => !isEmptyStub(f));
 
-  // Trailing-name match, e.g. "Makhachev" -> "Islam Makhachev". Only
-  // accepted when unambiguous.
-  const trailingMatches = all.filter((f) => isTrailingNameMatch(name, f.name));
-  if (trailingMatches.length === 1) {
-    console.log(`  ~ matched "${name}" to existing fighter "${trailingMatches[0].name}"`);
-    return trailingMatches[0].id;
+  const realExact = real.find((f) => f.name.toLowerCase() === name.toLowerCase());
+  if (realExact) return realExact.id;
+
+  const realFuzzy = real.find((f) => normalizeName(f.name) === key);
+  if (realFuzzy) return realFuzzy.id;
+
+  const realTrailing = real.filter((f) => isTrailingNameMatch(name, f.name));
+  if (realTrailing.length === 1) {
+    console.log(`  ~ matched "${name}" to existing fighter "${realTrailing[0].name}"`);
+    return realTrailing[0].id;
   }
-  if (trailingMatches.length > 1) {
+
+  const realLastWord = real.filter((f) => lastWordMatch(name, f.name));
+  if (realTrailing.length === 0 && realLastWord.length === 1) {
+    console.log(`  ~ matched "${name}" to existing fighter "${realLastWord[0].name}" (surname match)`);
+    return realLastWord[0].id;
+  }
+  if (realTrailing.length > 1 || realLastWord.length > 1) {
+    const ambiguous = realTrailing.length > 1 ? realTrailing : realLastWord;
     console.warn(
-      `  ! "${name}" matches ${trailingMatches.length} existing fighters ambiguously (${trailingMatches
+      `  ! "${name}" matches ${ambiguous.length} existing fighters ambiguously (${ambiguous
         .map((f) => f.name)
         .join(", ")}) - creating a stub instead of guessing.`,
     );
   }
+
+  // No confident match against a real fighter. Reuse an existing stub
+  // with this exact name if one already exists (avoids piling up
+  // duplicate stubs for a genuinely new fighter across repeated runs).
+  const existingStub = all.find((f) => f.name.toLowerCase() === name.toLowerCase());
+  if (existingStub) return existingStub.id;
 
   let slug = slugify(name);
   const clash = await prisma.fighter.findUnique({ where: { slug } });
