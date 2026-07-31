@@ -28,6 +28,17 @@ import * as cheerio from "cheerio";
 import crypto from "crypto";
 import { PrismaClient, FightMethod } from "@prisma/client";
 
+// Manual overrides for scraped labels that are genuinely ambiguous - e.g.
+// a common surname matching several fighters in the dataset, where
+// guessing would risk linking a fight to the wrong real person. When the
+// script logs a "matches N existing fighters ambiguously" warning, add an
+// entry here mapping the exact scraped label to the fighter's exact full
+// name as it appears in the database, then re-run. Key match is
+// case-insensitive; value must be an exact existing Fighter.name.
+const FIGHTER_ALIASES: Record<string, string> = {
+  // "Morales": "Michael Morales",
+};
+
 const prisma = new PrismaClient();
 
 const BASE_URL = "https://www.ufc.com";
@@ -250,6 +261,20 @@ function isEmptyStub(f: FighterLookupRow): boolean {
 }
 
 async function findOrCreateFighter(name: string): Promise<string> {
+  const aliasTarget = Object.entries(FIGHTER_ALIASES).find(
+    ([label]) => label.toLowerCase() === name.toLowerCase(),
+  )?.[1];
+  if (aliasTarget) {
+    const aliased = await prisma.fighter.findFirst({
+      where: { name: { equals: aliasTarget, mode: "insensitive" } },
+    });
+    if (aliased) {
+      console.log(`  ~ matched "${name}" via alias to "${aliased.name}"`);
+      return aliased.id;
+    }
+    console.warn(`  ! Alias for "${name}" points to "${aliasTarget}", but no such fighter exists - ignoring alias.`);
+  }
+
   const key = normalizeName(name);
   const all = await prisma.fighter.findMany({
     select: {
