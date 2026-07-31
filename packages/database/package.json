@@ -13,7 +13,8 @@
     "seed": "tsx prisma/seed.ts",
     "import-data": "tsx prisma/import-dataset.ts",
     "seed-rankings": "tsx prisma/seed-rankings.ts",
-    "scrape-upcoming": "tsx prisma/scrape-upcoming.ts"
+    "scrape-upcoming": "tsx prisma/scrape-upcoming.ts",
+    "cleanup-stubs": "tsx prisma/cleanup-empty-fighter-stubs.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

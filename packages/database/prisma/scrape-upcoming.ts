@@ -204,6 +204,23 @@ async function getEventDetail(slug: string): Promise<ScrapedEvent | null> {
   return { slug, name, date, venue, city, country, mainCard, prelims };
 }
 
+// The /events listing page (used for PPV/numbered events - see file
+// header) labels bouts with shortened display names, e.g. "Makhachev vs
+// Machado Garry" rather than "Islam Makhachev vs Ian Machado Garry". An
+// exact-name match against those would miss the real, fully-populated
+// fighter row and silently create a duplicate empty stub instead - which
+// is exactly what happened before this fix. This checks whether the
+// scraped name matches the trailing words of an existing fighter's full
+// name, and only accepts it if exactly one existing fighter qualifies -
+// ambiguous matches fall through to stub creation rather than risk
+// linking to the wrong person.
+function isTrailingNameMatch(scraped: string, existingFullName: string): boolean {
+  const scrapedWords = normalizeName(scraped).split(/\s+/).filter(Boolean);
+  const existingWords = normalizeName(existingFullName).split(/\s+/).filter(Boolean);
+  if (scrapedWords.length === 0 || scrapedWords.length >= existingWords.length) return false;
+  return existingWords.slice(-scrapedWords.length).join(" ") === scrapedWords.join(" ");
+}
+
 async function findOrCreateFighter(name: string): Promise<string> {
   const key = normalizeName(name);
   const existing = await prisma.fighter.findFirst({
@@ -217,6 +234,21 @@ async function findOrCreateFighter(name: string): Promise<string> {
   const all = await prisma.fighter.findMany({ select: { id: true, name: true } });
   const fuzzy = all.find((f) => normalizeName(f.name) === key);
   if (fuzzy) return fuzzy.id;
+
+  // Trailing-name match, e.g. "Makhachev" -> "Islam Makhachev". Only
+  // accepted when unambiguous.
+  const trailingMatches = all.filter((f) => isTrailingNameMatch(name, f.name));
+  if (trailingMatches.length === 1) {
+    console.log(`  ~ matched "${name}" to existing fighter "${trailingMatches[0].name}"`);
+    return trailingMatches[0].id;
+  }
+  if (trailingMatches.length > 1) {
+    console.warn(
+      `  ! "${name}" matches ${trailingMatches.length} existing fighters ambiguously (${trailingMatches
+        .map((f) => f.name)
+        .join(", ")}) - creating a stub instead of guessing.`,
+    );
+  }
 
   let slug = slugify(name);
   const clash = await prisma.fighter.findUnique({ where: { slug } });
@@ -339,6 +371,11 @@ async function main() {
           isTitleFight: wc.isTitleFight,
           weightClassId: weightClass.id,
           status: "SCHEDULED",
+          // Re-running with an improved findOrCreateFighter match should
+          // correct a fight that got linked to the wrong (stub) fighter
+          // last time, not just leave it stuck on the original mistake.
+          fighterAId,
+          fighterBId,
         },
         create: {
           id: fightId,
