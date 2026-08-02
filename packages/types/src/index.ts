@@ -19,6 +19,12 @@ export interface FighterSummaryDto {
   record: FighterRecord;
   weightClass: WeightClassDto | null;
   photoUrl: string | null;
+  // Required attribution when photoUrl is sourced from Wikimedia Commons
+  // (see prisma/fetch-wikipedia-photos.ts) - null when there's no photo
+  // or it came from elsewhere.
+  photoCredit: string | null;
+  photoLicense: string | null;
+  photoLicenseUrl: string | null;
   rank: number | null; // null = unranked
 }
 

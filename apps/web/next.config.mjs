@@ -8,6 +8,11 @@ const nextConfig = {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
+      {
+        // Wikimedia Commons - see packages/database/prisma/fetch-wikipedia-photos.ts
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+      },
     ],
   },
 };

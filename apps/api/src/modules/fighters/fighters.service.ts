@@ -134,6 +134,9 @@ export class FightersService {
       gym: fighter.gym,
       coach: fighter.coach,
       photoUrl: fighter.photoUrl,
+      photoCredit: fighter.photoCredit,
+      photoLicense: fighter.photoLicense,
+      photoLicenseUrl: fighter.photoLicenseUrl,
       rank: latestRanking?.rank ?? null,
       record: {
         wins: fighter.wins,
@@ -190,6 +193,9 @@ export function toSummaryDto(fighter: {
   name: string;
   nickname: string | null;
   photoUrl: string | null;
+  photoCredit?: string | null;
+  photoLicense?: string | null;
+  photoLicenseUrl?: string | null;
   wins: number;
   losses: number;
   draws: number;
@@ -202,6 +208,9 @@ export function toSummaryDto(fighter: {
     name: fighter.name,
     nickname: fighter.nickname,
     photoUrl: fighter.photoUrl,
+    photoCredit: fighter.photoCredit ?? null,
+    photoLicense: fighter.photoLicense ?? null,
+    photoLicenseUrl: fighter.photoLicenseUrl ?? null,
     rank: null,
     record: {
       wins: fighter.wins,

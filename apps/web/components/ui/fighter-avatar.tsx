@@ -21,6 +21,41 @@ function toneFor(name: string): string {
   return tones[hash];
 }
 
+// A no-photo fallback is the common case (most of the roster will never
+// have a real photo), so it's designed as a real state rather than a bare
+// placeholder: a radial glow behind the initials plus a faint octagon
+// outline, in the same gold-on-dark language as the rest of the app.
+function FallbackAvatar({ name, className }: { name: string; className: string }) {
+  const tone = toneFor(name);
+  return (
+    <div
+      className={`relative flex h-full w-full items-center justify-center overflow-hidden bg-bg-elevated-2 ${className}`}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at 50% 40%, ${tone}33, transparent 70%)`,
+        }}
+      />
+      <svg
+        viewBox="0 0 100 100"
+        className="absolute h-[85%] w-[85%] opacity-[0.14]"
+        aria-hidden="true"
+      >
+        <polygon
+          points="50,4 84,21 96,50 84,79 50,96 16,79 4,50 16,21"
+          fill="none"
+          stroke={tone}
+          strokeWidth="1.5"
+        />
+      </svg>
+      <span className="relative font-display text-lg font-medium text-gold-100">
+        {initials(name)}
+      </span>
+    </div>
+  );
+}
+
 export function FighterAvatar({
   name,
   photoUrl,
@@ -42,14 +77,5 @@ export function FighterAvatar({
     );
   }
 
-  return (
-    <div
-      className={`flex h-full w-full items-center justify-center ${className}`}
-      style={{ backgroundColor: toneFor(name) }}
-    >
-      <span className="font-display text-lg font-medium text-gold-100">
-        {initials(name)}
-      </span>
-    </div>
-  );
+  return <FallbackAvatar name={name} className={className} />;
 }

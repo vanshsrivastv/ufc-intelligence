@@ -14,7 +14,8 @@
     "import-data": "tsx prisma/import-dataset.ts",
     "seed-rankings": "tsx prisma/seed-rankings.ts",
     "scrape-upcoming": "tsx prisma/scrape-upcoming.ts",
-    "cleanup-stubs": "tsx prisma/cleanup-empty-fighter-stubs.ts"
+    "cleanup-stubs": "tsx prisma/cleanup-empty-fighter-stubs.ts",
+    "fetch-photos": "tsx prisma/fetch-wikipedia-photos.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

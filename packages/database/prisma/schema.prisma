@@ -71,6 +71,15 @@ model Fighter {
   noContests    Int      @default(0)
   photoUrl      String?
 
+  // Attribution for photoUrl when it's sourced from Wikimedia Commons
+  // (see prisma/fetch-wikipedia-photos.ts) - Commons images are reused
+  // under licenses (typically CC-BY/CC-BY-SA) that require crediting the
+  // photographer and license, not just linking the file. Null when
+  // photoUrl is unset or sourced some other way.
+  photoCredit     String?
+  photoLicense    String?
+  photoLicenseUrl String?
+
   // Career averages sourced directly from the UFC Stats dataset import
   // (packages/database/prisma/import-dataset.ts). Nullable because not
   // every historical fighter has enough recorded fight-time for these.
