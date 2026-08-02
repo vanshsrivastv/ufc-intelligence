@@ -22,17 +22,35 @@ const prisma = new PrismaClient();
 
 const USER_AGENT =
   "UFCIntelligenceBot/1.0 (personal portfolio project; fetches fighter photos from Wikimedia Commons with attribution)";
-const REQUEST_DELAY_MS = 500;
+const REQUEST_DELAY_MS = 800;
+const MAX_RETRIES = 4;
 const COMMONS_URL_PREFIX = "https://upload.wikimedia.org/wikipedia/commons/";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Wikipedia's API will 429 under sustained traffic even at a polite
+// request rate (shared IP ranges, etc.). Rather than give up on the first
+// 429, back off and retry - honoring a Retry-After header if the server
+// sends one, otherwise a growing delay (2s, 4s, 8s, 16s).
 async function fetchJson(url: string): Promise<any> {
-  const res = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+    if (res.ok) return res.json();
+
+    if (res.status === 429 && attempt < MAX_RETRIES) {
+      const retryAfterHeader = res.headers.get("retry-after");
+      const retryAfterMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : NaN;
+      const waitMs = Number.isFinite(retryAfterMs) ? retryAfterMs : 2000 * 2 ** attempt;
+      console.warn(`  ... rate limited, waiting ${Math.round(waitMs / 1000)}s before retry`);
+      await sleep(waitMs);
+      continue;
+    }
+
+    throw new Error(`${res.status} ${res.statusText}`);
+  }
+  throw new Error("429 Too Many Requests (exhausted retries)");
 }
 
 interface WikipediaImage {
