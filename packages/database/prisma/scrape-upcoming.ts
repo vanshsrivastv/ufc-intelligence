@@ -230,10 +230,29 @@ function isTrailingNameMatch(scraped: string, existingFullName: string): boolean
   return existingWords.slice(-scrapedWords.length).join(" ") === scrapedWords.join(" ");
 }
 
+// Family-name-first naming order (common for Chinese, Korean, Vietnamese,
+// etc. names as UFC records them - e.g. "Yan Xiaonan", where "Yan" is the
+// surname and comes FIRST) means a shortened scraped label can match the
+// LEADING words of an existing fighter's name instead of the trailing
+// ones. Found via a real case: a scraped "Yan" never matched "Yan
+// Xiaonan" because only trailing-word matching existed.
+function isLeadingNameMatch(scraped: string, existingFullName: string): boolean {
+  const scrapedWords = normalizeName(scraped).split(/\s+/).filter(Boolean);
+  const existingWords = normalizeName(existingFullName).split(/\s+/).filter(Boolean);
+  if (scrapedWords.length === 0 || scrapedWords.length >= existingWords.length) return false;
+  return existingWords.slice(0, scrapedWords.length).join(" ") === scrapedWords.join(" ");
+}
+
 function lastWordMatch(scraped: string, existingFullName: string): boolean {
   const scrapedLast = normalizeName(scraped).split(/\s+/).filter(Boolean).pop();
   const existingLast = normalizeName(existingFullName).split(/\s+/).filter(Boolean).pop();
   return Boolean(scrapedLast) && scrapedLast === existingLast;
+}
+
+function firstWordMatch(scraped: string, existingFullName: string): boolean {
+  const scrapedFirst = normalizeName(scraped).split(/\s+/).filter(Boolean)[0];
+  const existingFirst = normalizeName(existingFullName).split(/\s+/).filter(Boolean)[0];
+  return Boolean(scrapedFirst) && scrapedFirst === existingFirst;
 }
 
 interface FighterLookupRow {
@@ -303,24 +322,29 @@ async function findOrCreateFighter(name: string): Promise<string> {
   const realFuzzy = real.find((f) => normalizeName(f.name) === key);
   if (realFuzzy) return realFuzzy.id;
 
-  const realTrailing = real.filter((f) => isTrailingNameMatch(name, f.name));
-  if (realTrailing.length === 1) {
-    console.log(`  ~ matched "${name}" to existing fighter "${realTrailing[0].name}"`);
-    return realTrailing[0].id;
-  }
+  // Tried in order, each only accepted if exactly one real fighter
+  // qualifies. Covers both Western (given-name-first) and family-name-
+  // first naming orders, plus a single-surname-only label either way.
+  const matchTiers: { label: string; matches: FighterLookupRow[] }[] = [
+    { label: "trailing-name match", matches: real.filter((f) => isTrailingNameMatch(name, f.name)) },
+    { label: "leading-name match", matches: real.filter((f) => isLeadingNameMatch(name, f.name)) },
+    { label: "surname match", matches: real.filter((f) => lastWordMatch(name, f.name)) },
+    { label: "given-name match", matches: real.filter((f) => firstWordMatch(name, f.name)) },
+  ];
 
-  const realLastWord = real.filter((f) => lastWordMatch(name, f.name));
-  if (realTrailing.length === 0 && realLastWord.length === 1) {
-    console.log(`  ~ matched "${name}" to existing fighter "${realLastWord[0].name}" (surname match)`);
-    return realLastWord[0].id;
-  }
-  if (realTrailing.length > 1 || realLastWord.length > 1) {
-    const ambiguous = realTrailing.length > 1 ? realTrailing : realLastWord;
-    console.warn(
-      `  ! "${name}" matches ${ambiguous.length} existing fighters ambiguously (${ambiguous
-        .map((f) => f.name)
-        .join(", ")}) - creating a stub instead of guessing.`,
-    );
+  for (const tier of matchTiers) {
+    if (tier.matches.length === 1) {
+      console.log(`  ~ matched "${name}" to existing fighter "${tier.matches[0].name}" (${tier.label})`);
+      return tier.matches[0].id;
+    }
+    if (tier.matches.length > 1) {
+      console.warn(
+        `  ! "${name}" matches ${tier.matches.length} existing fighters ambiguously via ${tier.label} (${tier.matches
+          .map((f) => f.name)
+          .join(", ")}) - creating a stub instead of guessing.`,
+      );
+      break;
+    }
   }
 
   // No confident match against a real fighter. Reuse an existing stub
