@@ -58,8 +58,29 @@ function slugify(name: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+// Letters like ł, đ, ø are a single codepoint each - not a base letter
+// plus a combining mark - so NFD normalization below doesn't touch them.
+// Left alone they'd just get stripped by the final non-ASCII filter
+// (e.g. "Błachowicz" -> "Bachowicz", losing the l entirely) instead of
+// folding to their closest ASCII letter, which breaks matching against
+// the DB's plain-ASCII fighter names.
+const NON_DECOMPOSING_LETTERS: Record<string, string> = {
+  ł: "l",
+  Ł: "L",
+  đ: "d",
+  Đ: "D",
+  ø: "o",
+  Ø: "O",
+  æ: "ae",
+  Æ: "AE",
+  œ: "oe",
+  Œ: "OE",
+  ß: "ss",
+};
+
 function normalizeName(name: string): string {
   return name
+    .replace(/[łŁđĐøØæÆœŒß]/g, (ch) => NON_DECOMPOSING_LETTERS[ch])
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9\s']/gi, "")
