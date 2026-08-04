@@ -27,6 +27,13 @@
 import * as cheerio from "cheerio";
 import crypto from "crypto";
 import { PrismaClient, FightMethod } from "@prisma/client";
+import {
+  normalizeName,
+  isTrailingNameMatch,
+  isLeadingNameMatch,
+  lastWordMatch,
+  firstWordMatch,
+} from "./lib/name-match";
 
 // Manual overrides for scraped labels that are genuinely ambiguous - e.g.
 // a common surname matching several fighters in the dataset, where
@@ -56,36 +63,6 @@ function slugify(name: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-}
-
-// Letters like ł, đ, ø are a single codepoint each - not a base letter
-// plus a combining mark - so NFD normalization below doesn't touch them.
-// Left alone they'd just get stripped by the final non-ASCII filter
-// (e.g. "Błachowicz" -> "Bachowicz", losing the l entirely) instead of
-// folding to their closest ASCII letter, which breaks matching against
-// the DB's plain-ASCII fighter names.
-const NON_DECOMPOSING_LETTERS: Record<string, string> = {
-  ł: "l",
-  Ł: "L",
-  đ: "d",
-  Đ: "D",
-  ø: "o",
-  Ø: "O",
-  æ: "ae",
-  Æ: "AE",
-  œ: "oe",
-  Œ: "OE",
-  ß: "ss",
-};
-
-function normalizeName(name: string): string {
-  return name
-    .replace(/[łŁđĐøØæÆœŒß]/g, (ch) => NON_DECOMPOSING_LETTERS[ch])
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9\s']/gi, "")
-    .trim()
-    .toLowerCase();
 }
 
 function shortHash(input: string): string {
@@ -234,46 +211,6 @@ async function getEventDetail(slug: string): Promise<ScrapedEvent | null> {
   if (mainCard.length === 0 && prelims.length === 0) return null;
 
   return { slug, name, date, venue, city, country, mainCard, prelims };
-}
-
-// The /events listing page (used for PPV/numbered events - see file
-// header) labels bouts with shortened display names, e.g. "Makhachev vs
-// Machado Garry" rather than "Islam Makhachev vs Ian Machado Garry" -
-// sometimes shortened further still, dropping the site's own "extra"
-// name component entirely (e.g. "Machado Garry" for a fighter whose
-// dataset record might just be under a different first name). An
-// exact-name match against those would miss the real, fully-populated
-// fighter row and silently create a duplicate empty stub instead.
-function isTrailingNameMatch(scraped: string, existingFullName: string): boolean {
-  const scrapedWords = normalizeName(scraped).split(/\s+/).filter(Boolean);
-  const existingWords = normalizeName(existingFullName).split(/\s+/).filter(Boolean);
-  if (scrapedWords.length === 0 || scrapedWords.length >= existingWords.length) return false;
-  return existingWords.slice(-scrapedWords.length).join(" ") === scrapedWords.join(" ");
-}
-
-// Family-name-first naming order (common for Chinese, Korean, Vietnamese,
-// etc. names as UFC records them - e.g. "Yan Xiaonan", where "Yan" is the
-// surname and comes FIRST) means a shortened scraped label can match the
-// LEADING words of an existing fighter's name instead of the trailing
-// ones. Found via a real case: a scraped "Yan" never matched "Yan
-// Xiaonan" because only trailing-word matching existed.
-function isLeadingNameMatch(scraped: string, existingFullName: string): boolean {
-  const scrapedWords = normalizeName(scraped).split(/\s+/).filter(Boolean);
-  const existingWords = normalizeName(existingFullName).split(/\s+/).filter(Boolean);
-  if (scrapedWords.length === 0 || scrapedWords.length >= existingWords.length) return false;
-  return existingWords.slice(0, scrapedWords.length).join(" ") === scrapedWords.join(" ");
-}
-
-function lastWordMatch(scraped: string, existingFullName: string): boolean {
-  const scrapedLast = normalizeName(scraped).split(/\s+/).filter(Boolean).pop();
-  const existingLast = normalizeName(existingFullName).split(/\s+/).filter(Boolean).pop();
-  return Boolean(scrapedLast) && scrapedLast === existingLast;
-}
-
-function firstWordMatch(scraped: string, existingFullName: string): boolean {
-  const scrapedFirst = normalizeName(scraped).split(/\s+/).filter(Boolean)[0];
-  const existingFirst = normalizeName(existingFullName).split(/\s+/).filter(Boolean)[0];
-  return Boolean(scrapedFirst) && scrapedFirst === existingFirst;
 }
 
 interface FighterLookupRow {

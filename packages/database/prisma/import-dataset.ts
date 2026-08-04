@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import Papa from "papaparse";
 import { PrismaClient, FightMethod } from "@prisma/client";
+import { mapMethod as sharedMapMethod } from "./lib/method-map";
 
 const prisma = new PrismaClient();
 
@@ -120,17 +121,9 @@ function parseWeightClass(raw: string): {
 const unmappedMethods = new Set<string>();
 
 function mapMethod(raw: string): FightMethod {
-  const value = raw.trim().toLowerCase();
-  if (value === "ko/tko") return "TKO"; // dataset doesn't distinguish KO vs TKO — documented simplification
-  if (value === "tko - doctor's stoppage") return "TKO";
-  if (value === "submission") return "SUBMISSION";
-  if (value === "decision - unanimous") return "DECISION_UNANIMOUS";
-  if (value === "decision - split") return "DECISION_SPLIT";
-  if (value === "decision - majority") return "DECISION_MAJORITY";
-  if (value === "dq") return "DQ";
-  if (value === "could not continue" || value === "overturned" || value === "other") return "NO_CONTEST";
-  unmappedMethods.add(raw);
-  return "PENDING";
+  const mapped = sharedMapMethod(raw);
+  if (mapped === "PENDING" && raw.trim()) unmappedMethods.add(raw);
+  return mapped;
 }
 
 // ---------- CSV row types (only the columns we actually use) ----------
