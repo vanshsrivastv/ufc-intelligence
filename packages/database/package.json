@@ -15,7 +15,8 @@
     "seed-rankings": "tsx prisma/seed-rankings.ts",
     "scrape-upcoming": "tsx prisma/scrape-upcoming.ts",
     "cleanup-stubs": "tsx prisma/cleanup-empty-fighter-stubs.ts",
-    "fetch-photos": "tsx prisma/fetch-wikipedia-photos.ts"
+    "fetch-photos": "tsx prisma/fetch-wikipedia-photos.ts",
+    "remove-blank-fighters": "tsx prisma/remove-blank-fighters.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
