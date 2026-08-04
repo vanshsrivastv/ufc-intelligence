@@ -8,6 +8,7 @@ import type {
   WeightClassDto,
 } from "@ufc-intelligence/types";
 import { toSummaryDto } from "../fighters/fighters.service";
+import { deriveEventStatus, eventStatusWhere } from "../../common/event-status";
 import { ListEventsDto } from "./dto/list-events.dto";
 
 @Injectable()
@@ -16,17 +17,23 @@ export class EventsService {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
 
+    // Status is a date range, not the stored column - see event-status.ts.
     const where = {
-      ...(query.status ? { status: query.status } : {}),
+      ...(query.status ? eventStatusWhere(query.status) : {}),
       ...(query.search
         ? { name: { contains: query.search, mode: "insensitive" as const } }
         : {}),
     };
 
+    // Completed events run back to 1993, so the shared "soonest first"
+    // default would bury the card that just finished behind three decades
+    // of history - the opposite of what someone opening that tab wants.
+    const sort = query.sort ?? (query.status === "COMPLETED" ? "date_desc" : "date_asc");
+
     const orderBy =
-      query.sort === "date_desc"
+      sort === "date_desc"
         ? { date: "desc" as const }
-        : query.sort === "recent"
+        : sort === "recent"
           ? { createdAt: "desc" as const }
           : { date: "asc" as const };
 
@@ -82,7 +89,6 @@ function toEventSummaryDto(event: {
   venue: string | null;
   city: string | null;
   country: string | null;
-  status: string;
 }): EventSummaryDto {
   return {
     id: event.id,
@@ -92,7 +98,7 @@ function toEventSummaryDto(event: {
     venue: event.venue,
     city: event.city,
     country: event.country,
-    status: event.status as EventSummaryDto["status"],
+    status: deriveEventStatus(event.date),
   };
 }
 

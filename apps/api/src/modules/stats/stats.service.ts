@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { prisma } from "@ufc-intelligence/database";
+import { eventStatusWhere } from "../../common/event-status";
 
 @Injectable()
 export class StatsService {
@@ -39,9 +40,12 @@ export class StatsService {
     return { upcomingEvents, headliner, trendingFighters };
   }
 
+  // Strictly future events only. A card that has already started is no
+  // longer something to advertise as upcoming, and leaving finished ones
+  // in here is what kept stale events pinned to the homepage.
   private async getUpcomingEvents(limit: number) {
     const events = await prisma.event.findMany({
-      where: { status: "UPCOMING" },
+      where: eventStatusWhere("UPCOMING"),
       orderBy: { date: "asc" },
       take: limit,
     });
@@ -58,9 +62,11 @@ export class StatsService {
   // The featured upcoming fight — the next event's main event (lowest
   // cardPosition). An objective pick from the schedule, not an editorial
   // "fight of the week" call, since there's no such judgment data source.
+  // Also future-only: the homepage pairs this with a countdown, so an
+  // event already under way would render a timer stuck at zero.
   private async getHeadliner() {
     const nextEvent = await prisma.event.findFirst({
-      where: { status: "UPCOMING" },
+      where: eventStatusWhere("UPCOMING"),
       orderBy: { date: "asc" },
     });
     if (!nextEvent) return null;

@@ -19,7 +19,11 @@ export function EventFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get("status") ?? "";
-  const sort = searchParams.get("sort") ?? "date_asc";
+  // Mirrors the API's status-dependent default (see events.service.ts) so
+  // the dropdown shows the order actually being applied rather than
+  // claiming "soonest first" while Completed comes back newest-first.
+  const sort =
+    searchParams.get("sort") ?? (status === "COMPLETED" ? "date_desc" : "date_asc");
 
   function setParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());

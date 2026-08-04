@@ -12,9 +12,12 @@ export class ListEventsDto {
   @IsString()
   search?: string;
 
+  // Intentionally no default here: the service picks one based on which
+  // status tab is active, which it can only do while "unset" is still
+  // distinguishable from an explicitly chosen date_asc.
   @IsOptional()
   @IsIn(["date_asc", "date_desc", "recent"])
-  sort?: EventSort = "date_asc";
+  sort?: EventSort;
 
   @IsOptional()
   @Type(() => Number)
