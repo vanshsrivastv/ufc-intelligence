@@ -1,3 +1,9 @@
 .venv/
 __pycache__/
 *.pyc
+
+# Regenerated deterministically by scripts/build_features.py from the
+# CSVs already checked into packages/database/prisma/data/ - committing
+# it would just be repo bloat that goes stale the moment the source data
+# changes.
+data/
