@@ -120,8 +120,18 @@ def win_rate(state: dict) -> float:
 
 
 def recent_form(state: dict) -> float:
-    results = state["last_5_results"]
-    return sum(results) / len(results) if results else 0.5
+    # last_5_results holds every result once a fighter has 5 or fewer
+    # career fights - so up to that point this is just win_rate() again
+    # under a different name, not a distinct "recent form" signal. That
+    # redundancy showed up as severe multicollinearity when training
+    # (win_rate_diff's coefficient flipped sign once recent_form_diff was
+    # added, since roughly half the training rows had the two columns
+    # exactly equal). NaN here until the window is actually a strict
+    # subset of career history, so downstream missingness-handling can
+    # tell "no real recent-form signal yet" apart from "genuinely even."
+    if state["fights"] <= 5:
+        return float("nan")
+    return sum(state["last_5_results"]) / len(state["last_5_results"])
 
 
 def strike_accuracy(state: dict) -> float:

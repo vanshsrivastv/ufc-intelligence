@@ -53,13 +53,39 @@ predicting a fight that hasn't happened yet. Writes `data/train.csv`,
 development), and `data/test.csv` (touched exactly once, at the end, to
 report a final number).
 
+## Training the baseline model
+
+```
+.venv\Scripts\python scripts\train_baseline.py
+```
+
+Trains a logistic regression on train.csv, selects a regularization
+strength (`C`) using validation log-loss, and prints coefficients for a
+sanity check. `elo_diff` and `win_rate_diff` are constrained to a
+non-negative coefficient during model selection — both are direct
+summaries of "who has won more" (r=0.53), and under weak regularization
+the model was flipping `win_rate_diff` negative to compensate for that
+redundancy, which would make the wrong claim if this model's
+coefficients are ever surfaced as an explanation to a user. The
+constraint costs about 0.002 of validation log-loss versus the
+unconstrained optimum - a fair trade for a model whose explanations are
+actually correct.
+
+test.csv is never loaded by this script. It's reserved for a single
+final evaluation once a model is chosen, not for picking between C
+values along the way.
+
 ## Status
 
-Feature engineering and chronological split done and verified:
-16,800 rows from 8,551 fights (151 draws/no-contests excluded) split
-86.9% / 6.1% / 7.0% into train (through 2023) / validation (2024) / test
-(2025 onward), with label balance holding at exactly 0.5 in every split.
-Cross-checked the feature table against a real fighter's known fight
-history and against the dataset's very first tracked fight (correctly
-shows zero prior experience for both fighters). Model training not yet
-started.
+Feature engineering, chronological split, and baseline training done.
+Fixed a real bug found via coefficient sanity-checking: `recent_form`
+was defined identically to `win_rate` for any fighter with 5 or fewer
+career fights (half the dataset), causing severe multicollinearity.
+Current baseline: val accuracy 0.596, val log-loss 0.6497, all
+coefficients directionally sensible (younger relative age, better Elo,
+better reach, higher strike accuracy all correctly push win probability
+up). Not yet clearly ahead of the naive "better win rate wins" baseline
+(0.611 val accuracy) - the gap is within noise on 513 validation fights,
+so this is inconclusive rather than a finding either way; the real
+answer waits for the held-out test set. Calibration and final test
+evaluation not yet done.
