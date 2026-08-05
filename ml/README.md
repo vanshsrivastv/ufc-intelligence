@@ -75,17 +75,40 @@ test.csv is never loaded by this script. It's reserved for a single
 final evaluation once a model is chosen, not for picking between C
 values along the way.
 
+## Final test evaluation
+
+```
+.venv\Scripts\python scripts\evaluate_test.py
+```
+
+The only script that loads `test.csv`, and only once. Refits on
+train+val combined (nothing left to tune once C is chosen, so no reason
+to withhold validation rows from the final fit) and reports accuracy,
+log-loss, and a calibration reliability table against the 591 genuinely
+unseen 2025-onward fights.
+
 ## Status
 
-Feature engineering, chronological split, and baseline training done.
-Fixed a real bug found via coefficient sanity-checking: `recent_form`
-was defined identically to `win_rate` for any fighter with 5 or fewer
-career fights (half the dataset), causing severe multicollinearity.
-Current baseline: val accuracy 0.596, val log-loss 0.6497, all
-coefficients directionally sensible (younger relative age, better Elo,
-better reach, higher strike accuracy all correctly push win probability
-up). Not yet clearly ahead of the naive "better win rate wins" baseline
-(0.611 val accuracy) - the gap is within noise on 513 validation fights,
-so this is inconclusive rather than a finding either way; the real
-answer waits for the held-out test set. Calibration and final test
-evaluation not yet done.
+Full pipeline done through a first working baseline. Final test result:
+**0.616 accuracy vs. 0.602 for the naive "better win rate wins"
+baseline** - a real, if modest, edge on genuinely unseen fights. (This
+reverses the validation-set comparison, where the model trailed the
+naive baseline by 1.5 points - confirming that gap really was noise from
+a small validation set, not a sign the model was worse.) Log-loss 0.6434.
+Coefficients still all directionally sensible on the refit.
+
+One finding flagged but deliberately not acted on yet: the calibration
+table shows the model is systematically underconfident - all four
+non-extreme probability buckets show predicted probabilities pulled
+toward 50% relative to what actually happened, a consistent pattern
+across buckets even though no single bucket clears a strict significance
+threshold on its own. The fix (Platt scaling) has to be fit on
+validation data, not test - having now looked at test's aggregate
+calibration pattern, fitting any correction against test at this point
+would break the "test touched exactly once" rule this whole pipeline was
+built around. Left as a documented next step rather than patched in
+under time pressure to close it out.
+
+Not yet done: calibration correction, trying a non-linear model
+(gradient-boosted trees) for comparison, exporting weights for
+`predictions.service.ts`, retraining cadence.
