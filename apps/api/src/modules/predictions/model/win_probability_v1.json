@@ -1,0 +1,203 @@
+{
+  "modelVersion": "v1.0-logreg",
+  "trainedAt": "2026-08-05T17:54:47.158063+00:00",
+  "intercept": -3.883656142128027e-18,
+  "numeric": [
+    {
+      "feature": "age_diff_years",
+      "mean": 0.0,
+      "std": 5.215106190461978,
+      "weight": -0.28788053977148576
+    },
+    {
+      "feature": "age_diff_years_missing",
+      "mean": 0.013446023818670765,
+      "std": 0.11517477268108021,
+      "weight": 8.092916013967937e-19
+    },
+    {
+      "feature": "avg_fight_duration_diff",
+      "mean": 0.0,
+      "std": 245.18157992041088,
+      "weight": 0.09045769010898652
+    },
+    {
+      "feature": "avg_fight_duration_diff_missing",
+      "mean": 0.2562427967729543,
+      "std": 0.43655747144554596,
+      "weight": -1.5744471974494206e-18
+    },
+    {
+      "feature": "decision_rate_diff",
+      "mean": 0.0,
+      "std": 0.4558205073652158,
+      "weight": 0.13277662532586548
+    },
+    {
+      "feature": "elo_diff",
+      "mean": 0.0,
+      "std": 43.55886540194747,
+      "weight": 0.24707893254504618
+    },
+    {
+      "feature": "experience_diff",
+      "mean": 0.0,
+      "std": 6.4923588566975265,
+      "weight": -0.047844956720864036
+    },
+    {
+      "feature": "finish_rate_diff",
+      "mean": 0.0,
+      "std": 0.495980697497293,
+      "weight": 0.09217591101258213
+    },
+    {
+      "feature": "height_diff_cm",
+      "mean": 0.0,
+      "std": 6.495988892117625,
+      "weight": 0.0062230624235231026
+    },
+    {
+      "feature": "height_diff_cm_missing",
+      "mean": 0.001536688436419516,
+      "std": 0.039170486658565914,
+      "weight": -9.650619136211742e-19
+    },
+    {
+      "feature": "ko_rate_diff",
+      "mean": 0.0,
+      "std": 0.42527763457821055,
+      "weight": 0.06351604239618988
+    },
+    {
+      "feature": "reach_diff_cm",
+      "mean": 0.0,
+      "std": 7.700380503925603,
+      "weight": 0.06784050701282121
+    },
+    {
+      "feature": "reach_diff_cm_missing",
+      "mean": 0.1298501728774491,
+      "std": 0.3361385212693506,
+      "weight": -1.2198344384965236e-19
+    },
+    {
+      "feature": "recent_form_diff",
+      "mean": 0.0,
+      "std": 0.11898749007442676,
+      "weight": 0.03930859601843691
+    },
+    {
+      "feature": "recent_form_diff_missing",
+      "mean": 0.7817902420284287,
+      "std": 0.41303057937344,
+      "weight": 1.5665950783899751e-18
+    },
+    {
+      "feature": "strike_accuracy_diff",
+      "mean": 0.0,
+      "std": 0.12260426738591323,
+      "weight": 0.08136710301837893
+    },
+    {
+      "feature": "strike_accuracy_diff_missing",
+      "mean": 0.2581636573184787,
+      "std": 0.43762447755858647,
+      "weight": -1.1461104570560308e-18
+    },
+    {
+      "feature": "sub_rate_diff",
+      "mean": 0.0,
+      "std": 0.3742105080819444,
+      "weight": 0.04998662507989166
+    },
+    {
+      "feature": "takedown_accuracy_diff",
+      "mean": 0.0,
+      "std": 0.26366427361154393,
+      "weight": 0.020870536297621093
+    },
+    {
+      "feature": "takedown_accuracy_diff_missing",
+      "mean": 0.38506851069279036,
+      "std": 0.486611500856306,
+      "weight": -1.0247949406725022e-18
+    },
+    {
+      "feature": "win_rate_diff",
+      "mean": 0.0,
+      "std": 0.30991974319431054,
+      "weight": 0.01392292230442522
+    }
+  ],
+  "categorical": {
+    "weight_class": {
+      "categories": [
+        "bantamweight",
+        "catch_weight",
+        "featherweight",
+        "flyweight",
+        "heavyweight",
+        "light_heavyweight",
+        "lightweight",
+        "middleweight",
+        "open_weight",
+        "strawweight",
+        "welterweight"
+      ],
+      "weights": {
+        "bantamweight": -8.799393989921978e-19,
+        "catch_weight": -3.066822951489834e-19,
+        "featherweight": 7.475673157873608e-19,
+        "flyweight": 4.2006705566785046e-19,
+        "heavyweight": 6.782689018457615e-19,
+        "light_heavyweight": -1.0496327076568274e-18,
+        "lightweight": 1.9672900569320066e-18,
+        "middleweight": 1.2808515210882007e-19,
+        "open_weight": 4.0073580239805824e-19,
+        "strawweight": -3.5276509159344563e-19,
+        "welterweight": -2.0413665644996136e-19
+      }
+    },
+    "stance_matchup": {
+      "categories": [
+        "open stance_vs_orthodox",
+        "open stance_vs_sideways",
+        "open stance_vs_southpaw",
+        "orthodox_vs_orthodox",
+        "orthodox_vs_sideways",
+        "orthodox_vs_southpaw",
+        "orthodox_vs_switch",
+        "sideways_vs_southpaw",
+        "southpaw_vs_southpaw",
+        "southpaw_vs_switch",
+        "switch_vs_switch",
+        "unknown"
+      ],
+      "weights": {
+        "open stance_vs_orthodox": 2.5934124913847436e-19,
+        "open stance_vs_sideways": -5.115048797364558e-20,
+        "open stance_vs_southpaw": -1.5099242950043002e-19,
+        "orthodox_vs_orthodox": -3.4802860377480264e-19,
+        "orthodox_vs_sideways": 4.3250707229904957e-20,
+        "orthodox_vs_southpaw": 2.2280999147333565e-18,
+        "orthodox_vs_switch": -3.94389919184779e-19,
+        "sideways_vs_southpaw": 7.2540366991774e-21,
+        "southpaw_vs_southpaw": 9.46666853649206e-19,
+        "southpaw_vs_switch": -3.045736302359448e-19,
+        "switch_vs_switch": -1.299837214207828e-19,
+        "unknown": 9.230499588765735e-20
+      }
+    }
+  },
+  "missingIndicatorFeatures": [
+    "strike_accuracy_diff",
+    "takedown_accuracy_diff",
+    "avg_fight_duration_diff",
+    "height_diff_cm",
+    "reach_diff_cm",
+    "age_diff_years",
+    "recent_form_diff"
+  ],
+  "recentFormMinFights": 5
+}

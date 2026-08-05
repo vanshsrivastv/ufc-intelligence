@@ -97,6 +97,14 @@ model Fighter {
   // require scanning fight history on every request.
   lastFightDate DateTime?
 
+  // Elo can't be computed from one fighter's own fights in isolation -
+  // it depends on the chronological outcome of every fight, across every
+  // fighter, up to this point. That means it isn't a per-request query
+  // like winRate or strikeAccuracy; it has to be walked and cached by
+  // compute-elo.ts (same reasoning as lastFightDate above), then
+  // recomputed whenever new results land (see sync-results.ts).
+  eloRating Float @default(1500)
+
   weightClassId String?
   weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
 

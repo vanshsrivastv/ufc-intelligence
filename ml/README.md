@@ -21,8 +21,11 @@ pip install -r requirements.txt
   pipeline
 - `data/` — generated artifacts (gitignored, regenerate with
   `scripts/build_features.py`)
-- `models/` — exported model artifacts (weights as JSON), consumed by
-  `apps/api/src/modules/predictions/predictions.service.ts`
+
+The exported model is written directly into
+`apps/api/src/modules/predictions/model/` by `scripts/export_model.py`
+(see below), not into this folder — one copy, not a "did I remember to
+copy it over" step that can go stale.
 
 ## Building the training table
 
@@ -87,28 +90,59 @@ to withhold validation rows from the final fit) and reports accuracy,
 log-loss, and a calibration reliability table against the 591 genuinely
 unseen 2025-onward fights.
 
+## Exporting the model for production
+
+```
+.venv\Scripts\python scripts\export_model.py
+```
+
+Refits on train+val at the locked-in `C=0.0025` and writes
+`apps/api/src/modules/predictions/model/win_probability_v1.json` -
+feature names, standardization stats (mean/std), and weights, plus the
+intercept and `modelVersion`. No ML runtime needed on the Node side: the
+API just loads this JSON and does a dot product and a sigmoid (see
+`apps/api/src/modules/predictions/prediction-model.ts`).
+
+`predictions.service.ts` was rewritten to compute the same 14 features
+live from the database (Elo, win rate, recent form, strike/takedown
+accuracy, KO/submission/decision win-rate breakdown, average fight
+duration, height/reach/age differentials, stance/weight-class matchup)
+in place of the old hand-picked heuristic weights, while keeping the
+`PredictionDto` shape completely unchanged. `modelVersion` now reads
+`"v1.0-logreg"` straight from the exported JSON.
+
+One piece Elo needed that nothing else did: it can't be computed from a
+single fighter's own fight history in isolation, since it depends on the
+chronological outcome of every fight across every fighter. Added a
+`Fighter.eloRating` column (same caching pattern as the existing
+`lastFightDate`) and `packages/database/prisma/compute-elo.ts`, which
+walks the full fight history and writes it - needs a migration
+(`npm run db:migrate`) and a run of `npm run --workspace=@ufc-intelligence/database compute-elo`
+before predictions will reflect real ratings.
+
+**Verified:** the exported JSON plus the TS inference math reproduce
+sklearn's own `predict_proba` to floating-point precision (differences
+of 0 to 1.11e-16 - machine epsilon noise, not a discrepancy) across 5
+real test-set matchups, confirmed by feeding identical feature values
+into both sides. **Not yet verified:** whether `predictions.service.ts`
+computes those feature values correctly from a live database - that
+needs Docker running and `compute-elo.ts` to have actually populated
+`eloRating`, neither of which was available in the session that did this
+integration.
+
 ## Status
 
-Full pipeline done through a first working baseline. Final test result:
-**0.616 accuracy vs. 0.602 for the naive "better win rate wins"
-baseline** - a real, if modest, edge on genuinely unseen fights. (This
-reverses the validation-set comparison, where the model trailed the
-naive baseline by 1.5 points - confirming that gap really was noise from
-a small validation set, not a sign the model was worse.) Log-loss 0.6434.
-Coefficients still all directionally sensible on the refit.
+**Model v1.0 (`v1.0-logreg`) shipped to production code.** Final test
+result: 0.616 accuracy vs. 0.602 for the naive "better win rate wins"
+baseline on 591 genuinely unseen 2025-onward fights (log-loss 0.6434) -
+a real, if modest, edge. Exported and wired into `predictions.service.ts`
+with the inference math independently verified against the real trained
+model. Live end-to-end verification against the database is the one
+remaining step, pending Docker + a migration run.
 
-One finding flagged but deliberately not acted on yet: the calibration
-table shows the model is systematically underconfident - all four
-non-extreme probability buckets show predicted probabilities pulled
-toward 50% relative to what actually happened, a consistent pattern
-across buckets even though no single bucket clears a strict significance
-threshold on its own. The fix (Platt scaling) has to be fit on
-validation data, not test - having now looked at test's aggregate
-calibration pattern, fitting any correction against test at this point
-would break the "test touched exactly once" rule this whole pipeline was
-built around. Left as a documented next step rather than patched in
-under time pressure to close it out.
-
-Not yet done: calibration correction, trying a non-linear model
-(gradient-boosted trees) for comparison, exporting weights for
-`predictions.service.ts`, retraining cadence.
+Deliberately deferred as separate follow-up work, per plan: a
+calibration correction (the model is systematically underconfident - see
+`evaluate_test.py`'s reliability table) and a gradient-boosted-trees
+comparison. Neither should touch this already-validated v1.0 baseline;
+either would ship as v1.1+ only if it demonstrably beats v1.0 on a fresh
+evaluation.

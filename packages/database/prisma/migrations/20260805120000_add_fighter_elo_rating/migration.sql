@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "fighters" ADD COLUMN "eloRating" DOUBLE PRECISION NOT NULL DEFAULT 1500;
