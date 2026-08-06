@@ -43,7 +43,10 @@ export interface FighterDetailDto extends FighterSummaryDto {
   gym: string | null;
   coach: string | null;
   careerStats: FighterCareerStats;
+  // Completed fights only, most recent first - never a SCHEDULED bout
+  // (see upcomingFight for that).
   recentFights: FightSummaryDto[];
+  upcomingFight: FightSummaryDto | null;
 }
 
 export interface FighterCareerStats {
@@ -76,6 +79,7 @@ export type EventStatus = "UPCOMING" | "LIVE" | "COMPLETED";
 
 export interface FightSummaryDto {
   id: string;
+  event: { slug: string; name: string; date: string };
   fighterA: FighterSummaryDto;
   fighterB: FighterSummaryDto;
   weightClass: WeightClassDto | null;

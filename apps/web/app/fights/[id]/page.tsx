@@ -3,18 +3,7 @@ import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { CompareFaceOff } from "@/components/ui/compare-faceoff";
 import { EmptyState } from "@/components/ui/empty-state";
-
-const METHOD_LABEL: Record<string, string> = {
-  KO: "KO",
-  TKO: "TKO",
-  SUBMISSION: "Submission",
-  DECISION_UNANIMOUS: "Decision (Unanimous)",
-  DECISION_SPLIT: "Decision (Split)",
-  DECISION_MAJORITY: "Decision (Majority)",
-  DQ: "Disqualification",
-  NO_CONTEST: "No Contest",
-  PENDING: "Pending",
-};
+import { METHOD_LABEL } from "@/lib/method-label";
 
 export default async function FightDetailPage({
   params,

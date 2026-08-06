@@ -74,9 +74,10 @@ export class EventsService {
       throw new NotFoundException(`Event with slug "${slug}" not found`);
     }
 
+    const eventRef = { slug: event.slug, name: event.name, date: event.date.toISOString() };
     return {
       ...toEventSummaryDto(event),
-      fights: event.fights.map(toFightSummaryDto),
+      fights: event.fights.map((f) => toFightSummaryDto(f, eventRef)),
     };
   }
 }
@@ -102,9 +103,13 @@ function toEventSummaryDto(event: {
   };
 }
 
-function toFightSummaryDto(fight: any): FightSummaryDto {
+function toFightSummaryDto(
+  fight: any,
+  event: { slug: string; name: string; date: string },
+): FightSummaryDto {
   return {
     id: fight.id,
+    event,
     fighterA: toSummaryDto(fight.fighterA),
     fighterB: toSummaryDto(fight.fighterB),
     weightClass: fight.weightClass ? toWeightClassDto(fight.weightClass) : null,

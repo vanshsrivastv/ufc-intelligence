@@ -5,18 +5,7 @@ import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { EventStatusBadge } from "@/components/ui/event-card";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
-
-const METHOD_LABEL: Record<string, string> = {
-  KO: "KO",
-  TKO: "TKO",
-  SUBMISSION: "Submission",
-  DECISION_UNANIMOUS: "Decision (Unanimous)",
-  DECISION_SPLIT: "Decision (Split)",
-  DECISION_MAJORITY: "Decision (Majority)",
-  DQ: "Disqualification",
-  NO_CONTEST: "No Contest",
-  PENDING: "Pending",
-};
+import { METHOD_LABEL } from "@/lib/method-label";
 
 // Fights are imported with cardPosition 1 = main event, ascending down the
 // card. There's no explicit "segment" field, so main card / prelims is a

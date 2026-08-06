@@ -2,10 +2,20 @@ import Link from "next/link";
 import { GitCompare } from "lucide-react";
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api-client";
+import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PhotoAttribution } from "@/components/ui/photo-attribution";
+import { METHOD_LABEL } from "@/lib/method-label";
+
+function opponentOf(fight: FightSummaryDto, fighterId: string) {
+  return fight.fighterA.id === fighterId ? fight.fighterB : fight.fighterA;
+}
+
+function formatFightDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 export default async function FighterDetailPage({
   params,
@@ -65,6 +75,21 @@ export default async function FighterDetailPage({
             Compare with another fighter
           </Link>
 
+          {fighter.upcomingFight && (
+            <Link
+              href={`/fights/${fighter.upcomingFight.id}`}
+              className="mt-4 block rounded-lg border border-gold-500 bg-gold-900/20 p-4 transition-standard hover:bg-gold-900/30"
+            >
+              <p className="text-caption text-gold-300">
+                Upcoming · {formatFightDate(fighter.upcomingFight.event.date)}
+              </p>
+              <p className="mt-1 text-body-md text-text-primary">
+                vs {opponentOf(fighter.upcomingFight, fighter.id).name} ·{" "}
+                {fighter.upcomingFight.event.name}
+              </p>
+            </Link>
+          )}
+
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Stat label="Sig. strike accuracy" value={formatPct(fighter.careerStats.sigStrikeAccuracyPct)} />
             <Stat label="Strikes landed / min" value={formatRate(fighter.careerStats.sigStrikesLandedPerMin)} />
@@ -97,14 +122,28 @@ export default async function FighterDetailPage({
               {fighter.recentFights.length === 0 && (
                 <EmptyState message="No fight history recorded yet." />
               )}
-              {fighter.recentFights.map((fight) => (
-                <div key={fight.id} className="flex items-center justify-between p-4">
-                  <span className="text-body-md text-text-primary">
-                    {fight.fighterA.name} vs {fight.fighterB.name}
-                  </span>
-                  <span className="text-xs text-text-secondary">{fight.method}</span>
-                </div>
-              ))}
+              {fighter.recentFights.map((fight) => {
+                const opponent = opponentOf(fight, fighter.id);
+                const won = fight.winnerId === fighter.id;
+                return (
+                  <Link
+                    key={fight.id}
+                    href={`/fights/${fight.id}`}
+                    className="flex items-center justify-between p-4 transition-standard hover:bg-bg-elevated-2"
+                  >
+                    <span
+                      className={`text-body-md ${won ? "font-medium text-gold-300" : "text-text-primary"}`}
+                    >
+                      {won ? "W" : fight.winnerId ? "L" : "—"} vs {opponent.name}
+                    </span>
+                    <span className="text-right text-xs text-text-secondary">
+                      {METHOD_LABEL[fight.method] ?? fight.method}
+                      <br />
+                      {formatFightDate(fight.event.date)}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>

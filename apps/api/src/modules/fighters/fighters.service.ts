@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { prisma } from "@ufc-intelligence/database";
+import { FightMethod, FightStatus, prisma } from "@ufc-intelligence/database";
 import type {
   FighterDetailDto,
   FighterSummaryDto,
@@ -78,20 +78,7 @@ export class FightersService {
   async getBySlug(slug: string): Promise<FighterDetailDto> {
     const fighter = await prisma.fighter.findUnique({
       where: { slug },
-      include: {
-        weightClass: true,
-        fightStats: true,
-        fightsAsA: {
-          include: { fighterA: true, fighterB: true, weightClass: true },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-        fightsAsB: {
-          include: { fighterA: true, fighterB: true, weightClass: true },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        },
-      },
+      include: { weightClass: true, fightStats: true },
     });
 
     if (!fighter) {
@@ -112,15 +99,42 @@ export class FightersService {
     const totals = fighter.fightStats.filter((s) => s.round === 0);
     const totalStrikesAttempted = totals.reduce((sum, s) => sum + s.sigStrikesAttempted, 0);
     const totalStrikesLanded = totals.reduce((sum, s) => sum + s.sigStrikesLanded, 0);
-    const allFights = [...fighter.fightsAsA, ...fighter.fightsAsB];
-    const wins = allFights.filter((f) => f.winnerId === fighter.id);
+
+    // A single query across both corner relations, ordered by the actual
+    // event date - not createdAt (DB insert time, unrelated to when the
+    // fight happened) - and never take-limited here, since koTkoWins/
+    // submissionWins/decisionWins below need the fighter's ENTIRE
+    // completed history, not just their 10 most-recently-inserted rows
+    // (the previous per-side take:5 query undercounted every fighter with
+    // more than 10 fights on record).
+    const completedFights = await prisma.fight.findMany({
+      where: {
+        status: "COMPLETED",
+        OR: [{ fighterAId: fighter.id }, { fighterBId: fighter.id }],
+      },
+      include: { fighterA: true, fighterB: true, weightClass: true, event: true },
+      orderBy: { event: { date: "desc" } },
+    });
+
+    const wins = completedFights.filter((f) => f.winnerId === fighter.id);
     const koTkoWins = wins.filter((f) => f.method === "KO" || f.method === "TKO").length;
     const submissionWins = wins.filter((f) => f.method === "SUBMISSION").length;
     const decisionWins = wins.filter((f) => f.method.startsWith("DECISION")).length;
 
-    const recentFights = [...fighter.fightsAsA, ...fighter.fightsAsB]
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, 5);
+    const recentFights = completedFights.slice(0, 5);
+
+    // Separate from recentFights on purpose - an unfought, scheduled
+    // bout isn't a "recent fight," and rendering method: "PENDING" next
+    // to real results as if it were one of them is exactly the bug this
+    // split fixes.
+    const upcomingFight = await prisma.fight.findFirst({
+      where: {
+        status: "SCHEDULED",
+        OR: [{ fighterAId: fighter.id }, { fighterBId: fighter.id }],
+      },
+      include: { fighterA: true, fighterB: true, weightClass: true, event: true },
+      orderBy: { event: { date: "asc" } },
+    });
 
     return {
       id: fighter.id,
@@ -170,21 +184,40 @@ export class FightersService {
         submissionWins,
         decisionWins,
       },
-      recentFights: recentFights.map((f) => ({
-        id: f.id,
-        fighterA: toSummaryDto(f.fighterA as any),
-        fighterB: toSummaryDto(f.fighterB as any),
-        weightClass: null,
-        isTitleFight: f.isTitleFight,
-        cardPosition: f.cardPosition,
-        status: f.status,
-        method: f.method,
-        round: f.round,
-        time: f.time,
-        winnerId: f.winnerId,
-      })),
+      recentFights: recentFights.map(toFightSummaryDto),
+      upcomingFight: upcomingFight ? toFightSummaryDto(upcomingFight) : null,
     };
   }
+}
+
+function toFightSummaryDto(f: {
+  id: string;
+  event: { slug: string; name: string; date: Date };
+  fighterA: Parameters<typeof toSummaryDto>[0];
+  fighterB: Parameters<typeof toSummaryDto>[0];
+  weightClass: { id: string; name: string; weightLimitLbs: number; isWomens: boolean } | null;
+  isTitleFight: boolean;
+  cardPosition: number;
+  status: FightStatus;
+  method: FightMethod;
+  round: number | null;
+  time: string | null;
+  winnerId: string | null;
+}) {
+  return {
+    id: f.id,
+    event: { slug: f.event.slug, name: f.event.name, date: f.event.date.toISOString() },
+    fighterA: toSummaryDto(f.fighterA),
+    fighterB: toSummaryDto(f.fighterB),
+    weightClass: f.weightClass,
+    isTitleFight: f.isTitleFight,
+    cardPosition: f.cardPosition,
+    status: f.status,
+    method: f.method,
+    round: f.round,
+    time: f.time,
+    winnerId: f.winnerId,
+  };
 }
 
 export function toSummaryDto(fighter: {
