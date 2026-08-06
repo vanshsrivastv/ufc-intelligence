@@ -109,7 +109,7 @@ accuracy, KO/submission/decision win-rate breakdown, average fight
 duration, height/reach/age differentials, stance/weight-class matchup)
 in place of the old hand-picked heuristic weights, while keeping the
 `PredictionDto` shape completely unchanged. `modelVersion` now reads
-`"v1.0-logreg"` straight from the exported JSON.
+`"v1.0-beta"` straight from the exported JSON.
 
 One piece Elo needed that nothing else did: it can't be computed from a
 single fighter's own fight history in isolation, since it depends on the
@@ -129,7 +129,7 @@ before predictions will reflect real ratings.
    both sides.
 2. The live API, called end-to-end against the real database (migration
    applied, `compute-elo.ts` run, `npm run dev` actually started and
-   queried with curl): correctly returns `modelVersion: "v1.0-logreg"`,
+   queried with curl): correctly returns `modelVersion: "v1.0-beta"`,
    sane probabilities for a real historical fight (Alex Pereira favored
    74% over an older Jan Blachowicz - matches the real 2023 outcome),
    and a match against a genuinely fought 2025 card (Navajo Stirling
@@ -183,7 +183,7 @@ a ceiling on how exact that can ever get without a richer data source.
 
 ## Status
 
-**Model v1.0 (`v1.0-logreg`) shipped to production and verified
+**Model v1.0 (`v1.0-beta`) shipped to production and verified
 end-to-end**, including a real bug found and fixed by actually running
 the live API rather than trusting the earlier in-isolation check. Final
 test result: 0.616 accuracy vs. 0.602 for the naive "better win rate

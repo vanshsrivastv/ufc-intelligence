@@ -1,6 +1,6 @@
 {
-  "modelVersion": "v1.0-logreg",
-  "trainedAt": "2026-08-05T17:54:47.158063+00:00",
+  "modelVersion": "v1.0-beta",
+  "trainedAt": "2026-08-06T06:55:39.435768+00:00",
   "intercept": -3.883656142128027e-18,
   "numeric": [
     {

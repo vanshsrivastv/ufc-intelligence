@@ -25,7 +25,7 @@ OUTPUT_PATH = (
     REPO_ROOT / "apps" / "api" / "src" / "modules" / "predictions" / "model" / "win_probability_v1.json"
 )
 
-MODEL_VERSION = "v1.0-logreg"
+MODEL_VERSION = "v1.0-beta"
 FINAL_C = 0.0025  # locked in by train_baseline.py / evaluate_test.py
 RECENT_FORM_MIN_FIGHTS = 5  # must match build_features.py's recent_form()
 
