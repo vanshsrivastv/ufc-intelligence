@@ -4,6 +4,7 @@ import crypto from "crypto";
 import Papa from "papaparse";
 import { PrismaClient, FightMethod } from "@prisma/client";
 import { mapMethod as sharedMapMethod } from "./lib/method-map";
+import { canonicalizeWeightClass } from "./lib/weight-class";
 
 const prisma = new PrismaClient();
 
@@ -69,51 +70,14 @@ function parsePercentSafe(raw: string): number | null {
 
 // ---------- weight class lookup ----------
 
-const WEIGHT_LIMITS: Record<string, number> = {
-  strawweight: 115,
-  flyweight: 125,
-  bantamweight: 135,
-  featherweight: 145,
-  lightweight: 155,
-  welterweight: 170,
-  middleweight: 185,
-  "light heavyweight": 205,
-  heavyweight: 265,
-  "super heavyweight": 265,
-  "catch weight": 0,
-  "open weight": 0,
-};
-
-const unmappedWeightClasses = new Set<string>();
-
 function parseWeightClass(raw: string): {
   name: string;
   weightLimitLbs: number;
   isWomens: boolean;
   isTitleFight: boolean;
 } {
-  let cleaned = raw
-    .replace(/^UFC\s+/i, "")
-    .replace(/\s+Bout$/i, "")
-    .trim();
-
-  const isTitleFight = /title/i.test(cleaned) || /interim/i.test(cleaned);
-  cleaned = cleaned.replace(/\bInterim\b/gi, "").replace(/\bTitle\b/gi, "").trim().replace(/\s+/g, " ");
-
-  const isWomens = /^women'?s/i.test(cleaned);
-  const lookupKey = cleaned.replace(/^women'?s\s+/i, "").toLowerCase().trim();
-
-  const weightLimitLbs = WEIGHT_LIMITS[lookupKey];
-  if (weightLimitLbs === undefined) {
-    unmappedWeightClasses.add(cleaned || "(blank)");
-  }
-
-  return {
-    name: cleaned || "Unknown",
-    weightLimitLbs: weightLimitLbs ?? 0,
-    isWomens,
-    isTitleFight,
-  };
+  const isTitleFight = /title/i.test(raw) || /interim/i.test(raw);
+  return { ...canonicalizeWeightClass(raw), isTitleFight };
 }
 
 // ---------- fight method mapping ----------
@@ -393,11 +357,6 @@ async function main() {
   }
   console.log(`Assigned weight class and last-fight date for ${assigned} fighters.`);
 
-  if (unmappedWeightClasses.size > 0) {
-    console.warn("Unrecognized weight class strings (weightLimitLbs set to 0):", [
-      ...unmappedWeightClasses,
-    ]);
-  }
   if (unmappedMethods.size > 0) {
     console.warn("Unrecognized method strings (mapped to PENDING):", [...unmappedMethods]);
   }

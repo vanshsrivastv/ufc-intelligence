@@ -16,6 +16,7 @@
     "scrape-upcoming": "tsx prisma/scrape-upcoming.ts",
     "sync-results": "tsx prisma/sync-results.ts",
     "compute-elo": "tsx prisma/compute-elo.ts",
+    "canonicalize-weight-classes": "tsx prisma/canonicalize-weight-classes.ts",
     "cleanup-stubs": "tsx prisma/cleanup-empty-fighter-stubs.ts",
     "fetch-photos": "tsx prisma/fetch-wikipedia-photos.ts",
     "remove-blank-fighters": "tsx prisma/remove-blank-fighters.ts"
