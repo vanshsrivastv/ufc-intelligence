@@ -4,8 +4,16 @@
 // dependency, so the exact same inference math can be exercised from a
 // standalone script for parity-checking against the Python training
 // pipeline, without spinning up the whole API.
-import fs from "fs";
-import path from "path";
+// Namespace imports, not default imports - apps/api's tsconfig.json has
+// no esModuleInterop, and fs/path are plain CommonJS modules with no
+// real default export. A default import silently resolves to undefined
+// under Nest's webpack-based dev build (confirmed live: "Cannot read
+// properties of undefined (reading 'join')") even though it type-checks
+// fine and even runs fine under tsx, which uses a different, more
+// forgiving module loader - exactly why this only surfaced once the
+// actual API server was run, not from an isolated tsx script.
+import * as fs from "fs";
+import * as path from "path";
 
 export interface NumericModelFeature {
   feature: string;
