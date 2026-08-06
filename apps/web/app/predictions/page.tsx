@@ -142,11 +142,32 @@ export default function PredictionsPage() {
                       key={factor.factor}
                       className="rounded-md border border-border bg-bg-elevated-2 px-3 py-2"
                     >
-                      <p className="text-body-md text-text-primary">{factor.explanation}</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-body-md text-text-primary">{factor.explanation}</p>
+                        <span
+                          className={`shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${
+                            factor.favors === "A"
+                              ? "bg-gold-900 text-gold-300"
+                              : "border border-border-strong text-text-secondary"
+                          }`}
+                        >
+                          Favors {factor.favors === "A" ? fighterA.name : fighterB.name}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-bg-elevated">
+                        <div
+                          className={factor.favors === "A" ? "h-full bg-gold-300" : "h-full bg-border-strong"}
+                          style={{ width: `${Math.round(factor.weight * 100)}%` }}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
+
+              <p className="mt-6 text-center text-[11px] text-text-muted">
+                Model {prediction.modelVersion}
+              </p>
             </>
           )}
         </div>
