@@ -103,6 +103,13 @@ model Fighter {
   // like winRate or strikeAccuracy; it has to be walked and cached by
   // compute-elo.ts (same reasoning as lastFightDate above), then
   // recomputed whenever new results land (see sync-results.ts).
+  //
+  // Stays frozen at the 1500 default forever for any fighter whose fight
+  // rows never actually got imported (a real, known gap in the source
+  // data - some fighters only have a career win/loss total with no
+  // fight-by-fight breakdown; see ml/README.md's "Known limitation:
+  // sparse fighter records"). Not a bug in this script - there's
+  // nothing to walk for those fighters.
   eloRating Float @default(1500)
 
   weightClassId String?

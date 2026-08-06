@@ -120,25 +120,75 @@ walks the full fight history and writes it - needs a migration
 (`npm run db:migrate`) and a run of `npm run --workspace=@ufc-intelligence/database compute-elo`
 before predictions will reflect real ratings.
 
-**Verified:** the exported JSON plus the TS inference math reproduce
-sklearn's own `predict_proba` to floating-point precision (differences
-of 0 to 1.11e-16 - machine epsilon noise, not a discrepancy) across 5
-real test-set matchups, confirmed by feeding identical feature values
-into both sides. **Not yet verified:** whether `predictions.service.ts`
-computes those feature values correctly from a live database - that
-needs Docker running and `compute-elo.ts` to have actually populated
-`eloRating`, neither of which was available in the session that did this
-integration.
+**Verified two ways, once Docker and a live database were available:**
+
+1. The exported JSON plus the TS inference math reproduce sklearn's own
+   `predict_proba` to floating-point precision (differences of 0 to
+   1.11e-16 - machine epsilon noise, not a discrepancy) across 5 real
+   test-set matchups, confirmed by feeding identical feature values into
+   both sides.
+2. The live API, called end-to-end against the real database (migration
+   applied, `compute-elo.ts` run, `npm run dev` actually started and
+   queried with curl): correctly returns `modelVersion: "v1.0-logreg"`,
+   sane probabilities for a real historical fight (Alex Pereira favored
+   74% over an older Jan Blachowicz - matches the real 2023 outcome),
+   and a match against a genuinely fought 2025 card (Navajo Stirling
+   correctly favored 82% over Ivan Erslan, who Stirling did in fact beat
+   by decision) with an appropriately *low* confidence score given
+   Stirling's small (8-fight) sample. Also confirmed the cross-gender
+   guard still returns 400, not a crash.
+
+This live run surfaced one real bug that the earlier tsx-based parity
+check had missed: `import fs from "fs"` / `import path from "path"`
+resolved to `undefined` under Nest's webpack-based `--watch` build
+(`apps/api/tsconfig.json` has no `esModuleInterop`), crashing every
+prediction request with a 500. tsx's module loader papered over this,
+so it only ever surfaced once the actual serving runtime was exercised -
+exactly why "verify the inference math" and "verify the live API" are
+different checks, not one check twice. Fixed with namespace imports
+(`import * as fs from "fs"`), which don't depend on interop shimming.
+
+## Known limitation: sparse fighter records
+
+Some fighters have a career win/loss total (from `fighters.csv`) but no
+matching rows in `fights.csv` - no fight-by-fight breakdown at all. This
+was already known before the ML work started (documented early on as
+"~1,800 of 4,455 fighters have a record but no fight-by-fight detail"),
+but it specifically matters here because it silently degrades every
+history-derived feature for those fighters: `eloRating` sits frozen at
+the 1500 default forever (Elo has nothing to walk), `strikeAccuracy`/
+`takedownAccuracy` are `null`, and `winRate`/`koRate`/etc. fall back to
+their no-data defaults - none of which is visibly wrong to a user, since
+`buildDiffs` already treats these as legitimately missing.
+
+Confirmed concretely while spot-checking Elo parity: two different real
+UFC fighters are both named "Bruno Silva," correctly kept as separate
+rows in the database (`wins: 15/losses: 7` vs `wins: 23/losses: 13`), but
+one of them has `eloRating` frozen at exactly `1500` despite a real
+23-13 record - a textbook case of this exact gap. Because Elo propagates
+through the entire fighter graph over thousands of sequential updates,
+a handful of these gaps elsewhere in the graph is also the most likely
+explanation for a small (~0.04%) Elo discrepancy found between the live
+database's computed rating and an independent recomputation straight
+from the CSV for Jan Blachowicz - both numbers are internally consistent
+with their own data, they just can't perfectly agree while some fighters
+in the shared graph have incomplete histories.
+
+This is a data-completeness limitation inherited from the source CSVs,
+not an implementation bug in either the training pipeline or
+`compute-elo.ts` - both correctly process every fight-by-fight row that
+actually exists. Not something to fix as part of v1.0; worth knowing if
+a future model version tries to push Elo fidelity further, since it sets
+a ceiling on how exact that can ever get without a richer data source.
 
 ## Status
 
-**Model v1.0 (`v1.0-logreg`) shipped to production code.** Final test
-result: 0.616 accuracy vs. 0.602 for the naive "better win rate wins"
-baseline on 591 genuinely unseen 2025-onward fights (log-loss 0.6434) -
-a real, if modest, edge. Exported and wired into `predictions.service.ts`
-with the inference math independently verified against the real trained
-model. Live end-to-end verification against the database is the one
-remaining step, pending Docker + a migration run.
+**Model v1.0 (`v1.0-logreg`) shipped to production and verified
+end-to-end**, including a real bug found and fixed by actually running
+the live API rather than trusting the earlier in-isolation check. Final
+test result: 0.616 accuracy vs. 0.602 for the naive "better win rate
+wins" baseline on 591 genuinely unseen 2025-onward fights (log-loss
+0.6434) - a real, if modest, edge.
 
 Deliberately deferred as separate follow-up work, per plan: a
 calibration correction (the model is systematically underconfident - see
