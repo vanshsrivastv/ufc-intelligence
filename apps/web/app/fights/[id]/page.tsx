@@ -68,7 +68,12 @@ export default async function FightDetailPage({
 
       {fighterA && fighterB ? (
         <div className="mt-6">
-          <CompareFaceOff fighterA={fighterA} fighterB={fighterB} />
+          <CompareFaceOff
+            fighterA={fighterA}
+            fighterB={fighterB}
+            asOfA={fight.fighterAAtFightTime}
+            asOfB={fight.fighterBAtFightTime}
+          />
         </div>
       ) : (
         <EmptyState message="Couldn't load one or both fighters for this fight." />

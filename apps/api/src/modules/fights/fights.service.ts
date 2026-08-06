@@ -1,7 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { prisma } from "@ufc-intelligence/database";
-import type { FightDetailDto, PreviousMeetingDto, WeightClassDto } from "@ufc-intelligence/types";
+import { FightMethod, prisma } from "@ufc-intelligence/database";
+import type {
+  FighterAtFightTimeDto,
+  FightDetailDto,
+  PreviousMeetingDto,
+  WeightClassDto,
+} from "@ufc-intelligence/types";
 import { toSummaryDto } from "../fighters/fighters.service";
+
+const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+const KO_METHODS: FightMethod[] = ["KO", "TKO"];
 
 @Injectable()
 export class FightsService {
@@ -33,6 +41,11 @@ export class FightsService {
       include: { event: true },
       orderBy: { event: { date: "desc" } },
     });
+
+    const [fighterAAtFightTime, fighterBAtFightTime] = await Promise.all([
+      this.buildAtFightTime(fight.fighterA.id, fight.fighterA.dob, fight.event.date),
+      this.buildAtFightTime(fight.fighterB.id, fight.fighterB.dob, fight.event.date),
+    ]);
 
     return {
       id: fight.id,
@@ -70,7 +83,54 @@ export class FightsService {
           winnerId: m.winnerId,
         }),
       ),
+      fighterAAtFightTime,
+      fighterBAtFightTime,
     };
+  }
+
+  // "At fight time" - age and record as they stood on the day of this
+  // fight, not today. Age off dob vs. this fight's own event date rather
+  // than Date.now(), and record/finish-breakdown from only the fights
+  // that happened strictly BEFORE this one (excludes this fight's own
+  // result - "record entering the fight", not "record after it").
+  private async buildAtFightTime(
+    fighterId: string,
+    dob: Date | null,
+    fightDate: Date,
+  ): Promise<FighterAtFightTimeDto> {
+    const priorFights = await prisma.fight.findMany({
+      where: {
+        status: "COMPLETED",
+        event: { date: { lt: fightDate } },
+        OR: [{ fighterAId: fighterId }, { fighterBId: fighterId }],
+      },
+      select: { winnerId: true, method: true },
+    });
+
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+    let noContests = 0;
+    let koTkoWins = 0;
+    let submissionWins = 0;
+
+    for (const f of priorFights) {
+      if (f.winnerId === fighterId) {
+        wins++;
+        if (KO_METHODS.includes(f.method)) koTkoWins++;
+        else if (f.method === "SUBMISSION") submissionWins++;
+      } else if (f.winnerId !== null) {
+        losses++;
+      } else if (f.method === "NO_CONTEST") {
+        noContests++;
+      } else {
+        draws++;
+      }
+    }
+
+    const age = dob ? Math.floor((fightDate.getTime() - dob.getTime()) / MS_PER_YEAR) : null;
+
+    return { age, record: { wins, losses, draws, noContests }, koTkoWins, submissionWins };
   }
 }
 

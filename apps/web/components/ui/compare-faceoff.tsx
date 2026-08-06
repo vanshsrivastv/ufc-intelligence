@@ -1,4 +1,4 @@
-import type { FighterDetailDto } from "@ufc-intelligence/types";
+import type { FighterAtFightTimeDto, FighterDetailDto, FighterRecord } from "@ufc-intelligence/types";
 import { FighterAvatar } from "./fighter-avatar";
 
 function ageFromDob(dob: string | null): number | null {
@@ -12,20 +12,38 @@ function ageFromDob(dob: string | null): number | null {
   return age;
 }
 
-function winPct(f: FighterDetailDto): number | null {
-  const total = f.record.wins + f.record.losses + f.record.draws;
-  return total > 0 ? Math.round((f.record.wins / total) * 1000) / 10 : null;
+function winPctOf(record: FighterRecord): number | null {
+  const total = record.wins + record.losses + record.draws;
+  return total > 0 ? Math.round((record.wins / total) * 1000) / 10 : null;
 }
 
+// asOf, when supplied, is age/record/finish-breakdown as they stood on
+// a specific past date - a fight detail page for a bout from years ago
+// needs "how old was this fighter, what was their record, THEN," not
+// today's numbers. Without asOf (the Compare page's case), this
+// falls back to fighterA/fighterB's always-current values, which is
+// exactly what a hypothetical present-day matchup should show.
 export function CompareFaceOff({
   fighterA,
   fighterB,
+  asOfA,
+  asOfB,
 }: {
   fighterA: FighterDetailDto;
   fighterB: FighterDetailDto;
+  asOfA?: FighterAtFightTimeDto;
+  asOfB?: FighterAtFightTimeDto;
 }) {
-  const recordOf = (f: FighterDetailDto) =>
-    `${f.record.wins}-${f.record.losses}-${f.record.draws}`;
+  const ageA = asOfA ? asOfA.age : ageFromDob(fighterA.dob);
+  const ageB = asOfB ? asOfB.age : ageFromDob(fighterB.dob);
+  const recordA = asOfA ? asOfA.record : fighterA.record;
+  const recordB = asOfB ? asOfB.record : fighterB.record;
+  const koTkoA = asOfA ? asOfA.koTkoWins : fighterA.careerStats.koTkoWins;
+  const koTkoB = asOfB ? asOfB.koTkoWins : fighterB.careerStats.koTkoWins;
+  const subA = asOfA ? asOfA.submissionWins : fighterA.careerStats.submissionWins;
+  const subB = asOfB ? asOfB.submissionWins : fighterB.careerStats.submissionWins;
+
+  const recordOf = (record: FighterRecord) => `${record.wins}-${record.losses}-${record.draws}`;
 
   const rows: {
     label: string;
@@ -36,23 +54,15 @@ export function CompareFaceOff({
   }[] = [
     { label: "Height (cm)", a: fighterA.heightCm, b: fighterB.heightCm },
     { label: "Reach (cm)", a: fighterA.reachCm, b: fighterB.reachCm },
-    {
-      label: "Age",
-      a: ageFromDob(fighterA.dob),
-      b: ageFromDob(fighterB.dob),
-      higherIsBetter: false,
-    },
-    { label: "Win percentage", a: winPct(fighterA), b: winPct(fighterB), suffix: "%" },
-    {
-      label: "Knockouts",
-      a: fighterA.careerStats.koTkoWins,
-      b: fighterB.careerStats.koTkoWins,
-    },
-    {
-      label: "Submissions",
-      a: fighterA.careerStats.submissionWins,
-      b: fighterB.careerStats.submissionWins,
-    },
+    { label: "Age", a: ageA, b: ageB, higherIsBetter: false },
+    { label: "Win percentage", a: winPctOf(recordA), b: winPctOf(recordB), suffix: "%" },
+    { label: "Knockouts", a: koTkoA, b: koTkoB },
+    { label: "Submissions", a: subA, b: subB },
+    // Still always-current even in asOf mode - unlike record/age, these
+    // come from fighters.csv's pre-aggregated career totals, not
+    // individual fight rows, so a point-in-time version would need
+    // resumming FightStat rows for every fight before the target date.
+    // Same category of issue as age/record was, just not fixed here.
     {
       label: "Striking accuracy",
       a: fighterA.careerStats.sigStrikeAccuracyPct,
@@ -70,9 +80,9 @@ export function CompareFaceOff({
   return (
     <div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-lg border border-glass bg-glass p-7 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-        <FighterHeader fighter={fighterA} recordText={recordOf(fighterA)} />
+        <FighterHeader fighter={fighterA} recordText={recordOf(recordA)} />
         <span className="font-display text-xl italic text-text-muted">VS</span>
-        <FighterHeader fighter={fighterB} recordText={recordOf(fighterB)} align="right" />
+        <FighterHeader fighter={fighterB} recordText={recordOf(recordB)} align="right" />
       </div>
 
       <div className="mt-4 rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass">

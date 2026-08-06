@@ -125,6 +125,20 @@ export interface FightDetailDto {
   winnerId: string | null;
   stats: FightStatRoundDto[];
   previousMeetings: PreviousMeetingDto[];
+  // Age and record as they actually stood on the day of THIS fight, not
+  // today's values - a fighter's current age and career-total record
+  // are the wrong numbers next to a fight that may have happened
+  // decades ago. See FighterDetailDto for the always-current equivalent
+  // (correct on the Compare page, where "right now" is the point).
+  fighterAAtFightTime: FighterAtFightTimeDto;
+  fighterBAtFightTime: FighterAtFightTimeDto;
+}
+
+export interface FighterAtFightTimeDto {
+  age: number | null; // null if dob unknown
+  record: FighterRecord; // entering this fight - does not include this fight's own result
+  koTkoWins: number;
+  submissionWins: number;
 }
 
 export interface RankingEntryDto {
