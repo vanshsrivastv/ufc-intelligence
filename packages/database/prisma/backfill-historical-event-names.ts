@@ -114,9 +114,15 @@ function parseEventNameFromTitleTag(titleTag: string): string | null {
 
 async function fetchRealEventName(slug: string): Promise<string | null> {
   const html = await fetchHtml(`${BASE_URL}/event/${slug}`);
-  const match = html.match(/<title>(.*?)<\/title>/s);
-  if (!match) return null;
-  return parseEventNameFromTitleTag(match[1].trim());
+  // cheerio's .text() decodes HTML entities properly (a raw regex match
+  // on the <title> tag doesn't - confirmed live: "UFC 31: Locked & Loaded"
+  // was coming through as "UFC 31: Locked &amp; Loaded"). .first() is
+  // required - the page has other <title> elements too (SVG icons use
+  // <title> for accessibility labels, e.g. "Play Video" buttons), and
+  // $("title") matches all of them, not just the real document title.
+  const titleTag = cheerio.load(html)("title").first().text();
+  if (!titleTag) return null;
+  return parseEventNameFromTitleTag(titleTag.trim());
 }
 
 function sameUtcDay(a: Date, b: Date): boolean {
