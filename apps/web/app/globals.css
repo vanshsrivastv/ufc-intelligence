@@ -12,4 +12,27 @@
   ::selection {
     @apply bg-gold-500 text-text-on-gold;
   }
+
+  /*
+    UX audit finding #3: cards, nav links, and buttons had no deliberate
+    focus style at all, so a keyboard user tabbing through them saw
+    whatever the browser/OS happened to pick for its native outline -
+    gold on this machine's Chromium by coincidence, but blue, black, or
+    anything else depending on the browser and platform. Form inputs
+    already got an intentional on-brand treatment (border-color change
+    via `focus:border-gold-500`); this brings everything else in line
+    with a deliberate gold ring instead of leaving it to chance.
+
+    In @layer base rather than a utility class, on purpose: Tailwind
+    always emits `@layer base` before `@layer utilities` in the final
+    stylesheet, so on an equal-specificity tie the utilities layer always
+    wins - meaning any element using the `outline-none` utility (the
+    inputs) keeps its own existing focus treatment untouched, while every
+    other focusable element (nothing here overrides this rule) picks up
+    the new deliberate ring instead of the browser's default.
+  */
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 2px;
+  }
 }
