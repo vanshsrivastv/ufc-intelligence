@@ -5,6 +5,7 @@ import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { EventStatusBadge } from "@/components/ui/event-card";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { METHOD_LABEL } from "@/lib/method-label";
 
 // Fights are imported with cardPosition 1 = main event, ascending down the
@@ -60,9 +61,7 @@ export default async function EventDetailPage({
       )}
 
       {event.fights.length === 0 && (
-        <p className="mt-8 rounded-lg border border-border bg-bg-elevated p-4 text-body-md text-text-muted">
-          No fights added to this card yet.
-        </p>
+        <EmptyState message="No fights added to this card yet." />
       )}
 
       {mainCard.length > 0 && (

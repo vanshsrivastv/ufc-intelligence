@@ -3,6 +3,7 @@ import { api } from "@/lib/api-client";
 import { EventCard } from "@/components/ui/event-card";
 import { EventSearch } from "@/components/ui/event-search";
 import { EventFilters } from "@/components/ui/event-filters";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface EventsSearchParams {
   page?: string;
@@ -52,9 +53,7 @@ export default async function EventsPage({
       </div>
 
       {result.items.length === 0 && (
-        <p className="mt-12 text-center text-body-md text-text-muted">
-          No events match these filters.
-        </p>
+        <EmptyState message="No events match these filters." />
       )}
 
       {totalPages > 1 && (

@@ -4,6 +4,7 @@ import { FighterCard } from "@/components/ui/fighter-card";
 import { FighterListSearch } from "@/components/ui/fighter-list-search";
 import { FighterFilters } from "@/components/ui/fighter-filters";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getFavoritedFighterIds } from "@/lib/favorites";
 import { sortDivisions } from "@/lib/ranking-divisions";
 
@@ -79,9 +80,7 @@ export default async function FightersPage({
       </div>
 
       {result.items.length === 0 && (
-        <p className="mt-12 text-center text-body-md text-text-muted">
-          No fighters match these filters.
-        </p>
+        <EmptyState message="No fighters match these filters." />
       )}
 
       {totalPages > 1 && (
