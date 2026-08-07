@@ -2,6 +2,7 @@ import Link from "next/link";
 import { api } from "@/lib/api-client";
 import type { LeaderboardEntry } from "@/lib/api-client";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 
 export default async function StatisticsPage() {
   let lb;
@@ -9,10 +10,13 @@ export default async function StatisticsPage() {
     lb = await api.stats.getLeaderboards();
   } catch {
     return (
-      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
-        <h1 className="font-display text-heading-lg text-text-primary">Statistics</h1>
-        <EmptyState message="Couldn't load statistics right now — try refreshing in a moment." />
-      </main>
+      <>
+        <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
+        <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
+          <h1 className="font-display text-heading-lg text-text-primary">Statistics</h1>
+          <EmptyState message="Couldn't load statistics right now — try refreshing in a moment." />
+        </main>
+      </>
     );
   }
   const { methodBreakdown } = lb;
@@ -22,13 +26,17 @@ export default async function StatisticsPage() {
   const decPct = methodBreakdown.total > 0 ? Math.round((methodBreakdown.decision / methodBreakdown.total) * 100) : 0;
 
   return (
-    <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
-      <h1 className="font-display text-heading-lg text-text-primary">
-        Statistics
-      </h1>
-      <p className="mt-1 text-body-md text-text-secondary">
-        Real leaderboards computed from every recorded UFC fight in the database.
-      </p>
+    <>
+      <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
+      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+        <h1 className="font-display text-heading-lg text-text-primary">
+          Statistics
+        </h1>
+        <p className="mt-1 text-body-md text-text-secondary">
+          Real leaderboards computed from every recorded UFC fight in the database.
+        </p>
+      </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         <Leaderboard title="Most wins" entries={lb.mostWins} valueKey="wins" />
@@ -81,7 +89,8 @@ export default async function StatisticsPage() {
           </p>
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 

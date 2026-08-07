@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@ufc-intelligence/database";
 import { FighterCard } from "@/components/ui/fighter-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 
 export default async function FavoritesPage() {
   const session = await auth();
@@ -35,10 +36,14 @@ export default async function FavoritesPage() {
   }));
 
   return (
-    <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
-      <h1 className="font-display text-heading-lg text-text-primary">
-        Your favorites
-      </h1>
+    <>
+      <PageAtmosphere src="/images/conor-mcgregor.jpg" alt="" focalPosition="50% 15%" />
+      <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+        <h1 className="font-display text-heading-lg text-text-primary">
+          Your favorites
+        </h1>
+      </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {fighters.map((fighter) => (
@@ -49,6 +54,7 @@ export default async function FavoritesPage() {
       {fighters.length === 0 && (
         <EmptyState message="No favorites yet — tap the glove on any fighter to add one." />
       )}
-    </main>
+      </main>
+    </>
   );
 }
