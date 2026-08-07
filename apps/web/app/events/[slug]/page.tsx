@@ -38,7 +38,14 @@ export default async function EventDetailPage({
 
   return (
     <main className="mx-auto max-w-[900px] px-4 py-12 md:px-8">
-      <div className="flex items-start justify-between gap-4">
+      <Link
+        href="/events"
+        className="text-xs text-text-secondary transition-standard hover:text-gold-300"
+      >
+        ← All events
+      </Link>
+
+      <div className="mt-3 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-display-md text-text-primary">
             {event.name}
