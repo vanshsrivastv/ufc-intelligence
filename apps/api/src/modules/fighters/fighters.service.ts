@@ -35,26 +35,40 @@ export class FightersService {
       activityCutoff = cutoff;
     }
 
-    const where = {
-      ...(query.weightClass ? { weightClass: { name: query.weightClass } } : {}),
-      ...(query.gender ? { weightClass: { isWomens: query.gender === "women" } } : {}),
-      ...(query.search
-        ? { name: { contains: query.search, mode: "insensitive" as const } }
-        : {}),
-      ...(championOnlyIds ? { id: { in: championOnlyIds } } : {}),
-      ...(activityCutoff
-        ? query.activity === "active"
+    // Built as an explicit AND list, not flat object spread - the activity
+    // filter and documentedOnly can both need their own lastFightDate
+    // condition, and a second `lastFightDate` key in a spread object would
+    // silently clobber the first rather than combining with it.
+    const conditions: object[] = [];
+    if (query.weightClass) conditions.push({ weightClass: { name: query.weightClass } });
+    if (query.gender) conditions.push({ weightClass: { isWomens: query.gender === "women" } });
+    if (query.search) {
+      conditions.push({ name: { contains: query.search, mode: "insensitive" as const } });
+    }
+    if (championOnlyIds) conditions.push({ id: { in: championOnlyIds } });
+    if (activityCutoff) {
+      conditions.push(
+        query.activity === "active"
           ? { lastFightDate: { gte: activityCutoff } }
-          : { OR: [{ lastFightDate: { lt: activityCutoff } }, { lastFightDate: null }] }
-        : {}),
-    };
+          : { OR: [{ lastFightDate: { lt: activityCutoff } }, { lastFightDate: null }] },
+      );
+    }
+    if (query.documentedOnly) conditions.push({ lastFightDate: { not: null } });
+
+    const where = conditions.length > 0 ? { AND: conditions } : {};
 
     const orderBy =
       query.sort === "recent"
-        ? { createdAt: "desc" as const }
+        ? [{ createdAt: "desc" as const }]
         : query.sort === "oldest"
-          ? { createdAt: "asc" as const }
-          : { name: "asc" as const };
+          ? [{ createdAt: "asc" as const }]
+          : query.sort === "name_asc"
+            ? [{ name: "asc" as const }]
+            : // documented_first (the default): fighters with real fight-by-fight
+              // history surface first, most recently active among them first;
+              // the ~1,873 aggregate-only fighters sort to the very end instead
+              // of being interleaved alphabetically with everyone else.
+              [{ lastFightDate: { sort: "desc" as const, nulls: "last" as const } }, { name: "asc" as const }];
 
     const [rows, total] = await Promise.all([
       prisma.fighter.findMany({

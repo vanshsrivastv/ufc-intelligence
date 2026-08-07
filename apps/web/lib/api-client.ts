@@ -129,7 +129,8 @@ export const api = {
       gender?: "men" | "women";
       activity?: "active" | "inactive";
       championOnly?: boolean;
-      sort?: "name_asc" | "recent" | "oldest";
+      documentedOnly?: boolean;
+      sort?: "documented_first" | "name_asc" | "recent" | "oldest";
       page?: number;
       pageSize?: number;
     }) => {
@@ -139,6 +140,7 @@ export const api = {
       if (params?.gender) query.set("gender", params.gender);
       if (params?.activity) query.set("activity", params.activity);
       if (params?.championOnly) query.set("championOnly", "true");
+      if (params?.documentedOnly) query.set("documentedOnly", "true");
       if (params?.sort) query.set("sort", params.sort);
       if (params?.page) query.set("page", String(params.page));
       if (params?.pageSize) query.set("pageSize", String(params.pageSize));

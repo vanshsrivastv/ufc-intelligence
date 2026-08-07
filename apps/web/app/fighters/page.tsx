@@ -14,7 +14,8 @@ interface FightersSearchParams {
   gender?: "men" | "women";
   activity?: "active" | "inactive";
   championOnly?: string;
-  sort?: "name_asc" | "recent" | "oldest";
+  documentedOnly?: string;
+  sort?: "documented_first" | "name_asc" | "recent" | "oldest";
 }
 
 export default async function FightersPage({
@@ -26,6 +27,7 @@ export default async function FightersPage({
   const page = Number(params.page ?? "1") || 1;
   const search = params.search?.trim() || undefined;
   const championOnly = params.championOnly === "true";
+  const documentedOnly = params.documentedOnly === "true";
 
   const [result, favoritedIds, allWeightClasses] = await Promise.all([
     api.fighters.list({
@@ -35,6 +37,7 @@ export default async function FightersPage({
       gender: params.gender,
       activity: params.activity,
       championOnly,
+      documentedOnly,
       sort: params.sort,
     }),
     getFavoritedFighterIds(),
@@ -124,6 +127,7 @@ function PageLink({
   if (params.gender) next.set("gender", params.gender);
   if (params.activity) next.set("activity", params.activity);
   if (params.championOnly) next.set("championOnly", params.championOnly);
+  if (params.documentedOnly) next.set("documentedOnly", params.documentedOnly);
   if (params.sort) next.set("sort", params.sort);
   next.set("page", String(page));
 

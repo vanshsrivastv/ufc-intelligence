@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { WeightClassDto } from "@ufc-intelligence/types";
 
 const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: "documented_first", label: "Fight history first" },
   { value: "name_asc", label: "Alphabetical (A–Z)" },
   { value: "recent", label: "Recently added" },
   { value: "oldest", label: "Oldest added" },
@@ -28,8 +29,9 @@ export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDt
   const gender = searchParams.get("gender");
   const activity = searchParams.get("activity");
   const championOnly = searchParams.get("championOnly") === "true";
+  const documentedOnly = searchParams.get("documentedOnly") === "true";
   const weightClass = searchParams.get("weightClass") ?? "";
-  const sort = searchParams.get("sort") ?? "name_asc";
+  const sort = searchParams.get("sort") ?? "documented_first";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -75,6 +77,13 @@ export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDt
         onClick={() => setParam("championOnly", championOnly ? null : "true")}
       >
         Champions only
+      </FilterPill>
+
+      <FilterPill
+        active={documentedOnly}
+        onClick={() => setParam("documentedOnly", documentedOnly ? null : "true")}
+      >
+        Fight data available
       </FilterPill>
 
       <select
