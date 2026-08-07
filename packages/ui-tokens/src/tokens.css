@@ -25,7 +25,15 @@
   /* --- Text --- */
   --color-text-primary: #f2f0ea;
   --color-text-secondary: #b4b2a9;
-  --color-text-muted: #6e6c63;
+  /* Lightened from the original #6e6c63 - that failed WCAG AA (needs
+     4.5:1 for normal text) against every dark surface it's used on,
+     down to 3.24:1 on --color-bg-elevated-2. This value clears 4.5:1
+     against all three dark surfaces (4.56:1 on the worst case,
+     bg-elevated-2) while keeping the same warm-gray hue and staying
+     clearly darker than --color-text-secondary, so the hierarchy
+     (muted < secondary < primary) is unchanged - just actually
+     readable now. */
+  --color-text-muted: #8c8a82;
   --color-text-on-gold: #1a1408;
 
   /* --- Semantic --- */

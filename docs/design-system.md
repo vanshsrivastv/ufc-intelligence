@@ -27,7 +27,7 @@ Define these as CSS custom properties (or Tailwind theme extensions) — never h
   /* Text */
   --color-text-primary:    #F2F0EA;
   --color-text-secondary:  #B4B2A9;
-  --color-text-muted:      #6E6C63;
+  --color-text-muted:      #8C8A82;  /* lightened from #6E6C63 - that failed WCAG AA against every dark surface */
   --color-text-on-gold:    #1A1408;  /* dark text when placed on gold fill */
 
   /* Semantic (used sparingly — never decorative) */
