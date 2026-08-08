@@ -175,9 +175,27 @@ async function main() {
     }
     usedSlugs.add(slug);
 
+    // The CSV-sourced career-average fields below are only ever written by
+    // this script, so it's safe for update to refresh them on a re-run.
+    // wins/losses/draws are deliberately NOT in that update - sync-results.ts
+    // increments those live as new fights complete, and mirroring create's
+    // stale CSV counts into update would reset that live progress on every
+    // re-import. Same reasoning kept height/reach/stance/dob out too, since
+    // this script isn't their only writer going forward.
+    const careerAverages = {
+      sigStrikesLandedPerMin: parseRateSafe(row.SLpM),
+      sigStrikeAccuracyPct: parsePercentSafe(row.Str_Acc),
+      sigStrikesAbsorbedPerMin: parseRateSafe(row.SApM),
+      sigStrikeDefensePct: parsePercentSafe(row.Str_Def),
+      takedownAvgPer15Min: parseRateSafe(row.TD_Avg),
+      takedownAccuracyPct: parsePercentSafe(row.TD_Acc),
+      takedownDefensePct: parsePercentSafe(row.TD_Def),
+      submissionAvgPer15Min: parseRateSafe(row.Sub_Avg),
+    };
+
     const fighter = await prisma.fighter.upsert({
       where: { slug },
-      update: {},
+      update: careerAverages,
       create: {
         slug,
         name,
@@ -188,14 +206,7 @@ async function main() {
         wins: parseIntSafe(row.Wins),
         losses: parseIntSafe(row.Losses),
         draws: parseIntSafe(row.Draws),
-        sigStrikesLandedPerMin: parseRateSafe(row.SLpM),
-        sigStrikeAccuracyPct: parsePercentSafe(row.Str_Acc),
-        sigStrikesAbsorbedPerMin: parseRateSafe(row.SApM),
-        sigStrikeDefensePct: parsePercentSafe(row.Str_Def),
-        takedownAvgPer15Min: parseRateSafe(row.TD_Avg),
-        takedownAccuracyPct: parsePercentSafe(row.TD_Acc),
-        takedownDefensePct: parsePercentSafe(row.TD_Def),
-        submissionAvgPer15Min: parseRateSafe(row.Sub_Avg),
+        ...careerAverages,
       },
     });
 
