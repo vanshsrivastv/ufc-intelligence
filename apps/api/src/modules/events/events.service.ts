@@ -115,7 +115,7 @@ function toFightSummaryDto(
     event,
     fighterA: toSummaryDto(fight.fighterA),
     fighterB: toSummaryDto(fight.fighterB),
-    weightClass: fight.weightClass ? toWeightClassDto(fight.weightClass) : null,
+    weightClass: toWeightClassDto(fight.weightClass),
     isTitleFight: fight.isTitleFight,
     cardPosition: fight.cardPosition,
     status: fight.status,
@@ -126,12 +126,13 @@ function toFightSummaryDto(
   };
 }
 
-function toWeightClassDto(weightClass: {
-  id: string;
-  name: string;
-  weightLimitLbs: number;
-  isWomens: boolean;
-}): WeightClassDto {
+// "Unknown" is a real row (see scrape-upcoming.ts) used for fights whose
+// weight class couldn't be scraped, not a division fighters actually
+// compete in - treat it the same as no weight class at all.
+function toWeightClassDto(
+  weightClass: { id: string; name: string; weightLimitLbs: number; isWomens: boolean } | null,
+): WeightClassDto | null {
+  if (!weightClass || weightClass.name === "Unknown") return null;
   return {
     id: weightClass.id,
     name: weightClass.name,

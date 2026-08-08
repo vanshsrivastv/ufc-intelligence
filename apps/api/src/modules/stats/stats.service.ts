@@ -83,7 +83,12 @@ export class StatsService {
       eventName: nextEvent.name,
       eventDate: nextEvent.date.toISOString(),
       isTitleFight: mainEvent.isTitleFight,
-      weightClass: mainEvent.weightClass?.name ?? null,
+      // "Unknown" is a real row (see scrape-upcoming.ts) for fights whose
+      // weight class couldn't be scraped - not a division, so hide it.
+      weightClass:
+        mainEvent.weightClass && mainEvent.weightClass.name !== "Unknown"
+          ? mainEvent.weightClass.name
+          : null,
       fighterA: {
         slug: mainEvent.fighterA.slug,
         name: mainEvent.fighterA.name,
