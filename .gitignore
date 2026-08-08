@@ -34,6 +34,7 @@ npm-debug.log*
 
 # prisma
 packages/database/prisma/migrations/dev.db*
+packages/database/prisma/nationality-enrichment-results.json
 
 # IDE
 .vscode/*
