@@ -125,12 +125,30 @@ async function fetchRealEventName(slug: string): Promise<string | null> {
   return parseEventNameFromTitleTag(titleTag.trim());
 }
 
-function sameUtcDay(a: Date, b: Date): boolean {
-  return (
-    a.getUTCFullYear() === b.getUTCFullYear() &&
-    a.getUTCMonth() === b.getUTCMonth() &&
-    a.getUTCDate() === b.getUTCDate()
-  );
+// ufc.com's listing timestamp is the main card's actual start time, not a
+// date-only value - for a US-evening card that's often past midnight UTC,
+// landing on the calendar day *after* the event's real (local) date. Our
+// own event dates have no time component, so a strict same-UTC-day check
+// silently missed most US-based events (confirmed live: UFC 291, a
+// well-known July 29, 2023 event, carries timestamp 2023-07-30T02:00Z).
+// A generous window instead of an exact match absorbs that drift in
+// either direction (early-daytime cards in Asia/Oceania can drift the
+// other way) while still being far too narrow to ever span two distinct
+// UFC events, which are never scheduled less than several days apart.
+const MATCH_WINDOW_MS = 36 * 60 * 60 * 1000;
+
+function findClosestListing(listings: ListingEntry[], targetDate: Date): ListingEntry | null {
+  const targetMs = targetDate.getTime();
+  let best: ListingEntry | null = null;
+  let bestDiff = Infinity;
+  for (const listing of listings) {
+    const diff = Math.abs(listing.timestamp * 1000 - targetMs);
+    if (diff <= MATCH_WINDOW_MS && diff < bestDiff) {
+      best = listing;
+      bestDiff = diff;
+    }
+  }
+  return best;
 }
 
 async function main() {
@@ -159,7 +177,7 @@ async function main() {
     const current = await prisma.event.findUnique({ where: { id: target.id }, select: { name: true } });
     if (!current || !GENERIC_NAME_PATTERN.test(current.name)) continue;
 
-    const match = listings.find((l) => sameUtcDay(new Date(l.timestamp * 1000), target.date));
+    const match = findClosestListing(listings, target.date);
     if (!match) {
       console.warn(`  ! No listing match for ${target.slug} (${target.date.toISOString().slice(0, 10)})`);
       noMatch++;
