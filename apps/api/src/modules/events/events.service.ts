@@ -28,7 +28,10 @@ export class EventsService {
     // Completed events run back to 1993, so the shared "soonest first"
     // default would bury the card that just finished behind three decades
     // of history - the opposite of what someone opening that tab wants.
-    const sort = query.sort ?? (query.status === "COMPLETED" ? "date_desc" : "date_asc");
+    // The All tab (no status filter) mixes in that same 30 years of
+    // history, so it gets the same latest-first default; only Upcoming
+    // (a small, forward-looking set) benefits from soonest-first.
+    const sort = query.sort ?? (query.status === "UPCOMING" ? "date_asc" : "date_desc");
 
     const orderBy =
       sort === "date_desc"
