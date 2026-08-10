@@ -104,9 +104,17 @@ async function collectAllListings(): Promise<ListingEntry[]> {
 
 // Reliable across every era tested: "UFC 1 | The Beginning | UFC",
 // "UFC 100 | Lesnar vs. Mir II | UFC", "UFC Fight Night | Ortega vs Jung | UFC".
+//
+// Some pages skip that template entirely and put the already-fully-
+// formatted name directly in <title> with no "|" at all - confirmed
+// live across UFC 257, UFC 264, UFC 276, and several Fight Nights
+// spanning both 2021 and 2023, so this is a second template ufc.com
+// applies inconsistently, not a one-time layout change over time. A
+// bare "UFC" with nothing else is the one single-part case still worth
+// rejecting - every real event title carries more than that.
 function parseEventNameFromTitleTag(titleTag: string): string | null {
   const parts = titleTag.split("|").map((p) => p.trim());
-  if (parts.length < 2) return null;
+  if (parts.length === 1) return parts[0] === "UFC" ? null : parts[0];
   if (parts.length === 2) return parts[0]; // no real subtitle beyond the trailing "UFC" suffix
   const subtitle = parts.slice(1, -1).join(" | "); // defensive: subtitle itself containing a "|" is unlikely but not impossible
   return `${parts[0]}: ${subtitle}`;
