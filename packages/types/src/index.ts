@@ -26,6 +26,10 @@ export interface FighterSummaryDto {
   photoLicense: string | null;
   photoLicenseUrl: string | null;
   rank: number | null; // null = unranked
+  // null = insufficient fight-history data to compute a rating (not a
+  // real, computed Elo of 0 or some default) - never render this as 1500
+  // or any other stand-in value.
+  elo: number | null;
 }
 
 export interface FighterRecord {
@@ -42,6 +46,14 @@ export interface FighterDetailDto extends FighterSummaryDto {
   reachCm: number | null;
   gym: string | null;
   coach: string | null;
+  // 1 = highest Elo of every fighter with a computed rating. Null
+  // whenever elo itself is null - there's no meaningful rank position
+  // for a fighter who was never rated.
+  eloRank: number | null;
+  // Completed fights this fighter's current Elo was actually computed
+  // from - same count as recentFights would be if it weren't capped at
+  // 5. 0 for a fighter with elo: null (nothing to have computed it from).
+  eloFightCount: number;
   careerStats: FighterCareerStats;
   // Completed fights only, most recent first - never a SCHEDULED bout
   // (see upcomingFight for that).

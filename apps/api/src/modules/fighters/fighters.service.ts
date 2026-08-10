@@ -106,6 +106,17 @@ export class FightersService {
       orderBy: { effectiveDate: "desc" },
     });
 
+    // 1-indexed position among every fighter with a computed Elo - a
+    // plain count of strictly-higher ratings plus one, not a stored/
+    // cached value, since it has to stay correct as compute-elo.ts
+    // rewrites ratings out from under it. Skipped entirely (stays null)
+    // for a fighter with no rating of their own - "rank" isn't a
+    // meaningful concept for someone who was never rated.
+    const eloRank =
+      fighter.eloRating !== null
+        ? (await prisma.fighter.count({ where: { eloRating: { gt: fighter.eloRating } } })) + 1
+        : null;
+
     // Career totals are computed from per-fight totals (round = 0), not
     // recomputed from per-round rows here — that aggregation belongs to the
     // ingestion module's post-processing step (architecture.md §8), which
@@ -166,6 +177,9 @@ export class FightersService {
       photoLicense: fighter.photoLicense,
       photoLicenseUrl: fighter.photoLicenseUrl,
       rank: latestRanking?.rank ?? null,
+      elo: fighter.eloRating,
+      eloRank,
+      eloFightCount: completedFights.length,
       record: {
         wins: fighter.wins,
         losses: fighter.losses,
@@ -247,6 +261,7 @@ export function toSummaryDto(fighter: {
   losses: number;
   draws: number;
   noContests: number;
+  eloRating?: number | null;
   weightClass?: { id: string; name: string; weightLimitLbs: number; isWomens: boolean } | null;
 }): FighterSummaryDto {
   return {
@@ -259,6 +274,7 @@ export function toSummaryDto(fighter: {
     photoLicense: fighter.photoLicense ?? null,
     photoLicenseUrl: fighter.photoLicenseUrl ?? null,
     rank: null,
+    elo: fighter.eloRating ?? null,
     record: {
       wins: fighter.wins,
       losses: fighter.losses,
