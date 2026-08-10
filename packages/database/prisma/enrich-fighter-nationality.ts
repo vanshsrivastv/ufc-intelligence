@@ -33,6 +33,15 @@
 //     agreement (either because our fighter has no dob, or Wikidata's DOB
 //     is only year/month precision, or the dates disagree) -> unmatched,
 //     skipped. Both stay NULL - never guessed.
+//   - A single matched entity with more than one P27 (citizenship) value
+//     -> also ambiguous, skipped, for the same reason: found via spot-
+//     checking a first version of this script, 66 of 1,881 otherwise-
+//     "high confidence" matches had multiple citizenships on file - a mix
+//     of genuine dual nationals (Brock Lesnar: Canada + USA) and Soviet-
+//     era fighters tagged with both "Soviet Union" and their modern
+//     country. Picking whichever came first in the query results was
+//     arbitrary, not a decision, and risked visibly wrong output (a
+//     fighter's nationality showing as a defunct country).
 import { PrismaClient } from "@prisma/client";
 import { normalizeName } from "./lib/name-match";
 import * as fs from "fs";
@@ -103,7 +112,7 @@ interface WikidataCandidate {
   qid: string;
   label: string;
   dob: string | null; // YYYY-MM-DD, only when precision is day-level
-  country: string;
+  countries: string[]; // every distinct P27 value seen for this entity
 }
 
 // Wikidata time precision 11 = day. Anything coarser (10=month, 9=year,
@@ -149,9 +158,15 @@ async function collectCandidates(): Promise<Map<string, WikidataCandidate[]>> {
       const key = normalizeName(label);
       const list = byName.get(key) ?? [];
       // Same person can appear once per (dob, country) combination the
-      // query cross-joins against (e.g. dual citizenship) - dedupe by QID.
-      if (!list.some((c) => c.qid === qid)) {
-        list.push({ qid, label, dob, country });
+      // query cross-joins against (e.g. dual citizenship) - merge into the
+      // same candidate by QID rather than dropping the extra country, so
+      // dual/multiple citizenship is visible to matchFighter instead of
+      // silently losing all but the first-seen value.
+      const existing = list.find((c) => c.qid === qid);
+      if (existing) {
+        if (!existing.countries.includes(country)) existing.countries.push(country);
+      } else {
+        list.push({ qid, label, dob, countries: [country] });
         byName.set(key, list);
       }
     }
@@ -172,7 +187,7 @@ interface MatchResult {
   fighterDob: string | null;
   confidence: MatchConfidence;
   reason: string;
-  candidates: Array<{ qid: string; label: string; dob: string | null; country: string }>;
+  candidates: Array<{ qid: string; label: string; dob: string | null; countries: string[] }>;
   // Only meaningful when confidence === "high"
   matchedQid: string | null;
   matchedName: string | null;
@@ -194,7 +209,7 @@ function matchFighter(
     fighterId: fighter.id,
     fighterName: fighter.name,
     fighterDob,
-    candidates: candidates.map((c) => ({ qid: c.qid, label: c.label, dob: c.dob, country: c.country })),
+    candidates: candidates.map((c) => ({ qid: c.qid, label: c.label, dob: c.dob, countries: c.countries })),
   };
 
   if (candidates.length === 0) {
@@ -244,13 +259,25 @@ function matchFighter(
   }
 
   const match = dobMatches[0];
+
+  if (match.countries.length > 1) {
+    return {
+      ...base,
+      confidence: "ambiguous",
+      reason: `matched entity has ${match.countries.length} distinct citizenships on file: ${match.countries.join(", ")}`,
+      matchedQid: null,
+      matchedName: null,
+      nationality: null,
+    };
+  }
+
   return {
     ...base,
     confidence: "high",
-    reason: "exact name match, day-precision DOB agrees, unique candidate",
+    reason: "exact name match, day-precision DOB agrees, unique candidate, single citizenship",
     matchedQid: match.qid,
     matchedName: match.label,
-    nationality: match.country,
+    nationality: match.countries[0],
   };
 }
 
@@ -270,6 +297,14 @@ function printCoverageReport(results: MatchResult[]) {
     unmatchedReasons.set(bucket, (unmatchedReasons.get(bucket) ?? 0) + 1);
   }
 
+  const ambiguousReasons = new Map<string, number>();
+  for (const r of ambiguous) {
+    const bucket = r.reason.includes("distinct citizenships")
+      ? "matched entity has multiple citizenships on file"
+      : "multiple distinct entities matched name + DOB";
+    ambiguousReasons.set(bucket, (ambiguousReasons.get(bucket) ?? 0) + 1);
+  }
+
   console.log("\n===== Coverage report =====");
   console.log(`Total fighters missing nationality: ${total}`);
   console.log(
@@ -277,6 +312,10 @@ function printCoverageReport(results: MatchResult[]) {
   );
   console.log(`  Ambiguous (skipped):                ${ambiguous.length}`);
   console.log(`  Unmatched (skipped):                 ${unmatched.length}`);
+  console.log("\nAmbiguous breakdown:");
+  for (const [reason, count] of ambiguousReasons) {
+    console.log(`  ${count.toString().padStart(5)}  ${reason}`);
+  }
   console.log("\nUnmatched breakdown:");
   for (const [reason, count] of unmatchedReasons) {
     console.log(`  ${count.toString().padStart(5)}  ${reason}`);
