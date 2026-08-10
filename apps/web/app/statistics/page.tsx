@@ -6,9 +6,13 @@ import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { EloDistributionChart } from "@/components/charts/elo-distribution-chart";
 
 export default async function StatisticsPage() {
-  let lb, elo;
+  let lb, elo, overview;
   try {
-    [lb, elo] = await Promise.all([api.stats.getLeaderboards(), api.stats.getEloStats()]);
+    [lb, elo, overview] = await Promise.all([
+      api.stats.getLeaderboards(),
+      api.stats.getEloStats(),
+      api.stats.getOverview(),
+    ]);
   } catch {
     return (
       <>
@@ -94,9 +98,9 @@ export default async function StatisticsPage() {
       <div className="mt-12">
         <h2 className="font-display text-heading-lg text-text-primary">Elo ratings</h2>
         <p className="mt-1 text-body-md text-text-secondary">
-          {elo.count.toLocaleString()} of every fighter in the database have a computed rating —
-          the rest have only an aggregate win/loss record with no fight-by-fight history to
-          compute one from.
+          {elo.count.toLocaleString()} of {overview.fighters.toLocaleString()} fighters have a
+          computed rating — the rest have only an aggregate win/loss record with no fight-by-fight
+          history to compute one from.
         </p>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
