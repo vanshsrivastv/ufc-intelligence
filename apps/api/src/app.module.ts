@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { LoggerModule } from "nestjs-pino";
@@ -9,10 +10,12 @@ import { FightsModule } from "./modules/fights/fights.module";
 import { RankingsModule } from "./modules/rankings/rankings.module";
 import { PredictionsModule } from "./modules/predictions/predictions.module";
 import { StatsModule } from "./modules/stats/stats.module";
+import { SyncModule } from "./modules/sync/sync.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === "production" ? "info" : "debug",
@@ -34,6 +37,7 @@ import { StatsModule } from "./modules/stats/stats.module";
     RankingsModule,
     PredictionsModule,
     StatsModule,
+    SyncModule,
   ],
   providers: [
     {
