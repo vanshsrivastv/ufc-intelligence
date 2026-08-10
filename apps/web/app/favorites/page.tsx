@@ -26,6 +26,7 @@ export default async function FavoritesPage() {
     photoLicense: f.fighter.photoLicense,
     photoLicenseUrl: f.fighter.photoLicenseUrl,
     rank: null,
+    elo: f.fighter.eloRating,
     record: {
       wins: f.fighter.wins,
       losses: f.fighter.losses,
