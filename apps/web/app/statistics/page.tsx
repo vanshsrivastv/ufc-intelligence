@@ -144,7 +144,7 @@ export default async function StatisticsPage() {
                   <span className="text-body-md text-text-primary">{f.name}</span>
                 </div>
                 <span className="text-body-md font-medium tabular-nums text-gold-300">
-                  {Math.round(f.elo)}
+                  {f.elo}
                 </span>
               </Link>
             ))}

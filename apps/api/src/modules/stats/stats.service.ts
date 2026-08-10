@@ -406,13 +406,26 @@ export class StatsService {
       count,
       average,
       median,
-      leaderboard: leaderboard.map((f) => ({ id: f.id, slug: f.slug, name: f.name, elo: f.eloRating! })),
+      // Rounded here rather than at each render call site - individual
+      // fighter Elo is shown as a whole number everywhere else in the
+      // app (fighter card, detail page), and leaving it unrounded here
+      // is exactly what let a raw "1837.368415702674" leak into the
+      // leaderboard while the division list right below it (rounded
+      // explicitly at render time) showed a clean 1837 for the same
+      // fighter - same underlying value, inconsistent only because the
+      // rounding wasn't happening in one shared place.
+      leaderboard: leaderboard.map((f) => ({
+        id: f.id,
+        slug: f.slug,
+        name: f.name,
+        elo: Math.round(f.eloRating!),
+      })),
       distribution,
       topByDivision: topByDivision.map((f) => ({
         id: f.id,
         slug: f.slug,
         name: f.name,
-        elo: f.eloRating!,
+        elo: Math.round(f.eloRating!),
         weightClass: f.weightClass!.name,
       })),
     };
