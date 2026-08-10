@@ -1,7 +1,13 @@
 import { Type } from "class-transformer";
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
-export type FighterSort = "documented_first" | "name_asc" | "recent" | "oldest";
+export type FighterSort =
+  | "documented_first"
+  | "name_asc"
+  | "recent"
+  | "oldest"
+  | "elo_desc"
+  | "elo_asc";
 export type FighterGender = "men" | "women";
 export type FighterActivity = "active" | "inactive";
 
@@ -41,7 +47,7 @@ export class ListFightersDto {
   documentedOnly?: boolean;
 
   @IsOptional()
-  @IsIn(["documented_first", "name_asc", "recent", "oldest"])
+  @IsIn(["documented_first", "name_asc", "recent", "oldest", "elo_desc", "elo_asc"])
   sort?: FighterSort = "documented_first";
 
   @IsOptional()

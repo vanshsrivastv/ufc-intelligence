@@ -64,11 +64,21 @@ export class FightersService {
           ? [{ createdAt: "asc" as const }]
           : query.sort === "name_asc"
             ? [{ name: "asc" as const }]
-            : // documented_first (the default): fighters with real fight-by-fight
-              // history surface first, most recently active among them first;
-              // the ~1,873 aggregate-only fighters sort to the very end instead
-              // of being interleaved alphabetically with everyone else.
-              [{ lastFightDate: { sort: "desc" as const, nulls: "last" as const } }, { name: "asc" as const }];
+            : // elo_desc/elo_asc: nulls: "last" regardless of direction - a
+              // fighter with no computed Elo isn't "the lowest rated," they're
+              // unrated, and have to sort to the bottom either way rather than
+              // landing above real ratings on elo_asc the way a default
+              // database value would (the whole reason eloRating is nullable
+              // rather than defaulting to 1500 - see schema.prisma).
+              query.sort === "elo_desc"
+              ? [{ eloRating: { sort: "desc" as const, nulls: "last" as const } }, { name: "asc" as const }]
+              : query.sort === "elo_asc"
+                ? [{ eloRating: { sort: "asc" as const, nulls: "last" as const } }, { name: "asc" as const }]
+                : // documented_first (the default): fighters with real fight-by-fight
+                  // history surface first, most recently active among them first;
+                  // the ~1,873 aggregate-only fighters sort to the very end instead
+                  // of being interleaved alphabetically with everyone else.
+                  [{ lastFightDate: { sort: "desc" as const, nulls: "last" as const } }, { name: "asc" as const }];
 
     const [rows, total] = await Promise.all([
       prisma.fighter.findMany({

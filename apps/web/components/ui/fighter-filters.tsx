@@ -8,6 +8,8 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "name_asc", label: "Alphabetical (A–Z)" },
   { value: "recent", label: "Recently added" },
   { value: "oldest", label: "Oldest added" },
+  { value: "elo_desc", label: "Elo: Highest → Lowest" },
+  { value: "elo_asc", label: "Elo: Lowest → Highest" },
 ];
 
 export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDto[] }) {
