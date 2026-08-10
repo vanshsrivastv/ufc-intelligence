@@ -33,7 +33,14 @@ export class SyncService implements OnModuleInit {
   // packages/database/prisma/sync-results.ts fills in real fight results
   // for events that have already happened - the gap that let a card
   // which finished days earlier sit showing every fight as "Scheduled"
-  // with no result.
+  // with no result. compute-elo.ts runs right after, in the same tick,
+  // for the same reason: it's a full recompute over every completed
+  // fight, so it was silently going stale the moment sync-results
+  // started running on its own schedule and nothing re-triggered it.
+  // compute-elo.ts is a fast, local, no-network DB walk (no 15s crawl-
+  // delay the way the scrapers have), so running it every hour
+  // regardless of whether sync-results actually changed anything is
+  // cheap - simpler than trying to detect "did anything change" first.
   @Cron(CronExpression.EVERY_HOUR)
   async syncResults() {
     if (this.syncRunning) {
@@ -42,14 +49,21 @@ export class SyncService implements OnModuleInit {
     }
 
     this.syncRunning = true;
-    this.logger.log("Starting scheduled fight-result sync...");
     try {
+      this.logger.log("Starting scheduled fight-result sync...");
       const { stdout, stderr } = await execAsync(
         "npm run --workspace=@ufc-intelligence/database sync-results",
         { maxBuffer: 10 * 1024 * 1024 },
       );
       if (stdout.trim()) this.logger.log(stdout.trim());
       if (stderr.trim()) this.logger.warn(stderr.trim());
+
+      this.logger.log("Starting scheduled Elo recompute...");
+      const elo = await execAsync("npm run --workspace=@ufc-intelligence/database compute-elo", {
+        maxBuffer: 10 * 1024 * 1024,
+      });
+      if (elo.stdout.trim()) this.logger.log(elo.stdout.trim());
+      if (elo.stderr.trim()) this.logger.warn(elo.stderr.trim());
     } catch (err) {
       this.logger.error(`Scheduled fight-result sync failed: ${(err as Error).message}`);
     } finally {

@@ -7,9 +7,15 @@
 // Always a full recompute, not an incremental update - the whole point of
 // Elo is that it's order-dependent, so "recompute everything" is the only
 // version of this that can't drift from a bug in an incremental update
-// path. Run after any batch of new results lands (see sync-results.ts) -
-// there's no trigger wiring this up automatically, it's a deliberate
-// manual step, same as re-running scrape-upcoming.ts itself.
+// path. Chained after sync-results.ts in SyncService, so it reruns
+// automatically any time new results land.
+//
+// Resets every fighter's eloRating to null before writing anything, then
+// only sets a real value for a fighter this walk actually reaches (has
+// at least one completed fight). That's what keeps eloRating meaning
+// "unrated, no fight history to compute from" for everyone else, instead
+// of silently leaving a stale or default value that looks like a real
+// rating.
 import { PrismaClient, FightMethod } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -69,6 +75,11 @@ async function main() {
     ratings.set(fighterAId, newEloA);
     ratings.set(fighterBId, newEloB);
   }
+
+  // Reset first so a fighter who no longer appears in the walk (e.g. all
+  // their fight rows got cleaned up as bad data) doesn't keep a stale
+  // rating from a previous run sitting there looking current.
+  await prisma.fighter.updateMany({ data: { eloRating: null } });
 
   console.log(`Writing eloRating for ${ratings.size} fighter(s) who have at least one completed fight.`);
   for (const [fighterId, elo] of ratings) {

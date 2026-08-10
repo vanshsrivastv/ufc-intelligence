@@ -66,7 +66,7 @@ interface FighterModelInputs {
   id: string;
   slug: string;
   name: string;
-  eloRating: number;
+  eloRating: number | null;
   totalFights: number;
   winRate: number;
   recentFormRate: number | null;
@@ -247,7 +247,15 @@ export class PredictionsService {
   private buildDiffs(a: FighterModelInputs, b: FighterModelInputs): FeatureDiffs {
     const diff = (x: number | null, y: number | null) => (x === null || y === null ? null : x - y);
     const diffs: Record<BaseNumericFeature, number | null> = {
-      elo_diff: a.eloRating - b.eloRating,
+      // eloRating is now nullable ("no completed fights to compute it
+      // from" - see schema.prisma), so this needs the same diff() null-
+      // guard every other optional feature already uses. The model
+      // itself has no elo_diff_missing weight (every fighter had some
+      // Elo, even if uninformative, at training time), but
+      // evaluateMatchup already treats any null diff as a neutral 0
+      // before standardizing - the same safe degrade every other
+      // feature here relies on, not a special case for this one.
+      elo_diff: diff(a.eloRating, b.eloRating),
       experience_diff: a.totalFights - b.totalFights,
       win_rate_diff: a.winRate - b.winRate,
       recent_form_diff: diff(a.recentFormRate, b.recentFormRate),

@@ -104,13 +104,16 @@ model Fighter {
   // compute-elo.ts (same reasoning as lastFightDate above), then
   // recomputed whenever new results land (see sync-results.ts).
   //
-  // Stays frozen at the 1500 default forever for any fighter whose fight
-  // rows never actually got imported (a real, known gap in the source
-  // data - some fighters only have a career win/loss total with no
-  // fight-by-fight breakdown; see ml/README.md's "Known limitation:
-  // sparse fighter records"). Not a bug in this script - there's
-  // nothing to walk for those fighters.
-  eloRating Float @default(1500)
+  // Nullable, no default - null means "not computed" (no completed fight
+  // rows to walk for this fighter; a real, known gap in the source data,
+  // see ml/README.md's "Known limitation: sparse fighter records"), and
+  // has to stay distinguishable from a genuine ~1500 rating a fighter
+  // earned from actual fights. A non-nullable column with a 1500 default
+  // couldn't tell those two states apart - every untouched fighter would
+  // silently look identical to one who'd fought their way to a real
+  // 1500. compute-elo.ts resets every fighter to null before recomputing,
+  // so this is only ever non-null for a fighter it actually walked.
+  eloRating Float?
 
   weightClassId String?
   weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
