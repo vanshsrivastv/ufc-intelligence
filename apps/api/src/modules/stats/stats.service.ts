@@ -330,6 +330,94 @@ export class StatsService {
     };
   }
 
+  // Elo section for the Statistics page - deliberately scoped to what's
+  // meaningful from data we actually have: a leaderboard, average/median,
+  // a distribution for the chart, and the top-rated fighter per division.
+  // Not "fighters above threshold X" as a separate stat - the
+  // distribution buckets already answer that without a second, redundant
+  // metric.
+  async getEloStats() {
+    const rated = await prisma.fighter.findMany({
+      where: { eloRating: { not: null } },
+      select: { eloRating: true },
+    });
+    const values = rated.map((f) => f.eloRating!).sort((a, b) => a - b);
+    const count = values.length;
+    const average = count > 0 ? values.reduce((s, v) => s + v, 0) / count : null;
+    const median =
+      count === 0
+        ? null
+        : count % 2 === 1
+          ? values[(count - 1) / 2]
+          : (values[count / 2 - 1] + values[count / 2]) / 2;
+
+    const leaderboard = await prisma.fighter.findMany({
+      where: { eloRating: { not: null } },
+      orderBy: { eloRating: "desc" },
+      take: 10,
+      select: { id: true, slug: true, name: true, eloRating: true },
+    });
+
+    // Fixed-width buckets rather than a fixed bucket count - a fixed
+    // count would make each bucket's width (and therefore what a spike
+    // means) silently shift every time compute-elo.ts reruns and the
+    // min/max drift, which would make the chart misleading to compare
+    // against itself over time.
+    const BUCKET_SIZE = 100;
+    const bucketCounts = new Map<number, number>();
+    for (const v of values) {
+      const bucketStart = Math.floor(v / BUCKET_SIZE) * BUCKET_SIZE;
+      bucketCounts.set(bucketStart, (bucketCounts.get(bucketStart) ?? 0) + 1);
+    }
+    const distribution = [...bucketCounts.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([bucketStart, fighterCount]) => ({
+        bucketStart,
+        bucketLabel: `${bucketStart}–${bucketStart + BUCKET_SIZE - 1}`,
+        count: fighterCount,
+      }));
+
+    // Top-rated fighter per division - every rated fighter with a known
+    // weight class, sorted once, then first-seen-per-division kept (same
+    // in-memory "first after sorting wins" pattern getChampions/
+    // mostTitleFights already use elsewhere in this file).
+    const ratedWithDivision = await prisma.fighter.findMany({
+      where: { eloRating: { not: null }, weightClassId: { not: null } },
+      orderBy: { eloRating: "desc" },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        eloRating: true,
+        weightClassId: true,
+        weightClass: { select: { name: true } },
+      },
+    });
+    const seenDivisions = new Set<string>();
+    const topByDivision: typeof ratedWithDivision = [];
+    for (const f of ratedWithDivision) {
+      if (f.weightClassId && !seenDivisions.has(f.weightClassId)) {
+        seenDivisions.add(f.weightClassId);
+        topByDivision.push(f);
+      }
+    }
+
+    return {
+      count,
+      average,
+      median,
+      leaderboard: leaderboard.map((f) => ({ id: f.id, slug: f.slug, name: f.name, elo: f.eloRating! })),
+      distribution,
+      topByDivision: topByDivision.map((f) => ({
+        id: f.id,
+        slug: f.slug,
+        name: f.name,
+        elo: f.eloRating!,
+        weightClass: f.weightClass!.name,
+      })),
+    };
+  }
+
   private async methodLeaderboard(methods: string[], key: string) {
     const groups = await prisma.fight.groupBy({
       by: ["winnerId"],

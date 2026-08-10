@@ -16,7 +16,7 @@ interface FightersSearchParams {
   activity?: "active" | "inactive";
   championOnly?: string;
   documentedOnly?: string;
-  sort?: "documented_first" | "name_asc" | "recent" | "oldest";
+  sort?: "documented_first" | "name_asc" | "recent" | "oldest" | "elo_desc" | "elo_asc";
 }
 
 export default async function FightersPage({

@@ -20,6 +20,11 @@ export class StatsController {
     return this.statsService.getLeaderboards();
   }
 
+  @Get("elo")
+  getEloStats() {
+    return this.statsService.getEloStats();
+  }
+
   @Get("dashboard")
   getDashboard() {
     return this.statsService.getDashboard();

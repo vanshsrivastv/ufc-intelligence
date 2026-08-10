@@ -62,6 +62,7 @@ export interface LeaderboardEntry {
   submissions?: number;
   streak?: number;
   titleFights?: number;
+  elo?: number;
   accuracyPct?: number;
   age?: number;
   fights?: number;
@@ -121,6 +122,31 @@ export interface DashboardData {
   trendingFighters: TrendingFighter[];
 }
 
+export interface EloDivisionLeader {
+  id: string;
+  slug: string;
+  name: string;
+  elo: number;
+  weightClass: string;
+}
+
+export interface EloDistributionBucket {
+  bucketStart: number;
+  bucketLabel: string;
+  count: number;
+}
+
+export interface EloStats {
+  // Fighters with a computed rating - never all 4,520, see
+  // Fighter.eloRating's schema comment.
+  count: number;
+  average: number | null;
+  median: number | null;
+  leaderboard: LeaderboardEntry[];
+  distribution: EloDistributionBucket[];
+  topByDivision: EloDivisionLeader[];
+}
+
 export const api = {
   fighters: {
     list: (params?: {
@@ -130,7 +156,7 @@ export const api = {
       activity?: "active" | "inactive";
       championOnly?: boolean;
       documentedOnly?: boolean;
-      sort?: "documented_first" | "name_asc" | "recent" | "oldest";
+      sort?: "documented_first" | "name_asc" | "recent" | "oldest" | "elo_desc" | "elo_asc";
       page?: number;
       pageSize?: number;
     }) => {
@@ -190,5 +216,6 @@ export const api = {
     getChampions: () => request<ChampionSummary[]>("/stats/champions"),
     getLeaderboards: () => request<Leaderboards>("/stats/leaderboards"),
     getDashboard: () => request<DashboardData>("/stats/dashboard"),
+    getEloStats: () => request<EloStats>("/stats/elo"),
   },
 };
