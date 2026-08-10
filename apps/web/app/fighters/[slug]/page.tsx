@@ -74,6 +74,35 @@ export default async function FighterDetailPage({
             {record} {fighter.weightClass ? `· ${fighter.weightClass.name}` : ""}
           </p>
 
+          {/* Omitted entirely when null (insufficient fight history) -
+              see FighterCard for the same reasoning: no placeholder, no
+              default 1500, nothing that could be mistaken for a real
+              rating. */}
+          {fighter.elo !== null && (
+            <div className="mt-3 inline-flex items-center gap-4 rounded-md border border-border bg-bg-elevated px-4 py-2.5">
+              <div>
+                <p className="text-caption text-text-secondary">Elo rating</p>
+                <p className="font-display text-heading-sm tabular-nums text-gold-300">
+                  {Math.round(fighter.elo)}
+                </p>
+              </div>
+              {fighter.eloRank !== null && (
+                <div className="border-l border-border pl-4">
+                  <p className="text-caption text-text-secondary">Elo rank</p>
+                  <p className="font-display text-heading-sm tabular-nums text-text-primary">
+                    #{fighter.eloRank}
+                  </p>
+                </div>
+              )}
+              <div className="border-l border-border pl-4">
+                <p className="text-caption text-text-secondary">Fights</p>
+                <p className="font-display text-heading-sm tabular-nums text-text-primary">
+                  {fighter.eloFightCount}
+                </p>
+              </div>
+            </div>
+          )}
+
           <Link
             href={`/compare?fighters=${fighter.slug}`}
             className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-text-secondary transition-standard hover:border-gold-500 hover:text-gold-300"

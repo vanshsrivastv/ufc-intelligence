@@ -33,9 +33,20 @@ export function FighterCard({
           &ldquo;{fighter.nickname}&rdquo;
         </p>
       )}
-      <p className="mt-0.5 text-xs text-text-secondary">
-        {record} {fighter.weightClass ? `· ${fighter.weightClass.name}` : ""}
-      </p>
+      <div className="mt-0.5 flex items-baseline justify-between gap-2">
+        <p className="truncate text-xs text-text-secondary">
+          {record} {fighter.weightClass ? `· ${fighter.weightClass.name}` : ""}
+        </p>
+        {/* Omitted entirely when null (insufficient fight history) rather
+            than showing a placeholder - a dash here would sit right next
+            to a real record and could read as "we don't know," when the
+            truth is closer to "there's nothing to compute this from." */}
+        {fighter.elo !== null && (
+          <p className="shrink-0 text-xs font-medium tabular-nums text-text-primary">
+            Elo {Math.round(fighter.elo)}
+          </p>
+        )}
+      </div>
 
       {fighter.rank !== null && (
         <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
