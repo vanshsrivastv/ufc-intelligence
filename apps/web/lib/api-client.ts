@@ -204,6 +204,8 @@ export const api = {
     listWeightClasses: () => request<WeightClassDto[]>("/rankings/weight-classes"),
     list: (weightClass: string) =>
       request<RankingEntryDto[]>(`/rankings?weightClass=${encodeURIComponent(weightClass)}`),
+    listByElo: (weightClass: string) =>
+      request<RankingEntryDto[]>(`/rankings/elo?weightClass=${encodeURIComponent(weightClass)}`),
   },
   predictions: {
     getMatchup: (fighterA: string, fighterB: string) =>

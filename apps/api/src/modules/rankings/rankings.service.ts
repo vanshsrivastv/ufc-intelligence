@@ -50,7 +50,7 @@ export class RankingsService {
     const entries = Array.from(latestPerFighter.values()).sort((a, b) => a.rank - b.rank);
     const fighterIds = entries.map((e) => e.fighterId);
     const statusByFighter = await this.computeActivityStatus(fighterIds);
-    const eloRankByFighter = await this.computeEloRanksForDivision(weightClass.id);
+    const eloRankByFighter = await this.computeEloRanksForDivision(weightClass.id, fighterIds);
 
     return entries.map((row) => ({
       rank: row.rank,
@@ -61,17 +61,73 @@ export class RankingsService {
     }));
   }
 
+  // Rankings purely by Elo, no official ranking involved - "#1 Elo" isn't
+  // necessarily the champion, so this deliberately does NOT reuse rank 0
+  // for the top spot the way official rankings do (that convention means
+  // "holds the title," which Elo has no way to know).
+  async listByElo(query: ListRankingsDto): Promise<RankingEntryDto[]> {
+    if (!query.weightClass) return [];
+
+    const weightClass = await prisma.weightClass.findUnique({
+      where: { name: query.weightClass },
+    });
+    if (!weightClass) {
+      throw new NotFoundException(`Weight class "${query.weightClass}" not found`);
+    }
+
+    const rated = await prisma.fighter.findMany({
+      where: { weightClassId: weightClass.id, eloRating: { not: null } },
+      include: { weightClass: true },
+      orderBy: { eloRating: "desc" },
+      take: 15,
+    });
+
+    const fighterIds = rated.map((f) => f.id);
+    const statusByFighter = await this.computeActivityStatus(fighterIds);
+
+    return rated.map((fighter, i) => ({
+      rank: i + 1,
+      fighter: toSummaryDto(fighter),
+      effectiveDate: new Date().toISOString(),
+      status: statusByFighter.get(fighter.id) ?? "inactive",
+      eloRank: i + 1,
+    }));
+  }
+
   // Step 6 of the Elo plan: where would Elo place each officially-ranked
   // fighter within their own division? Scoped to the whole division's
   // rated fighters, not just the other 15 names on the official list -
   // "#3 by Elo" should mean third overall in the division, not third
   // among a pre-selected set.
-  private async computeEloRanksForDivision(weightClassId: string): Promise<Map<string, number>> {
-    const rated = await prisma.fighter.findMany({
-      where: { weightClassId, eloRating: { not: null } },
-      orderBy: { eloRating: "desc" },
-      select: { id: true },
-    });
+  //
+  // officialFighterIds is unioned in on top of the weightClassId match,
+  // not just an extra filter - Fighter.weightClassId reflects a
+  // fighter's career-majority division, which can differ from the
+  // division they're CURRENTLY officially ranked in for anyone who
+  // recently moved up/down in weight. Confirmed live: Islam Makhachev's
+  // fighter record still says Lightweight (most of his career), but the
+  // Ranking table correctly has him as Welterweight champion - scoping
+  // by weightClassId alone silently excluded him from his own division's
+  // Elo pool, which is why his Elo rank wasn't showing up at all.
+  private async computeEloRanksForDivision(
+    weightClassId: string,
+    officialFighterIds: string[],
+  ): Promise<Map<string, number>> {
+    const [byDivision, byOfficialRanking] = await Promise.all([
+      prisma.fighter.findMany({
+        where: { weightClassId, eloRating: { not: null } },
+        select: { id: true, eloRating: true },
+      }),
+      prisma.fighter.findMany({
+        where: { id: { in: officialFighterIds }, eloRating: { not: null } },
+        select: { id: true, eloRating: true },
+      }),
+    ]);
+
+    const byId = new Map(byDivision.map((f) => [f.id, f]));
+    for (const f of byOfficialRanking) byId.set(f.id, f);
+
+    const rated = [...byId.values()].sort((a, b) => b.eloRating! - a.eloRating!);
     const eloRankByFighter = new Map<string, number>();
     rated.forEach((f, i) => eloRankByFighter.set(f.id, i + 1));
     return eloRankByFighter;

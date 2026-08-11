@@ -15,4 +15,9 @@ export class RankingsController {
   list(@Query() query: ListRankingsDto) {
     return this.rankingsService.list(query);
   }
+
+  @Get("elo")
+  listByElo(@Query() query: ListRankingsDto) {
+    return this.rankingsService.listByElo(query);
+  }
 }
