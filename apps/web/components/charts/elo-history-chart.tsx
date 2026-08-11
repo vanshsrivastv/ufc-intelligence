@@ -10,7 +10,10 @@ export function EloHistoryChart({ history }: { history: { date: string; elo: num
   if (history.length < 2) return null;
 
   const data = history.map((h) => ({
-    date: new Date(h.date).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+    // Full 4-digit year, not "2-digit" - "Mar 24" reads as "March 24th"
+    // (a day), not "March 2024" (a year), which is exactly the
+    // confusion a 2-digit year next to a month abbreviation invites.
+    date: new Date(h.date).toLocaleDateString("en-US", { month: "short", year: "numeric" }),
     elo: Math.round(h.elo),
   }));
 
