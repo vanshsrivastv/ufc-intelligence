@@ -60,6 +60,23 @@ export function RankingsBoard({
         </p>
       )}
 
+      {/* Official rankings are a hand-maintained snapshot (see
+          seed-rankings.ts), not a live feed - re-run only when someone
+          updates it. Worth saying plainly now that this board also shows
+          an Elo-rank comparison next to each fighter: that comparison is
+          only as fresh as this date, not a live-vs-live comparison. */}
+      {rankings[0]?.effectiveDate && (
+        <p className="mt-2 text-[11px] text-text-muted">
+          Official rankings as of{" "}
+          {new Date(rankings[0].effectiveDate).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+          . Elo updates continuously as new results sync.
+        </p>
+      )}
+
       <div
         className={`mt-8 divide-y divide-border rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard ${
           visible && !isPending ? "opacity-100" : "opacity-0"
@@ -105,7 +122,17 @@ function RankingRow({ entry }: { entry: RankingEntryDto }) {
         </div>
       </div>
 
-      <StatusBadge status={entry.status} />
+      <div className="flex items-center gap-4">
+        {/* Omitted entirely when null (no computed Elo) rather than a
+            placeholder - same reasoning as everywhere else Elo shows up
+            in this app. */}
+        {entry.eloRank !== null && (
+          <span className="text-[11px] text-text-secondary">
+            Elo <span className="font-medium text-text-primary">#{entry.eloRank}</span>
+          </span>
+        )}
+        <StatusBadge status={entry.status} />
+      </div>
     </Link>
   );
 }

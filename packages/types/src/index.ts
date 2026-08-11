@@ -164,6 +164,13 @@ export interface RankingEntryDto {
   // Derived from fight recency relative to the dataset's own most recent
   // event (not wall-clock time) — see RankingsService.computeActivityStatus.
   status: "active" | "inactive";
+  // This fighter's position (1 = highest) among every fighter in this
+  // same division with a computed Elo rating - not just the other
+  // officially-ranked fighters, so it reflects where Elo would actually
+  // place them among the full division, not just relative to the other
+  // 15 names on this list. Null when this fighter has no Elo rating to
+  // rank by.
+  eloRank: number | null;
 }
 
 export interface FightStatRoundDto {

@@ -50,13 +50,31 @@ export class RankingsService {
     const entries = Array.from(latestPerFighter.values()).sort((a, b) => a.rank - b.rank);
     const fighterIds = entries.map((e) => e.fighterId);
     const statusByFighter = await this.computeActivityStatus(fighterIds);
+    const eloRankByFighter = await this.computeEloRanksForDivision(weightClass.id);
 
     return entries.map((row) => ({
       rank: row.rank,
       fighter: toSummaryDto(row.fighter),
       effectiveDate: row.effectiveDate.toISOString(),
       status: statusByFighter.get(row.fighterId) ?? "inactive",
+      eloRank: eloRankByFighter.get(row.fighterId) ?? null,
     }));
+  }
+
+  // Step 6 of the Elo plan: where would Elo place each officially-ranked
+  // fighter within their own division? Scoped to the whole division's
+  // rated fighters, not just the other 15 names on the official list -
+  // "#3 by Elo" should mean third overall in the division, not third
+  // among a pre-selected set.
+  private async computeEloRanksForDivision(weightClassId: string): Promise<Map<string, number>> {
+    const rated = await prisma.fighter.findMany({
+      where: { weightClassId, eloRating: { not: null } },
+      orderBy: { eloRating: "desc" },
+      select: { id: true },
+    });
+    const eloRankByFighter = new Map<string, number>();
+    rated.forEach((f, i) => eloRankByFighter.set(f.id, i + 1));
+    return eloRankByFighter;
   }
 
   // "Active" is judged relative to the most recent event date in the whole
