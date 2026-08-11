@@ -39,7 +39,7 @@ export function HorizontalScroller({ children }: { children: React.ReactNode }) 
   function scrollBy(direction: 1 | -1) {
     const el = ref.current;
     if (!el) return;
-    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
+    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "instant" as ScrollBehavior });
   }
 
   return (
