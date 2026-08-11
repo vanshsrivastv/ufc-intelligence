@@ -9,6 +9,7 @@ import {
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
+import { HorizontalScroller } from "@/components/ui/horizontal-scroller";
 
 export default async function HomePage() {
   let overview: StatsOverview = { fighters: 0, fights: 0, events: 0, weightClasses: 0 };
@@ -65,7 +66,7 @@ export default async function HomePage() {
         <h2 className="font-display text-heading-md text-text-primary">
           Current champions
         </h2>
-        <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+        <HorizontalScroller>
           {champions.map((c) => (
             <Link
               key={c.fighterId}
@@ -89,7 +90,7 @@ export default async function HomePage() {
               No champions recorded yet.
             </p>
           )}
-        </div>
+        </HorizontalScroller>
       </section>
         </>
       )}
@@ -162,7 +163,7 @@ export default async function HomePage() {
             <p className="mt-1 text-xs text-text-muted">
               Top-3-ranked fighters with the most recent fight activity.
             </p>
-            <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
+            <HorizontalScroller>
               {dashboard.trendingFighters.map((f) => (
                 <Link
                   key={f.slug}
@@ -180,7 +181,7 @@ export default async function HomePage() {
                   </p>
                 </Link>
               ))}
-            </div>
+            </HorizontalScroller>
           </section>
         )}
 

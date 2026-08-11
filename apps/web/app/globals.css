@@ -36,3 +36,18 @@
     outline-offset: 2px;
   }
 }
+
+@layer utilities {
+  /* Used by HorizontalScroller - the native scrollbar it'd otherwise show
+     reads as a raw, unstyled browser default next to this app's glass/
+     gold treatment everywhere else; the prev/next buttons are the
+     intended affordance instead. Content is still fully scrollable by
+     drag/trackpad/wheel, just without the visible track. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
