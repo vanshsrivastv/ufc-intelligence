@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { api } from "@/lib/api-client";
 import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
+import { EloHistoryChart } from "@/components/charts/elo-history-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PhotoAttribution } from "@/components/ui/photo-attribution";
@@ -136,6 +137,17 @@ export default async function FighterDetailPage({
             <Stat label="Nationality" value={fighter.nationality ?? "—"} />
             <Stat label="Submission avg / 15 min" value={formatRate(fighter.careerStats.submissionAvgPer15Min)} />
           </div>
+
+          {fighter.eloHistory.length >= 2 && (
+            <div className="mt-12">
+              <h2 className="font-display text-heading-md text-text-primary">
+                Elo history
+              </h2>
+              <div className="mt-4 rounded-lg border border-border bg-bg-elevated p-4">
+                <EloHistoryChart history={fighter.eloHistory} />
+              </div>
+            </div>
+          )}
 
           <div className="mt-12">
             <h2 className="font-display text-heading-md text-text-primary">

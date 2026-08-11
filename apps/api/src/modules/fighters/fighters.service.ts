@@ -127,6 +127,18 @@ export class FightersService {
         ? (await prisma.fighter.count({ where: { eloRating: { gt: fighter.eloRating } } })) + 1
         : null;
 
+    // Empty for elo: null rather than a separate query - a fighter with
+    // no current rating has no history rows either, since both are
+    // written together by the same compute-elo.ts walk.
+    const eloHistory =
+      fighter.eloRating !== null
+        ? await prisma.eloHistory.findMany({
+            where: { fighterId: fighter.id },
+            orderBy: { eventDate: "asc" },
+            select: { eventDate: true, eloAfter: true },
+          })
+        : [];
+
     // Career totals are computed from per-fight totals (round = 0), not
     // recomputed from per-round rows here — that aggregation belongs to the
     // ingestion module's post-processing step (architecture.md §8), which
@@ -190,6 +202,7 @@ export class FightersService {
       elo: fighter.eloRating,
       eloRank,
       eloFightCount: completedFights.length,
+      eloHistory: eloHistory.map((h) => ({ date: h.eventDate.toISOString(), elo: h.eloAfter })),
       record: {
         wins: fighter.wins,
         losses: fighter.losses,

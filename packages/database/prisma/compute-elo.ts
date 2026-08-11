@@ -41,10 +41,18 @@ function updateElo(eloA: number, eloB: number, actualA: number, isFinish: boolea
   return [eloA + delta, eloB - delta];
 }
 
+interface HistoryRow {
+  fighterId: string;
+  fightId: string;
+  eventDate: Date;
+  eloAfter: number;
+}
+
 async function main() {
   const fights = await prisma.fight.findMany({
     where: { status: "COMPLETED" },
     select: {
+      id: true,
       fighterAId: true,
       fighterBId: true,
       winnerId: true,
@@ -58,9 +66,10 @@ async function main() {
 
   const ratings = new Map<string, number>();
   const rating = (id: string) => ratings.get(id) ?? ELO_BASE;
+  const history: HistoryRow[] = [];
 
   for (const fight of fights) {
-    const { fighterAId, fighterBId, winnerId, method } = fight;
+    const { id: fightId, fighterAId, fighterBId, winnerId, method, event } = fight;
     const eloA = rating(fighterAId);
     const eloB = rating(fighterBId);
 
@@ -74,6 +83,11 @@ async function main() {
     const [newEloA, newEloB] = updateElo(eloA, eloB, actualA, isFinish);
     ratings.set(fighterAId, newEloA);
     ratings.set(fighterBId, newEloB);
+
+    history.push(
+      { fighterId: fighterAId, fightId, eventDate: event.date, eloAfter: newEloA },
+      { fighterId: fighterBId, fightId, eventDate: event.date, eloAfter: newEloB },
+    );
   }
 
   // Reset first so a fighter who no longer appears in the walk (e.g. all
@@ -85,6 +99,13 @@ async function main() {
   for (const [fighterId, elo] of ratings) {
     await prisma.fighter.update({ where: { id: fighterId }, data: { eloRating: elo } });
   }
+
+  // Full rebuild, not incremental - see the file header comment for why.
+  // deleteMany with no where clause + createMany is one round trip each,
+  // versus per-row upserts for ~2x the fight count.
+  console.log(`Rewriting elo_history (${history.length} row(s))...`);
+  await prisma.eloHistory.deleteMany({});
+  await prisma.eloHistory.createMany({ data: history });
 
   console.log("Done.");
 }

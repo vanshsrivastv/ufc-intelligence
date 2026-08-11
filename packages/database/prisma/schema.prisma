@@ -124,6 +124,7 @@ model Fighter {
   fightStats    FightStat[]
   rankings      Ranking[]
   favoritedBy   UserFavorite[]
+  eloHistory    EloHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -176,6 +177,7 @@ model Fight {
 
   stats       FightStat[]
   predictions Prediction[]
+  eloHistory  EloHistory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -184,6 +186,40 @@ model Fight {
   @@index([fighterAId])
   @@index([fighterBId])
   @@map("fights")
+}
+
+// One row per (fighter, fight) - the fighter's rating immediately after
+// that fight resolved, in chronological order. Step 7 of the Elo plan:
+// lets the fighter detail page draw a real rating-over-time chart
+// without recomputing a fighter's whole history on every page load.
+//
+// Written by compute-elo.ts, which already walks every completed fight
+// in event-date order to produce the current eloRating - capturing the
+// intermediate state at each step costs almost nothing extra over
+// keeping only the final value the way that script did before this.
+// Like eloRating itself, this table is fully rebuilt on every run
+// (deleted and reinserted), not incrementally updated - same reasoning
+// the header comment on eloRating already gives: Elo is order-dependent,
+// so "recompute everything" is the only version that can't silently
+// drift from a bug in an incremental path.
+model EloHistory {
+  id String @id @default(cuid())
+
+  fighterId String
+  fighter   Fighter @relation(fields: [fighterId], references: [id], onDelete: Cascade)
+
+  fightId String
+  fight   Fight  @relation(fields: [fightId], references: [id], onDelete: Cascade)
+
+  // Denormalized from fight.event.date - avoids a join through Fight and
+  // Event just to sort/chart this table, which is the whole point of it
+  // existing instead of deriving history on demand at read time.
+  eventDate DateTime
+  eloAfter  Float
+
+  @@unique([fighterId, fightId])
+  @@index([fighterId, eventDate])
+  @@map("elo_history")
 }
 
 model FightStat {

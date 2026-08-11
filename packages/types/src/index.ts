@@ -54,6 +54,12 @@ export interface FighterDetailDto extends FighterSummaryDto {
   // from - same count as recentFights would be if it weren't capped at
   // 5. 0 for a fighter with elo: null (nothing to have computed it from).
   eloFightCount: number;
+  // Rating after each completed fight, chronological (oldest first) -
+  // step 7 of the Elo plan. Empty for a fighter with elo: null. One
+  // entry per fight, not a fixed-size window - eloFightCount above
+  // already gives the total, so this array's own length doubles as
+  // that count.
+  eloHistory: { date: string; elo: number }[];
   careerStats: FighterCareerStats;
   // Completed fights only, most recent first - never a SCHEDULED bout
   // (see upcomingFight for that).
