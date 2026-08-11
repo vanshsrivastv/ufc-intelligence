@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { Check, ChevronDown, Trophy } from "lucide-react";
 import type { RankingEntryDto, WeightClassDto } from "@ufc-intelligence/types";
 import { api } from "@/lib/api-client";
 import { sortDivisions } from "@/lib/ranking-divisions";
 
 type RankingMode = "official" | "elo";
+
+const MODE_LABEL: Record<RankingMode, string> = {
+  official: "Official rankings",
+  elo: "Elo rankings",
+};
+const MODE_DESCRIPTION: Record<RankingMode, string> = {
+  official: "UFC's own divisional rankings",
+  elo: "Ranked purely by computed Elo rating",
+};
 
 export function RankingsBoard({
   weightClasses,
@@ -23,6 +33,26 @@ export function RankingsBoard({
   const [rankings, setRankings] = useState(initialRankings);
   const [visible, setVisible] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [modeMenuOpen, setModeMenuOpen] = useState(false);
+  const modeMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!modeMenuOpen) return;
+    function handlePointerDown(e: PointerEvent) {
+      if (modeMenuRef.current && !modeMenuRef.current.contains(e.target as Node)) {
+        setModeMenuOpen(false);
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setModeMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [modeMenuOpen]);
 
   function fetchRankings(nextMode: RankingMode, name: string) {
     return nextMode === "official" ? api.rankings.list(name) : api.rankings.listByElo(name);
@@ -56,31 +86,58 @@ export function RankingsBoard({
 
   return (
     <div>
-      <div className="flex gap-2" role="tablist" aria-label="Ranking type">
+      <div className="relative inline-block" ref={modeMenuRef}>
         <button
-          role="tab"
-          aria-selected={mode === "official"}
-          onClick={() => selectMode("official")}
-          className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-standard ${
-            mode === "official"
-              ? "border-gold-500 bg-gold-900 text-gold-300"
-              : "border-border text-text-secondary hover:border-border-strong"
-          }`}
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={modeMenuOpen}
+          onClick={() => setModeMenuOpen((v) => !v)}
+          className="flex items-center gap-2.5 rounded-md border border-glass bg-glass px-4 py-2 text-left backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
         >
-          Official rankings
+          <Trophy size={15} strokeWidth={1.75} className="text-gold-300" />
+          <span className="text-body-md font-medium text-text-primary">{MODE_LABEL[mode]}</span>
+          <ChevronDown
+            size={15}
+            strokeWidth={1.75}
+            className={`text-text-secondary transition-standard ${modeMenuOpen ? "rotate-180" : ""}`}
+          />
         </button>
-        <button
-          role="tab"
-          aria-selected={mode === "elo"}
-          onClick={() => selectMode("elo")}
-          className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-standard ${
-            mode === "elo"
-              ? "border-gold-500 bg-gold-900 text-gold-300"
-              : "border-border text-text-secondary hover:border-border-strong"
-          }`}
-        >
-          Elo rankings
-        </button>
+
+        {modeMenuOpen && (
+          <div
+            role="listbox"
+            aria-label="Ranking type"
+            className="absolute left-0 top-full z-10 mt-2 w-64 overflow-hidden rounded-md border border-glass bg-glass-strong backdrop-blur-2xl backdrop-saturate-150 shadow-glass"
+          >
+            {(["official", "elo"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={mode === option}
+                onClick={() => {
+                  selectMode(option);
+                  setModeMenuOpen(false);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-standard hover:bg-bg-elevated-2"
+              >
+                <span>
+                  <span
+                    className={`block text-body-md font-medium ${
+                      mode === option ? "text-gold-300" : "text-text-primary"
+                    }`}
+                  >
+                    {MODE_LABEL[option]}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-text-secondary">
+                    {MODE_DESCRIPTION[option]}
+                  </span>
+                </span>
+                {mode === option && <Check size={16} strokeWidth={2} className="shrink-0 text-gold-300" />}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Weight class">
