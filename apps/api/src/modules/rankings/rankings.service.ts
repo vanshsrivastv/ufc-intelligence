@@ -75,12 +75,34 @@ export class RankingsService {
       throw new NotFoundException(`Weight class "${query.weightClass}" not found`);
     }
 
-    const rated = await prisma.fighter.findMany({
-      where: { weightClassId: weightClass.id, eloRating: { not: null } },
-      include: { weightClass: true },
-      orderBy: { eloRating: "desc" },
-      take: 15,
+    // Same union computeEloRanksForDivision uses, for the same reason:
+    // Fighter.weightClassId alone would silently drop anyone officially
+    // ranked in this division after a recent move up/down in weight -
+    // confirmed live, this tab was missing the reigning Welterweight
+    // champion (Islam Makhachev) from the Welterweight Elo list, while
+    // the Official tab correctly showed him as Elo #1 in that same
+    // division. Both tabs have to agree.
+    const currentlyRankedHere = await prisma.ranking.findMany({
+      where: { weightClassId: weightClass.id },
+      distinct: ["fighterId"],
+      select: { fighterId: true },
     });
+
+    const [byDivision, byOfficialRanking] = await Promise.all([
+      prisma.fighter.findMany({
+        where: { weightClassId: weightClass.id, eloRating: { not: null } },
+        include: { weightClass: true },
+      }),
+      prisma.fighter.findMany({
+        where: { id: { in: currentlyRankedHere.map((r) => r.fighterId) }, eloRating: { not: null } },
+        include: { weightClass: true },
+      }),
+    ]);
+
+    const byId = new Map(byDivision.map((f) => [f.id, f]));
+    for (const f of byOfficialRanking) byId.set(f.id, f);
+
+    const rated = [...byId.values()].sort((a, b) => b.eloRating! - a.eloRating!).slice(0, 15);
 
     const fighterIds = rated.map((f) => f.id);
     const statusByFighter = await this.computeActivityStatus(fighterIds);
