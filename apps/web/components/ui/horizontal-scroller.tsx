@@ -57,7 +57,7 @@ export function HorizontalScroller({ children }: { children: React.ReactNode }) 
           type="button"
           onClick={() => scrollBy(-1)}
           aria-label="Scroll left"
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-glass bg-glass-strong text-text-secondary shadow-glass backdrop-blur-2xl transition-standard hover:border-gold-500 hover:text-gold-300"
+          className="absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-glass bg-glass-strong text-text-secondary shadow-glass backdrop-blur-2xl transition-standard hover:border-gold-500 hover:text-gold-300"
         >
           <ChevronLeft size={18} strokeWidth={1.75} />
         </button>
@@ -67,7 +67,7 @@ export function HorizontalScroller({ children }: { children: React.ReactNode }) 
           type="button"
           onClick={() => scrollBy(1)}
           aria-label="Scroll right"
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-glass bg-glass-strong text-text-secondary shadow-glass backdrop-blur-2xl transition-standard hover:border-gold-500 hover:text-gold-300"
+          className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-glass bg-glass-strong text-text-secondary shadow-glass backdrop-blur-2xl transition-standard hover:border-gold-500 hover:text-gold-300"
         >
           <ChevronRight size={18} strokeWidth={1.75} />
         </button>
