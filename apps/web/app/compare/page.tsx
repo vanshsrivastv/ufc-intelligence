@@ -3,6 +3,7 @@ import { ComparePicker } from "@/components/ui/compare-picker";
 import { CompareFaceOff } from "@/components/ui/compare-faceoff";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
+import { StatRadarChart } from "@/components/charts/stat-radar-chart";
 
 export default async function ComparePage({
   searchParams,
@@ -32,6 +33,11 @@ export default async function ComparePage({
     fighterB.weightClass &&
     fighterA.weightClass.isWomens !== fighterB.weightClass.isWomens;
 
+  const percentiles =
+    fighterA && fighterB && !genderMismatch
+      ? await api.fighters.getComparePercentiles(fighterA.slug, fighterB.slug).catch(() => null)
+      : null;
+
   return (
     <>
       <PageAtmosphere src="/images/jj.jpg" alt="" focalPosition="50% 20%" />
@@ -56,6 +62,12 @@ export default async function ComparePage({
       {fighterA && fighterB && !genderMismatch && (
         <div className="mt-10">
           <CompareFaceOff fighterA={fighterA} fighterB={fighterB} />
+        </div>
+      )}
+
+      {fighterA && fighterB && !genderMismatch && percentiles && (
+        <div className="mt-6 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+          <StatRadarChart percentiles={percentiles} nameA={fighterA.name} nameB={fighterB.name} />
         </div>
       )}
 

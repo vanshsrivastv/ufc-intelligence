@@ -1,11 +1,28 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { FightMethod, FightStatus, prisma } from "@ufc-intelligence/database";
 import type {
+  ComparePercentilesDto,
   FighterDetailDto,
   FighterSummaryDto,
   PaginatedResult,
+  StatPercentiles,
 } from "@ufc-intelligence/types";
 import { ListFightersDto } from "./dto/list-fighters.dto";
+
+const NULL_PERCENTILES: StatPercentiles = {
+  elo: null,
+  strikeAccuracy: null,
+  takedownAccuracy: null,
+  takedownDefense: null,
+  finishRate: null,
+  winRate: null,
+  strikesLandedPerMin: null,
+  takedownAvg: null,
+  submissionAvg: null,
+  koRate: null,
+  submissionRate: null,
+  decisionRate: null,
+};
 
 @Injectable()
 export class FightersService {
@@ -237,6 +254,125 @@ export class FightersService {
       },
       recentFights: recentFights.map(toFightSummaryDto),
       upcomingFight: upcomingFight ? toFightSummaryDto(upcomingFight) : null,
+    };
+  }
+
+  // Powers the Compare page's radar chart. Every value is this fighter's
+  // percentile rank (0-100) against every OTHER rated fighter in the
+  // whole roster - not scoped to their own weight class (a real,
+  // deliberate limitation flagged for later, not an oversight: a
+  // heavyweight's takedown rate isn't really comparable to a flyweight's
+  // in absolute terms).
+  //
+  // One bulk fetch of every rated fighter's raw stats, plus one bulk
+  // fetch of every completed fight for KO/submission/decision tallying,
+  // then everything else is computed in memory - the same "one query,
+  // tally in a Map" shape getLeaderboards() already uses for
+  // mostActiveFighters/mostTitleFights, not 24 separate percentile
+  // queries (12 stats x 2 fighters) hitting the database.
+  async getComparePercentiles(slugA: string, slugB: string): Promise<ComparePercentilesDto> {
+    const [fighterA, fighterB] = await Promise.all([
+      prisma.fighter.findUnique({ where: { slug: slugA }, select: { id: true } }),
+      prisma.fighter.findUnique({ where: { slug: slugB }, select: { id: true } }),
+    ]);
+    if (!fighterA) throw new NotFoundException(`Fighter with slug "${slugA}" not found`);
+    if (!fighterB) throw new NotFoundException(`Fighter with slug "${slugB}" not found`);
+
+    const rated = await prisma.fighter.findMany({
+      where: { eloRating: { not: null } },
+      select: {
+        id: true,
+        eloRating: true,
+        sigStrikeAccuracyPct: true,
+        takedownAccuracyPct: true,
+        takedownDefensePct: true,
+        sigStrikesLandedPerMin: true,
+        takedownAvgPer15Min: true,
+        submissionAvgPer15Min: true,
+        wins: true,
+        losses: true,
+      },
+    });
+    const ratedIds = new Set(rated.map((f) => f.id));
+
+    const decidedFights = await prisma.fight.findMany({
+      where: { status: "COMPLETED", winnerId: { not: null } },
+      select: { winnerId: true, method: true },
+    });
+    const koWins = new Map<string, number>();
+    const subWins = new Map<string, number>();
+    const decWins = new Map<string, number>();
+    for (const fight of decidedFights) {
+      const winnerId = fight.winnerId!;
+      if (!ratedIds.has(winnerId)) continue;
+      if (fight.method === "KO" || fight.method === "TKO") {
+        koWins.set(winnerId, (koWins.get(winnerId) ?? 0) + 1);
+      } else if (fight.method === "SUBMISSION") {
+        subWins.set(winnerId, (subWins.get(winnerId) ?? 0) + 1);
+      } else if (fight.method.startsWith("DECISION")) {
+        decWins.set(winnerId, (decWins.get(winnerId) ?? 0) + 1);
+      }
+    }
+
+    type MetricKey = keyof StatPercentiles;
+    const metricsById = new Map<string, Record<MetricKey, number | null>>();
+    for (const f of rated) {
+      const ko = koWins.get(f.id) ?? 0;
+      const sub = subWins.get(f.id) ?? 0;
+      const dec = decWins.get(f.id) ?? 0;
+      const totalDecided = ko + sub + dec;
+      metricsById.set(f.id, {
+        elo: f.eloRating,
+        strikeAccuracy: f.sigStrikeAccuracyPct,
+        takedownAccuracy: f.takedownAccuracyPct,
+        takedownDefense: f.takedownDefensePct,
+        strikesLandedPerMin: f.sigStrikesLandedPerMin,
+        takedownAvg: f.takedownAvgPer15Min,
+        submissionAvg: f.submissionAvgPer15Min,
+        winRate: f.wins + f.losses > 0 ? (f.wins / (f.wins + f.losses)) * 100 : null,
+        finishRate: totalDecided > 0 ? ((ko + sub) / totalDecided) * 100 : null,
+        koRate: totalDecided > 0 ? (ko / totalDecided) * 100 : null,
+        submissionRate: totalDecided > 0 ? (sub / totalDecided) * 100 : null,
+        decisionRate: totalDecided > 0 ? (dec / totalDecided) * 100 : null,
+      });
+    }
+
+    const metricKeys = Object.keys(NULL_PERCENTILES) as MetricKey[];
+    // Sorted, null-free value arrays per metric - the population a given
+    // fighter's raw value gets ranked against.
+    const sortedValues = new Map<MetricKey, number[]>();
+    for (const key of metricKeys) {
+      const values = [...metricsById.values()]
+        .map((m) => m[key])
+        .filter((v): v is number => v !== null)
+        .sort((a, b) => a - b);
+      sortedValues.set(key, values);
+    }
+
+    function percentileOf(key: MetricKey, value: number | null): number | null {
+      if (value === null) return null;
+      const values = sortedValues.get(key)!;
+      if (values.length === 0) return null;
+      let lower = 0;
+      for (const v of values) {
+        if (v < value) lower++;
+      }
+      return Math.round((lower / values.length) * 100);
+    }
+
+    function statPercentilesFor(fighterId: string): StatPercentiles {
+      const metrics = metricsById.get(fighterId);
+      if (!metrics) return NULL_PERCENTILES;
+      const result = {} as StatPercentiles;
+      for (const key of metricKeys) {
+        result[key] = percentileOf(key, metrics[key]);
+      }
+      return result;
+    }
+
+    return {
+      fighterA: statPercentilesFor(fighterA.id),
+      fighterB: statPercentilesFor(fighterB.id),
     };
   }
 }

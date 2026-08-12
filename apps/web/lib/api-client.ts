@@ -1,4 +1,5 @@
 import type {
+  ComparePercentilesDto,
   EventDetailDto,
   EventSummaryDto,
   FighterDetailDto,
@@ -177,6 +178,10 @@ export const api = {
     },
     getBySlug: (slug: string) =>
       request<FighterDetailDto>(`/fighters/${slug}`),
+    getComparePercentiles: (fighterA: string, fighterB: string) =>
+      request<ComparePercentilesDto>(
+        `/fighters/compare-percentiles?fighterA=${encodeURIComponent(fighterA)}&fighterB=${encodeURIComponent(fighterB)}`,
+      ),
   },
   events: {
     list: (params?: {

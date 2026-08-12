@@ -211,6 +211,32 @@ export interface PredictionDto {
   generatedAt: string;
 }
 
+// Every value is a percentile rank (0-100) among all fighters with a
+// computed rating/stat - roster-wide, not scoped to the fighter's own
+// weight class (a planned follow-up, not yet built). null means the
+// underlying raw stat is itself null (insufficient data), never a
+// fabricated 0 - the radar chart has to render a gap on that axis, not
+// a point at the bottom.
+export interface StatPercentiles {
+  elo: number | null;
+  strikeAccuracy: number | null;
+  takedownAccuracy: number | null;
+  takedownDefense: number | null;
+  finishRate: number | null;
+  winRate: number | null;
+  strikesLandedPerMin: number | null;
+  takedownAvg: number | null;
+  submissionAvg: number | null;
+  koRate: number | null;
+  submissionRate: number | null;
+  decisionRate: number | null;
+}
+
+export interface ComparePercentilesDto {
+  fighterA: StatPercentiles;
+  fighterB: StatPercentiles;
+}
+
 // Paginated list envelope used across all list endpoints
 export interface PaginatedResult<T> {
   items: T[];
