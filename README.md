@@ -44,21 +44,28 @@ npm run dev
 - Frontend: http://localhost:3000
 - API: http://localhost:4000/api/v1
 
-## What's actually implemented right now (milestone 1)
+## What's implemented right now
 
 - Full monorepo scaffolding, design tokens wired end-to-end into Tailwind
 - Prisma schema covering fighters, events, fights, per-round fight stats, rankings, predictions, users
-- One complete vertical slice: the **fighters** module (list + detail), backend to frontend, including a real integration test
+- Real data: fighter/event/fight history imported from UFC Stats (not the bootstrap seed script), including a historical-event-name backfill and Wikidata-based fighter nationality enrichment
+- **Fighters** — list, filters (weight class, gender, activity, champion-only, documented-only), sortable (name, recency, Elo), detail page with career stats, fight history, and an Elo rating history chart
+- **Events** — list and detail pages, upcoming/live/completed status
+- **Rankings** — official UFC rankings and a computed Elo-based ranking per weight class, switchable via a dropdown
+- **Compare** — side-by-side fighter comparison (record, physical stats, striking/grappling accuracy) plus a roster-wide percentile radar chart (6-stat compact view, expandable to 12)
+- **Predictions** — matchup win-probability model using Elo, physical, and fight-history features
+- **Statistics** — league-wide leaderboards, method-of-victory breakdown, Elo distribution
+- Auth (Auth.js) with sign in/up and a favorites list
+- Elo ratings computed and stored as a first-class stat (nullable — only for fighters with enough graded fight history), surfaced across cards, detail pages, sorting, rankings, and statistics
+- Scheduled sync jobs (NestJS `@nestjs/schedule`) that keep results and stub-fighter relinking up to date automatically
 - CI pipeline (lint, typecheck, test, build) against a real Postgres service container
 
-## What's explicitly NOT implemented yet (by design — see docs/architecture.md for the plan)
+## Not yet implemented
 
-- Events, rankings, predictions, and users modules (same pattern as `fighters`, not yet built)
-- The real data ingestion pipeline (currently there's only a bootstrap seed script — see `packages/database/prisma/seed.ts`, which is explicitly not the real data source)
-- Auth, caching, background jobs, search
-- Any actual ML/prediction model
-
-This is intentional: the fighters module exists as the reference pattern so the next modules can be built the same way, rather than everything existing as thin placeholders.
+- Weight-class-scoped percentile radar chart (currently roster-wide only)
+- Admin panel (discussed, not started)
+- Caching, background job queue, search
+- Known data-quality issue: a handful of duplicate-name fighters (e.g. two fighters both named "Bruno Silva") can have fight history cross-attributed during import — tracked, not yet fixed
 
 ## Docs
 
