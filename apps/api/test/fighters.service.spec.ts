@@ -1,6 +1,7 @@
 import { beforeAll, afterAll, beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@ufc-intelligence/database";
 import { FightersService } from "../src/modules/fighters/fighters.service";
+import { assertTestDatabase } from "./assert-test-database";
 
 // This is a real integration test against DATABASE_URL — it expects a test
 // database to be reachable (see docker-compose.yml). It is not mocked,
@@ -10,6 +11,7 @@ describe("FightersService", () => {
   const service = new FightersService(prisma as any);
 
   beforeAll(async () => {
+    assertTestDatabase();
     await prisma.$connect();
   });
 
