@@ -1,15 +1,18 @@
 // Seeds real, current UFC divisional rankings (champion + ranked #1-15)
 // for the 11 real divisions the Rankings page displays. import-dataset.ts
 // never populates the Ranking table at all — this is what actually puts
-// data behind that page. Source: ufc.com/rankings, current as of the time
-// this file was written. Re-run this any time you want to refresh to a
-// newer snapshot; it clears each division's prior rows first, so it's
-// safe to re-run.
+// data behind that page. Source: ufc.com/rankings' "Media Panel Rankings"
+// tab (not the "Meta" algorithmic tab, which is a different, newer
+// ranking system ufc.com now also shows and orders divisions
+// differently) - current as of the time this file was written. Re-run
+// this any time you want to refresh to a newer snapshot; it clears each
+// division's prior rows first, so it's safe to re-run.
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 // rank 0 = champion, 1-15 = contenders, in order.
+// Snapshot: ufc.com/rankings, Media Panel Rankings, "Last updated: Tuesday, Aug. 11".
 const RANKINGS: Record<string, string[]> = {
   Heavyweight: [
     "Tom Aspinall",
@@ -22,30 +25,30 @@ const RANKINGS: Record<string, string[]> = {
     "Curtis Blaydes",
     "Rizvan Kuniev",
     "Ante Delija",
+    "Aleksandar Rakic",
     "Valter Walker",
     "Tyrell Fortune",
     "Derrick Lewis",
     "Marcin Tybura",
     "Brando Pericic",
-    "Mick Parkin",
   ],
   "Light Heavyweight": [
     "Carlos Ulberg",
     "Magomed Ankalaev",
     "Jiri Prochazka",
     "Alex Pereira",
-    "Jan Blachowicz",
     "Khalil Rountree Jr.",
+    "Navajo Stirling",
     "Paulo Costa",
     "Jamahal Hill",
     "Azamat Murzakanov",
+    "Jan Blachowicz",
     "Dominick Reyes",
     "Bogdan Guskov",
     "Robert Whittaker",
     "Johnny Walker",
-    "Aleksandar Rakic",
     "Alonzo Menifield",
-    "Navajo Stirling",
+    "Nikita Krylov",
   ],
   Middleweight: [
     "Sean Strickland",
@@ -78,9 +81,9 @@ const RANKINGS: Record<string, string[]> = {
     "Kamaru Usman",
     "Joaquin Buckley",
     "Yaroslav Amosov",
+    "Uros Medic",
     "Mike Malott",
     "Michael Page",
-    "Uros Medic",
     "Daniel Rodriguez",
   ],
   Lightweight: [
@@ -92,11 +95,11 @@ const RANKINGS: Record<string, string[]> = {
     "Paddy Pimblett",
     "Benoit Saint Denis",
     "Mauricio Ruffy",
+    "Quillan Salkilld",
     "Mateusz Gamrot",
     "Dan Hooker",
     "Renato Moicano",
     "Rafael Fiziev",
-    "Quillan Salkilld",
     "Tom Nolan",
     "Beneil Dariush",
     "Manuel Torres",
@@ -146,13 +149,13 @@ const RANKINGS: Record<string, string[]> = {
     "Kyoji Horiguchi",
     "Lone'er Kavanagh",
     "Asu Almabayev",
-    "Amir Albazi",
     "Brandon Moreno",
+    "Amir Albazi",
+    "Ramazan Temirov",
     "Alex Perez",
     "Steve Erceg",
     "Tim Elliott",
     "Tagir Ulanbekov",
-    "Ramazan Temirov",
     "Edgar Chairez",
   ],
   "Women's Bantamweight": [
@@ -200,13 +203,13 @@ const RANKINGS: Record<string, string[]> = {
     "Gillian Robertson",
     "Fatima Kline",
     "Loopy Godinez",
-    "Amanda Lemos",
+    "Alexia Thainara",
     "Jessica Andrade",
     "Tabatha Ricci",
+    "Amanda Lemos",
     "Amanda Ribas",
-    "Alexia Thainara",
-    "Denise Gomes",
     "Angela Hill",
+    "Denise Gomes",
     "Mizuki",
   ],
 };
