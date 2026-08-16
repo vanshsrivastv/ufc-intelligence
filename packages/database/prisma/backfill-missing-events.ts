@@ -46,6 +46,11 @@ const CRAWL_DELAY_MS = 15_000; // matches ufc.com's robots.txt crawl-delay
 const USER_AGENT =
   "UFCIntelligenceBot/1.0 (personal portfolio project, respects robots.txt and crawl-delay)";
 const MAX_LISTING_PAGES = 20; // the gap is recent by definition - nowhere near the ~98-page full archive
+// Same window backfill-historical-event-names.ts uses: a US-evening card's
+// real timestamp commonly lands past midnight UTC, a day later than a
+// date-only CSV value, and is never wide enough to span two distinct
+// UFC events (never scheduled less than several days apart).
+const MATCH_WINDOW_MS = 36 * 60 * 60 * 1000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -380,9 +385,38 @@ async function main() {
   let fightsCreated = 0;
 
   for (const listing of uniqueSlugs) {
-    const existing = await prisma.event.findUnique({ where: { slug: listing.slug }, select: { id: true } });
-    if (existing) {
-      console.log(`Skipping ${listing.slug} - already in the database.`);
+    const existingBySlug = await prisma.event.findUnique({ where: { slug: listing.slug }, select: { id: true } });
+    if (existingBySlug) {
+      console.log(`Skipping ${listing.slug} - already in the database (same slug).`);
+      continue;
+    }
+
+    // Slug alone isn't enough: a CSV-imported event uses a synthetic
+    // date-derived slug ("event-2026-03-07") while this script's own
+    // listing walk discovers ufc.com's real slug ("ufc-326") for the
+    // exact same card - two different strings for one real event. A
+    // US-evening card's real ufc.com timestamp also commonly lands past
+    // midnight UTC, a calendar day later than the CSV's date-only value
+    // (same drift backfill-historical-event-names.ts's own
+    // MATCH_WINDOW_MS already accounts for) - so this checks for any
+    // existing event within a generous window instead of an exact date
+    // match, and skips on a hit regardless of slug. Confirmed live: this
+    // is exactly what let UFC 326 get created twice before this guard
+    // existed.
+    const listingMs = listing.timestamp * 1000;
+    const existingNearby = await prisma.event.findFirst({
+      where: {
+        date: {
+          gte: new Date(listingMs - MATCH_WINDOW_MS),
+          lte: new Date(listingMs + MATCH_WINDOW_MS),
+        },
+      },
+      select: { id: true, slug: true },
+    });
+    if (existingNearby) {
+      console.log(
+        `Skipping ${listing.slug} - already in the database as "${existingNearby.slug}" (date within ${MATCH_WINDOW_MS / 3_600_000}h).`,
+      );
       continue;
     }
 
