@@ -78,8 +78,18 @@ async function findWikipediaImage(fighterName: string): Promise<WikipediaImage |
   const sourceUrl: string = page.original.source;
   if (!sourceUrl.startsWith(COMMONS_URL_PREFIX)) return null; // skip non-free local uploads
 
-  const fileTitle = "File:" + decodeURIComponent(sourceUrl.split("/").pop() ?? "");
-  return { sourceUrl, fileTitle };
+  // Wikipedia's API appends UTM tracking params to this URL
+  // (?utm_source=en.wikipedia.org&utm_campaign=api&...) - splitting on
+  // "/" without stripping the query string first pulled that whole
+  // tracking string into the constructed file title, which Commons then
+  // legitimately couldn't resolve to any real file. Every single lookup
+  // was hitting this, misreported as "no license metadata" rather than
+  // "wrong title entirely."
+  const pathOnly = sourceUrl.split("?")[0];
+  const fileTitle = "File:" + decodeURIComponent(pathOnly.split("/").pop() ?? "");
+  // Save the clean path, not the raw URL with tracking params attached -
+  // consistent with every photoUrl saved before this bug was introduced.
+  return { sourceUrl: pathOnly, fileTitle };
 }
 
 interface CommonsAttribution {
