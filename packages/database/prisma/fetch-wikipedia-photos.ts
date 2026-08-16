@@ -4,6 +4,11 @@
 // Wikipedia page with a photo at all, and because this is meant to cover
 // the fighters people actually look at, not chase 100% coverage.
 //
+// Pass --elo-top=N to target the top N fighters by Elo rating instead of
+// the Rankings table - useful since Elo rank and official rank are two
+// different populations (a fighter can be highly Elo-rated without ever
+// having been officially ranked, or vice versa).
+//
 // Only images hosted on Wikimedia Commons are used
 // (upload.wikimedia.org/wikipedia/commons/...). Commons requires every
 // file to carry a real reuse license (CC-BY, CC-BY-SA, public domain,
@@ -104,19 +109,41 @@ async function getCommonsAttribution(fileTitle: string): Promise<CommonsAttribut
 }
 
 async function main() {
-  const rankedFighterIds = await prisma.ranking.findMany({
-    select: { fighterId: true },
-    distinct: ["fighterId"],
-  });
-  const fighters = await prisma.fighter.findMany({
-    where: {
-      id: { in: rankedFighterIds.map((r) => r.fighterId) },
-      photoUrl: null,
-    },
-    select: { id: true, name: true },
-  });
+  const eloTopArg = process.argv.slice(2).find((a) => a.startsWith("--elo-top="));
+  const eloTop = eloTopArg ? Number(eloTopArg.split("=")[1]) : null;
 
-  console.log(`Checking Wikipedia photos for ${fighters.length} ranked fighter(s) without a photo...`);
+  // Take the real top-N by Elo first, THEN filter to missing-photo - not
+  // the other way around, which would silently pull in someone ranked
+  // well below N just because everyone actually in the top N already has
+  // a photo.
+  const fighters = eloTop
+    ? (
+        await prisma.fighter.findMany({
+          where: { eloRating: { not: null } },
+          orderBy: { eloRating: "desc" },
+          take: eloTop,
+          select: { id: true, name: true, photoUrl: true },
+        })
+      )
+        .filter((f) => f.photoUrl === null)
+        .map(({ id, name }) => ({ id, name }))
+    : await prisma.fighter.findMany({
+        where: {
+          id: {
+            in: (
+              await prisma.ranking.findMany({ select: { fighterId: true }, distinct: ["fighterId"] })
+            ).map((r) => r.fighterId),
+          },
+          photoUrl: null,
+        },
+        select: { id: true, name: true },
+      });
+
+  console.log(
+    eloTop
+      ? `Checking Wikipedia photos for ${fighters.length} top-${eloTop}-by-Elo fighter(s) without a photo...`
+      : `Checking Wikipedia photos for ${fighters.length} ranked fighter(s) without a photo...`,
+  );
 
   let found = 0;
   let skippedNonFree = 0;
