@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { tagCategoryColors } from "@ufc-intelligence/ui-tokens";
 import type { PerformanceTagDto } from "@ufc-intelligence/types";
 
 export function PerformanceProfile({ tags }: { tags: PerformanceTagDto[] }) {
@@ -18,32 +17,21 @@ export function PerformanceProfile({ tags }: { tags: PerformanceTagDto[] }) {
       <p className="font-display text-heading-md text-text-primary">Performance profile</p>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {tags.map((tag) => {
-          const color = tagCategoryColors[tag.category];
-          const isHovered = hovered?.id === tag.id;
-          return (
-            <div
-              key={tag.id}
-              onMouseEnter={() => setHovered(tag)}
-              onMouseLeave={() => setHovered(null)}
-              className="flex items-center rounded-full border border-border px-3.5 py-1.5 transition-standard"
-              style={isHovered ? { borderColor: color } : undefined}
-            >
-              <span
-                className={isHovered ? "text-xs" : "text-xs text-text-primary"}
-                style={isHovered ? { color } : undefined}
-              >
-                {tag.label}
-              </span>
-            </div>
-          );
-        })}
+        {tags.map((tag) => (
+          <div
+            key={tag.id}
+            onMouseEnter={() => setHovered(tag)}
+            onMouseLeave={() => setHovered(null)}
+            className="flex items-center rounded-full border border-border px-3.5 py-1.5 transition-standard hover:border-gold-500"
+          >
+            <span className="text-xs text-text-primary transition-standard hover:text-gold-300">
+              {tag.label}
+            </span>
+          </div>
+        ))}
       </div>
 
-      <p
-        className={hovered ? "mt-3.5 min-h-[16px] text-xs" : "mt-3.5 min-h-[16px] text-xs text-text-secondary"}
-        style={hovered ? { color: tagCategoryColors[hovered.category] } : undefined}
-      >
+      <p className={`mt-3.5 min-h-[16px] text-xs ${hovered ? "text-gold-300" : "text-text-secondary"}`}>
         {hovered ? hovered.explain : "Hover a tag to see what earned it."}
       </p>
     </div>
