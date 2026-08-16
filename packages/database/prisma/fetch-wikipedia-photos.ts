@@ -109,13 +109,23 @@ async function getCommonsAttribution(fileTitle: string): Promise<CommonsAttribut
 }
 
 async function main() {
-  const eloTopArg = process.argv.slice(2).find((a) => a.startsWith("--elo-top="));
+  const args = process.argv.slice(2);
+  const eloTopArg = args.find((a) => a.startsWith("--elo-top="));
+  const eloRangeArg = args.find((a) => a.startsWith("--elo-range="));
   const eloTop = eloTopArg ? Number(eloTopArg.split("=")[1]) : null;
+  // 1-indexed, inclusive on both ends - "--elo-range=51-100" means Elo
+  // ranks 51 through 100.
+  const eloRange = eloRangeArg
+    ? (() => {
+        const [start, end] = eloRangeArg.split("=")[1].split("-").map(Number);
+        return { start, end };
+      })()
+    : null;
 
-  // Take the real top-N by Elo first, THEN filter to missing-photo - not
+  // Take the real slice by Elo first, THEN filter to missing-photo - not
   // the other way around, which would silently pull in someone ranked
-  // well below N just because everyone actually in the top N already has
-  // a photo.
+  // outside the requested window just because everyone actually inside
+  // it already has a photo.
   const fighters = eloTop
     ? (
         await prisma.fighter.findMany({
@@ -127,22 +137,36 @@ async function main() {
       )
         .filter((f) => f.photoUrl === null)
         .map(({ id, name }) => ({ id, name }))
-    : await prisma.fighter.findMany({
-        where: {
-          id: {
-            in: (
-              await prisma.ranking.findMany({ select: { fighterId: true }, distinct: ["fighterId"] })
-            ).map((r) => r.fighterId),
+    : eloRange
+      ? (
+          await prisma.fighter.findMany({
+            where: { eloRating: { not: null } },
+            orderBy: { eloRating: "desc" },
+            skip: eloRange.start - 1,
+            take: eloRange.end - eloRange.start + 1,
+            select: { id: true, name: true, photoUrl: true },
+          })
+        )
+          .filter((f) => f.photoUrl === null)
+          .map(({ id, name }) => ({ id, name }))
+      : await prisma.fighter.findMany({
+          where: {
+            id: {
+              in: (
+                await prisma.ranking.findMany({ select: { fighterId: true }, distinct: ["fighterId"] })
+              ).map((r) => r.fighterId),
+            },
+            photoUrl: null,
           },
-          photoUrl: null,
-        },
-        select: { id: true, name: true },
-      });
+          select: { id: true, name: true },
+        });
 
   console.log(
     eloTop
       ? `Checking Wikipedia photos for ${fighters.length} top-${eloTop}-by-Elo fighter(s) without a photo...`
-      : `Checking Wikipedia photos for ${fighters.length} ranked fighter(s) without a photo...`,
+      : eloRange
+        ? `Checking Wikipedia photos for ${fighters.length} Elo rank ${eloRange.start}-${eloRange.end} fighter(s) without a photo...`
+        : `Checking Wikipedia photos for ${fighters.length} ranked fighter(s) without a photo...`,
   );
 
   let found = 0;
