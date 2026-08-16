@@ -53,6 +53,7 @@ npm run dev
 - **Events** — list and detail pages, upcoming/live/completed status
 - **Rankings** — official UFC rankings and a computed Elo-based ranking per weight class, switchable via a dropdown
 - **Compare** — side-by-side fighter comparison (record, physical stats, striking/grappling accuracy) plus a roster-wide percentile radar chart (6-stat compact view, expandable to 12)
+- **Performance profile** — 3-5 data-driven skill tags per fighter (e.g. "Elite Wrestler — 97th percentile in takedown avg"), computed from roster-wide percentiles against a fixed threshold spec, shown on the fighter detail page
 - **Predictions** — matchup win-probability model using Elo, physical, and fight-history features
 - **Statistics** — league-wide leaderboards, method-of-victory breakdown, Elo distribution
 - Auth (Auth.js) with sign in/up and a favorites list
@@ -62,7 +63,7 @@ npm run dev
 
 ## Not yet implemented
 
-- Weight-class-scoped percentile radar chart (currently roster-wide only)
+- Weight-class-scoped percentiles (radar chart and performance profile are both roster-wide only)
 - Admin panel (discussed, not started)
 - Caching, background job queue, search
 - Known data-quality issue: a handful of duplicate-name fighters (e.g. two fighters both named "Bruno Silva") can have fight history cross-attributed during import — tracked, not yet fixed
