@@ -8,6 +8,7 @@ import { EloHistoryChart } from "@/components/charts/elo-history-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PhotoAttribution } from "@/components/ui/photo-attribution";
+import { PerformanceProfile } from "@/components/ui/performance-profile";
 import { METHOD_LABEL } from "@/lib/method-label";
 
 function opponentOf(fight: FightSummaryDto, fighterId: string) {
@@ -103,6 +104,8 @@ export default async function FighterDetailPage({
               </div>
             </div>
           )}
+
+          <PerformanceProfile tags={fighter.performanceProfile} />
 
           <Link
             href={`/compare?fighters=${fighter.slug}`}

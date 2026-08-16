@@ -65,6 +65,25 @@ export interface FighterDetailDto extends FighterSummaryDto {
   // (see upcomingFight for that).
   recentFights: FightSummaryDto[];
   upcomingFight: FightSummaryDto | null;
+  // Data-driven skill tags (e.g. "Elite Wrestler"), each backed by a real
+  // percentile against the rated roster - never more than 5, and empty
+  // (not null) whenever this fighter has too few completed fights for any
+  // tag to be statistically meaningful. See apps/api's
+  // performance-profile.ts for the full threshold spec.
+  performanceProfile: PerformanceTagDto[];
+}
+
+export type PerformanceTagCategory = "striking" | "wrestling" | "grappling" | "finishing" | "overall";
+
+export interface PerformanceTagDto {
+  id: string;
+  label: string;
+  category: PerformanceTagCategory;
+  // The percentile that earned this tag - for a composite tag (e.g. Elite
+  // Striker) this is the average of its component percentiles, a ranking
+  // aid only. `explain` always names the real underlying stat(s) instead.
+  percentile: number;
+  explain: string;
 }
 
 export interface FighterCareerStats {

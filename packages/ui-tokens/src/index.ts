@@ -42,6 +42,18 @@ export const chartPalette = {
   grid: colors.border,
 } as const;
 
+// One color per Performance Profile tag category (fighter detail page) -
+// gold and danger are the app's own existing tokens; the other three are
+// new, deliberately kept to just these five since that's the entire tag
+// taxonomy (see apps/api's performance-profile.ts).
+export const tagCategoryColors = {
+  overall: colors.gold300,
+  wrestling: "#378ADD",
+  striking: "#D85A30",
+  grappling: "#D4537E",
+  finishing: colors.danger,
+} as const;
+
 export const spacing = {
   1: 4,
   2: 8,
