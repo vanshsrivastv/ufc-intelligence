@@ -72,3 +72,4 @@ npm run dev
 
 - [`docs/design-system.md`](./docs/design-system.md) — full design system (colors, type, spacing, component rules)
 - [`docs/architecture.md`](./docs/architecture.md) — system architecture, tech stack reasoning, data strategy
+- [`docs/data-pipeline.md`](./docs/data-pipeline.md) — every `packages/database/prisma/*.ts` script, what it does, run order, and the local test-database safety guard
