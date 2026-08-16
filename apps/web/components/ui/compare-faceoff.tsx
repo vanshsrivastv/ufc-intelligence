@@ -52,6 +52,18 @@ export function CompareFaceOff({
     suffix?: string;
     higherIsBetter?: boolean;
   }[] = [
+    // Always-current, unlike the asOf-aware rows above it - a fight-detail
+    // page's "what was Elo the day of this fight" isn't something
+    // EloHistory can answer without picking one specific history row per
+    // fighter, which the Compare page's plain fighterA/fighterB.elo case
+    // doesn't need to worry about. Null (not 0/1500) whenever a fighter
+    // has too little graded history to have a rating yet - see
+    // FighterSummaryDto.elo's own doc comment for why.
+    {
+      label: "Elo rating",
+      a: fighterA.elo !== null ? Math.round(fighterA.elo) : null,
+      b: fighterB.elo !== null ? Math.round(fighterB.elo) : null,
+    },
     { label: "Height (cm)", a: fighterA.heightCm, b: fighterB.heightCm },
     { label: "Reach (cm)", a: fighterA.reachCm, b: fighterB.reachCm },
     { label: "Age", a: ageA, b: ageB, higherIsBetter: false },
