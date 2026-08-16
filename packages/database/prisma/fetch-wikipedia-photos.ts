@@ -27,7 +27,11 @@ const prisma = new PrismaClient();
 
 const USER_AGENT =
   "UFCIntelligenceBot/1.0 (personal portfolio project; fetches fighter photos from Wikimedia Commons with attribution)";
-const REQUEST_DELAY_MS = 800;
+// Was 800ms - a run through Elo ranks 51-100 hit sustained 429s with
+// 46-48s Retry-After values, which is Wikipedia/Commons saying the
+// previous pace was too aggressive, not a fluke. Slower base pace to
+// stay under whatever threshold triggered that.
+const REQUEST_DELAY_MS = 3000;
 const MAX_RETRIES = 4;
 const COMMONS_URL_PREFIX = "https://upload.wikimedia.org/wikipedia/commons/";
 
@@ -84,27 +88,43 @@ interface CommonsAttribution {
   licenseUrl: string | null;
 }
 
-async function getCommonsAttribution(fileTitle: string): Promise<CommonsAttribution | null> {
+// Three distinct outcomes, not two - "no-metadata" and "non-free" used to
+// both collapse into a single null return, which silently misclassified
+// at least one real Public Domain photo (Conor McGregor's) as
+// non-free during a run that hit heavy rate-limiting. Both cases still
+// mean "don't use this image right now," but only "non-free" is a real,
+// permanent licensing decision - "no-metadata" is worth a visible
+// warning and a re-check, since it can mean the response came back
+// incomplete under load rather than the file genuinely lacking a license.
+type AttributionResult =
+  | { status: "ok"; attribution: CommonsAttribution }
+  | { status: "non-free" }
+  | { status: "no-metadata" };
+
+async function getCommonsAttribution(fileTitle: string): Promise<AttributionResult> {
   const url =
     "https://commons.wikimedia.org/w/api.php?action=query&prop=imageinfo&iiprop=extmetadata" +
     `&titles=${encodeURIComponent(fileTitle)}&format=json&formatversion=2`;
   const data = await fetchJson(url);
   const page = data?.query?.pages?.[0];
   const meta = page?.imageinfo?.[0]?.extmetadata;
-  if (!meta) return null;
+  if (!meta) return { status: "no-metadata" };
 
   const artist: string | undefined = meta.Artist?.value?.replace(/<[^>]+>/g, "").trim();
   const credit: string | undefined = meta.Credit?.value?.replace(/<[^>]+>/g, "").trim();
   const licenseShortName: string | undefined = meta.LicenseShortName?.value;
   const licenseUrl: string | undefined = meta.LicenseUrl?.value;
 
-  // No usable license metadata (or explicitly non-free) - don't use it.
-  if (!licenseShortName || /non-free|fair use/i.test(licenseShortName)) return null;
+  if (!licenseShortName) return { status: "no-metadata" };
+  if (/non-free|fair use/i.test(licenseShortName)) return { status: "non-free" };
 
   return {
-    credit: artist || credit || null,
-    license: licenseShortName,
-    licenseUrl: licenseUrl ?? null,
+    status: "ok",
+    attribution: {
+      credit: artist || credit || null,
+      license: licenseShortName,
+      licenseUrl: licenseUrl ?? null,
+    },
   };
 }
 
@@ -172,6 +192,7 @@ async function main() {
   let found = 0;
   let skippedNonFree = 0;
   let noImage = 0;
+  const ambiguous: string[] = [];
 
   for (const fighter of fighters) {
     await sleep(REQUEST_DELAY_MS);
@@ -188,14 +209,34 @@ async function main() {
     }
 
     await sleep(REQUEST_DELAY_MS);
-    let attribution: CommonsAttribution | null;
+    let result: AttributionResult;
     try {
-      attribution = await getCommonsAttribution(image.fileTitle);
+      result = await getCommonsAttribution(image.fileTitle);
     } catch (err) {
       console.warn(`  ! ${fighter.name}: attribution lookup failed (${(err as Error).message})`);
       continue;
     }
-    if (!attribution) {
+
+    // "no-metadata" gets exactly one retry after a longer pause, since it
+    // can mean the response came back incomplete under rate-limit
+    // pressure rather than the file genuinely lacking a license (see
+    // Conor McGregor, misclassified this way in an earlier run).
+    if (result.status === "no-metadata") {
+      await sleep(REQUEST_DELAY_MS * 3);
+      try {
+        result = await getCommonsAttribution(image.fileTitle);
+      } catch (err) {
+        console.warn(`  ! ${fighter.name}: attribution retry failed (${(err as Error).message})`);
+        continue;
+      }
+    }
+
+    if (result.status === "no-metadata") {
+      console.warn(`  ? ${fighter.name}: no license metadata after retry - worth a manual re-check`);
+      ambiguous.push(fighter.name);
+      continue;
+    }
+    if (result.status === "non-free") {
       skippedNonFree++;
       continue;
     }
@@ -204,18 +245,22 @@ async function main() {
       where: { id: fighter.id },
       data: {
         photoUrl: image.sourceUrl,
-        photoCredit: attribution.credit,
-        photoLicense: attribution.license,
-        photoLicenseUrl: attribution.licenseUrl,
+        photoCredit: result.attribution.credit,
+        photoLicense: result.attribution.license,
+        photoLicenseUrl: result.attribution.licenseUrl,
       },
     });
-    console.log(`  + ${fighter.name}: photo set (${attribution.license})`);
+    console.log(`  + ${fighter.name}: photo set (${result.attribution.license})`);
     found++;
   }
 
   console.log(
-    `\nDone. ${found} photo(s) set, ${noImage} fighter(s) with no Wikipedia image, ${skippedNonFree} skipped (no usable free license).`,
+    `\nDone. ${found} photo(s) set, ${noImage} fighter(s) with no Wikipedia image, ${skippedNonFree} skipped ` +
+      `(genuinely non-free), ${ambiguous.length} ambiguous (no license metadata even after retry).`,
   );
+  if (ambiguous.length > 0) {
+    console.log(`Ambiguous (worth a manual re-check): ${ambiguous.join(", ")}`);
+  }
 }
 
 main()
