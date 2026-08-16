@@ -22,7 +22,8 @@
     "fetch-photos": "tsx prisma/fetch-wikipedia-photos.ts",
     "remove-blank-fighters": "tsx prisma/remove-blank-fighters.ts",
     "enrich-nationality": "tsx prisma/enrich-fighter-nationality.ts",
-    "relink-stub-fighters": "tsx prisma/relink-stub-fighters.ts"
+    "relink-stub-fighters": "tsx prisma/relink-stub-fighters.ts",
+    "backfill-missing-events": "tsx prisma/backfill-missing-events.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
