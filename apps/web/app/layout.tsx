@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { QueryProvider } from "@/lib/query-provider";
 import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
@@ -11,6 +11,15 @@ export const metadata: Metadata = {
   title: "UFC Intelligence",
   description:
     "Career-deep fighter stats, live event coverage, and explainable fight predictions.",
+};
+
+// Without this, mobile browsers assume the page is a desktop-width
+// design (~980px) and shrink the whole page to fit the screen instead of
+// laying it out at the device's actual width - reads as everything being
+// tiny and "zoomed out" with no way to interact at a normal scale.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
