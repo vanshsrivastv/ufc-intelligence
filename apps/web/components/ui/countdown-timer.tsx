@@ -15,14 +15,20 @@ function timeLeft(target: number) {
 
 export function CountdownTimer({ targetDate }: { targetDate: string }) {
   const target = new Date(targetDate).getTime();
-  const [remaining, setRemaining] = useState(() => timeLeft(target));
+  // Starts null on both server and first client render - Date.now() is
+  // never identical between the two, so computing a real value here
+  // (rather than deferring to the effect below) mismatched on whichever
+  // second boundary the two renders happened to straddle, and React
+  // threw a hydration error on every single page load.
+  const [remaining, setRemaining] = useState<ReturnType<typeof timeLeft> | null>(null);
 
   useEffect(() => {
+    setRemaining(timeLeft(target));
     const interval = setInterval(() => setRemaining(timeLeft(target)), 1000);
     return () => clearInterval(interval);
   }, [target]);
 
-  if (remaining.done) return null;
+  if (remaining === null || remaining.done) return null;
 
   return (
     <div className="flex gap-3">
