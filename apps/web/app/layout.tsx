@@ -4,6 +4,7 @@ import { Nav } from "@/components/layout/nav";
 import { Footer } from "@/components/layout/footer";
 import { BackToTop } from "@/components/layout/back-to-top";
 import { ToastProvider } from "@/components/ui/toast-provider";
+import { OnboardingTour } from "@/components/ui/onboarding-tour";
 import "./globals.css";
 import { AuthSessionProvider } from "@/lib/session-provider";
 
@@ -37,6 +38,7 @@ export default function RootLayout({
               <div className="flex-1">{children}</div>
               <Footer />
               <BackToTop />
+              <OnboardingTour />
             </ToastProvider>
           </QueryProvider>
         </AuthSessionProvider>

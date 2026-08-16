@@ -31,6 +31,9 @@ export function NavLinks({ mobile = false }: { mobile?: boolean }) {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
+            // Lets OnboardingTour find this exact link to spotlight it -
+            // "home" -> "home", "/fighters" -> "fighters", etc.
+            data-tour={href === "/" ? "home" : href.slice(1)}
             className={
               mobile
                 ? `flex items-center gap-2 rounded-md px-3 py-2.5 text-sm transition-standard ${
