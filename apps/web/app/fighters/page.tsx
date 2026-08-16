@@ -39,7 +39,7 @@ export default async function FightersPage({
       activity: params.activity,
       championOnly,
       documentedOnly,
-      sort: params.sort,
+      sort: params.sort ?? "elo_desc",
     }),
     getFavoritedFighterIds(),
     api.rankings.listWeightClasses(),

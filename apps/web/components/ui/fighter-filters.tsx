@@ -33,7 +33,7 @@ export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDt
   const championOnly = searchParams.get("championOnly") === "true";
   const documentedOnly = searchParams.get("documentedOnly") === "true";
   const weightClass = searchParams.get("weightClass") ?? "";
-  const sort = searchParams.get("sort") ?? "documented_first";
+  const sort = searchParams.get("sort") ?? "elo_desc";
 
   return (
     <div className="flex flex-wrap items-center gap-2">
