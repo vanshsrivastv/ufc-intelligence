@@ -120,7 +120,7 @@ const RANKINGS: Record<string, string[]> = {
     "Aaron Pico",
     "Melquizael Costa",
     "David Onama",
-    "Patricio Pitbull",
+    "Patricio Freire", // ufc.com lists him by ring name "Patricio Pitbull" - our roster has his real name
   ],
   Bantamweight: [
     "Petr Yan",
