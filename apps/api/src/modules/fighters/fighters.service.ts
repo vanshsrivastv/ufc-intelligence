@@ -187,7 +187,12 @@ export class FightersService {
     const submissionWins = wins.filter((f) => f.method === "SUBMISSION").length;
     const decisionWins = wins.filter((f) => f.method.startsWith("DECISION")).length;
 
-    const recentFights = completedFights.slice(0, 5);
+    // Full history, not capped - the frontend defaults to showing the
+    // first 5 with a "Show all" expansion, since a fighter with a long
+    // career (e.g. Charles Oliveira's 37+ fights) had most of their
+    // record permanently hidden with no way to see it when this was
+    // sliced down to 5 here instead.
+    const recentFights = completedFights;
 
     // Separate from recentFights on purpose - an unfought, scheduled
     // bout isn't a "recent fight," and rendering method: "PENDING" next

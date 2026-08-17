@@ -61,8 +61,10 @@ export interface FighterDetailDto extends FighterSummaryDto {
   // that count.
   eloHistory: { date: string; elo: number }[];
   careerStats: FighterCareerStats;
-  // Completed fights only, most recent first - never a SCHEDULED bout
-  // (see upcomingFight for that).
+  // Every completed fight, most recent first - never a SCHEDULED bout
+  // (see upcomingFight for that). Not capped/paginated; the frontend
+  // decides how much of this to show at once (e.g. a "Show all" toggle
+  // past the first 5).
   recentFights: FightSummaryDto[];
   upcomingFight: FightSummaryDto | null;
   // Data-driven skill tags (e.g. "Elite Wrestler"), each backed by a real

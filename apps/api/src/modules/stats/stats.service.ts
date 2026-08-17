@@ -102,12 +102,15 @@ export class StatsService {
     };
   }
 
-  // "Trending" = currently top-3-ranked fighters, sorted by most recent
+  // "Trending" = currently top-3-RANKED CONTENDERS, sorted by most recent
   // fight activity — a real, honest proxy since no popularity/view metric
-  // exists in this dataset.
+  // exists in this dataset. gte: 1 deliberately excludes rank 0
+  // (champion) - without it this leaked every division's champion in
+  // here too, duplicating names already shown in the "Current champions"
+  // strip right above this section on the homepage.
   private async getTrendingFighters(limit: number) {
     const topRanked = await prisma.ranking.findMany({
-      where: { rank: { lte: 3 } },
+      where: { rank: { gte: 1, lte: 3 } },
       orderBy: { effectiveDate: "desc" },
       distinct: ["fighterId"],
       include: { fighter: true, weightClass: true },

@@ -6,11 +6,10 @@ import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
 import { EloHistoryChart } from "@/components/charts/elo-history-chart";
 import { FighterRadarChart } from "@/components/charts/fighter-radar-chart";
-import { EmptyState } from "@/components/ui/empty-state";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PhotoAttribution } from "@/components/ui/photo-attribution";
 import { PerformanceProfile } from "@/components/ui/performance-profile";
-import { METHOD_LABEL } from "@/lib/method-label";
+import { FightHistoryList } from "@/components/ui/fight-history-list";
 
 function opponentOf(fight: FightSummaryDto, fighterId: string) {
   return fight.fighterA.id === fighterId ? fight.fighterB : fight.fighterA;
@@ -181,32 +180,8 @@ export default async function FighterDetailPage({
             <h2 className="font-display text-heading-md text-text-primary">
               Recent fights
             </h2>
-            <div className="mt-4 divide-y divide-border rounded-lg border border-border bg-bg-elevated">
-              {fighter.recentFights.length === 0 && (
-                <EmptyState message="No fight history recorded yet." />
-              )}
-              {fighter.recentFights.map((fight) => {
-                const opponent = opponentOf(fight, fighter.id);
-                const won = fight.winnerId === fighter.id;
-                return (
-                  <Link
-                    key={fight.id}
-                    href={`/fights/${fight.id}`}
-                    className="flex items-center justify-between p-4 transition-standard hover:bg-bg-elevated-2"
-                  >
-                    <span
-                      className={`text-body-md ${won ? "font-medium text-gold-300" : "text-text-primary"}`}
-                    >
-                      {won ? "W" : fight.winnerId ? "L" : "—"} vs {opponent.name}
-                    </span>
-                    <span className="text-right text-xs text-text-secondary">
-                      {METHOD_LABEL[fight.method] ?? fight.method}
-                      <br />
-                      {formatFightDate(fight.event.date)}
-                    </span>
-                  </Link>
-                );
-              })}
+            <div className="mt-4">
+              <FightHistoryList fights={fighter.recentFights} fighterId={fighter.id} />
             </div>
           </div>
         </div>

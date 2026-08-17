@@ -31,7 +31,7 @@ export function Footer() {
               <Mail size={13} strokeWidth={1.75} />
             </a>
             <a
-              href="https://github.com/vanshsrivastv"
+              href="https://github.com/vanshsrivastv/ufc-intelligence"
               target="_blank"
               rel="noreferrer noopener"
               aria-label="GitHub repository"

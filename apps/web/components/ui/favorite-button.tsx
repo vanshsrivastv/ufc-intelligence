@@ -77,7 +77,14 @@ export function FavoriteButton({
   return (
     <button
       onClick={handleClick}
-      aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={
+        session?.user
+          ? favorited
+            ? "Remove from favorites"
+            : "Add to favorites"
+          : "Sign in to save favorites"
+      }
+      title={session?.user ? undefined : "Sign in to save favorites"}
       className="relative flex h-8 w-10 items-center justify-center overflow-visible"
     >
       <AnimatePresence>

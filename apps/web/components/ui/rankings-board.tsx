@@ -91,6 +91,7 @@ export function RankingsBoard({
           type="button"
           aria-haspopup="listbox"
           aria-expanded={modeMenuOpen}
+          aria-label={`Ranking type: ${MODE_LABEL[mode]}. Click to change.`}
           onClick={() => setModeMenuOpen((v) => !v)}
           className="flex items-center gap-2.5 rounded-md border border-glass bg-glass px-4 py-2 text-left backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
         >
