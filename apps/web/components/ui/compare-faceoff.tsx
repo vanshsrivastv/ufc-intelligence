@@ -91,6 +91,11 @@ export function CompareFaceOff({
 
   return (
     <div>
+      {(asOfA || asOfB) && (
+        <p className="mb-2 text-center text-[11px] text-text-muted">
+          Records and age shown as they stood entering this fight, not their current numbers.
+        </p>
+      )}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-lg border border-glass bg-glass p-7 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
         <FighterHeader fighter={fighterA} recordText={recordOf(recordA)} />
         <span className="font-display text-xl italic text-text-muted">VS</span>
