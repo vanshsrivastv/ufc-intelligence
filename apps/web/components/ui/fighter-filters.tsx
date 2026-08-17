@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SlidersHorizontal, ChevronDown } from "lucide-react";
 import type { WeightClassDto } from "@ufc-intelligence/types";
 
 const SORT_OPTIONS: { value: string; label: string }[] = [
@@ -15,6 +17,11 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDto[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Collapsed by default on mobile only - the md:flex below always shows
+  // the row regardless of this state once the viewport is wide enough
+  // that 2 selects + 6 pills don't push every fighter card below the
+  // fold. Desktop layout is completely unaffected by this state.
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -35,8 +42,35 @@ export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDt
   const weightClass = searchParams.get("weightClass") ?? "";
   const sort = searchParams.get("sort") ?? "elo_desc";
 
+  const activeCount = [weightClass !== "", gender !== null, activity !== null, championOnly, documentedOnly].filter(
+    Boolean,
+  ).length;
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div>
+      <button
+        type="button"
+        onClick={() => setMobileOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-bg-elevated px-3 py-2 text-xs text-text-secondary transition-standard md:hidden"
+        aria-expanded={mobileOpen}
+      >
+        <span className="flex items-center gap-2">
+          <SlidersHorizontal size={14} strokeWidth={1.75} />
+          Filters & sort
+          {activeCount > 0 && (
+            <span className="rounded-full bg-gold-900 px-1.5 py-0.5 text-[10px] font-medium text-gold-300">
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          size={14}
+          strokeWidth={1.75}
+          className={`transition-standard ${mobileOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      <div className={`mt-2 flex-wrap items-center gap-2 md:mt-0 md:flex ${mobileOpen ? "flex" : "hidden"}`}>
       <select
         value={weightClass}
         onChange={(e) => setParam("weightClass", e.target.value || null)}
@@ -99,6 +133,7 @@ export function FighterFilters({ weightClasses }: { weightClasses: WeightClassDt
           </option>
         ))}
       </select>
+      </div>
     </div>
   );
 }
