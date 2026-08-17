@@ -4,6 +4,7 @@ import type { EloDivisionLeader, LeaderboardEntry } from "@/lib/api-client";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { EloDistributionChart } from "@/components/charts/elo-distribution-chart";
+import { StatisticsTabs } from "@/components/ui/statistics-tabs";
 
 export default async function StatisticsPage() {
   let lb, elo, overview;
@@ -30,39 +31,15 @@ export default async function StatisticsPage() {
   const subPct = methodBreakdown.total > 0 ? Math.round((methodBreakdown.submission / methodBreakdown.total) * 100) : 0;
   const decPct = methodBreakdown.total > 0 ? Math.round((methodBreakdown.decision / methodBreakdown.total) * 100) : 0;
 
-  return (
+  const recordsSection = (
     <>
-      <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
-      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-        <h1 className="font-display text-heading-lg text-text-primary">
-          Statistics
-        </h1>
-        <p className="mt-1 text-body-md text-text-secondary">
-          Real leaderboards computed from every recorded UFC fight in the database.
-        </p>
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         <Leaderboard title="Most wins" entries={lb.mostWins} valueKey="wins" />
         <Leaderboard title="Most finishes" entries={lb.mostFinishes} valueKey="finishes" />
         <Leaderboard title="Longest win streak" entries={lb.longestWinStreak} valueKey="streak" />
         <Leaderboard title="Most KO/TKO wins" entries={lb.mostKOWins} valueKey="kos" />
         <Leaderboard title="Most submission wins" entries={lb.mostSubmissionWins} valueKey="submissions" />
-        <Leaderboard title="Most title fights" entries={lb.mostTitleFights} valueKey="titleFights" />
         <Leaderboard title="Most active fighters" entries={lb.mostActiveFighters} valueKey="fights" />
-        <Leaderboard
-          title="Youngest champions"
-          entries={lb.youngestChampions}
-          valueKey="age"
-          suffix=" yrs"
-        />
-        <Leaderboard
-          title="Oldest champions"
-          entries={lb.oldestChampions}
-          valueKey="age"
-          suffix=" yrs"
-        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
@@ -94,66 +71,102 @@ export default async function StatisticsPage() {
           </p>
         </div>
       </div>
+    </>
+  );
 
-      <div className="mt-12">
-        <h2 className="font-display text-heading-lg text-text-primary">Elo ratings</h2>
-        <p className="mt-1 text-body-md text-text-secondary">
-          {elo.count.toLocaleString()} of {overview.fighters.toLocaleString()} fighters have a
-          computed rating — the rest have only an aggregate win/loss record with no fight-by-fight
-          history to compute one from.
-        </p>
+  const milestonesSection = (
+    <div className="grid gap-6 lg:grid-cols-3">
+      <Leaderboard title="Most title fights" entries={lb.mostTitleFights} valueKey="titleFights" />
+      <Leaderboard
+        title="Youngest champions"
+        entries={lb.youngestChampions}
+        valueKey="age"
+        suffix=" yrs"
+      />
+      <Leaderboard
+        title="Oldest champions"
+        entries={lb.oldestChampions}
+        valueKey="age"
+        suffix=" yrs"
+      />
+    </div>
+  );
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <Leaderboard title="Elo leaderboard" entries={elo.leaderboard} valueKey="elo" />
+  const eloSection = (
+    <div>
+      <p className="text-body-md text-text-secondary">
+        {elo.count.toLocaleString()} of {overview.fighters.toLocaleString()} fighters have a
+        computed rating — the rest have only an aggregate win/loss record with no fight-by-fight
+        history to compute one from.
+      </p>
 
-          <div className="rounded-lg border border-border bg-bg-elevated p-6">
-            <p className="font-display text-heading-md text-text-primary">Rating distribution</p>
-            <div className="mt-4 flex gap-8">
-              <div>
-                <p className="text-caption text-text-secondary">Average</p>
-                <p className="font-display text-heading-sm tabular-nums text-text-primary">
-                  {elo.average !== null ? Math.round(elo.average) : "—"}
-                </p>
-              </div>
-              <div>
-                <p className="text-caption text-text-secondary">Median</p>
-                <p className="font-display text-heading-sm tabular-nums text-text-primary">
-                  {elo.median !== null ? Math.round(elo.median) : "—"}
-                </p>
-              </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Leaderboard title="Elo leaderboard" entries={elo.leaderboard} valueKey="elo" />
+
+        <div className="rounded-lg border border-border bg-bg-elevated p-6">
+          <p className="font-display text-heading-md text-text-primary">Rating distribution</p>
+          <div className="mt-4 flex gap-8">
+            <div>
+              <p className="text-caption text-text-secondary">Average</p>
+              <p className="font-display text-heading-sm tabular-nums text-text-primary">
+                {elo.average !== null ? Math.round(elo.average) : "—"}
+              </p>
             </div>
-            <div className="mt-4">
-              <EloDistributionChart buckets={elo.distribution} />
+            <div>
+              <p className="text-caption text-text-secondary">Median</p>
+              <p className="font-display text-heading-sm tabular-nums text-text-primary">
+                {elo.median !== null ? Math.round(elo.median) : "—"}
+              </p>
             </div>
           </div>
-        </div>
-
-        <div className="mt-6 rounded-lg border border-border bg-bg-elevated p-4">
-          <p className="font-display text-heading-md text-text-primary">
-            Highest Elo by division
-          </p>
-          <div className="mt-3 flex flex-col gap-1">
-            {elo.topByDivision.map((f: EloDivisionLeader) => (
-              <Link
-                key={f.id}
-                href={`/fighters/${f.slug}`}
-                className="flex items-center justify-between rounded-md px-2 py-2 transition-standard hover:bg-bg-elevated-2"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-32 shrink-0 text-xs text-text-muted">{f.weightClass}</span>
-                  <span className="text-body-md text-text-primary">{f.name}</span>
-                </div>
-                <span className="text-body-md font-medium tabular-nums text-gold-300">
-                  {f.elo}
-                </span>
-              </Link>
-            ))}
-            {elo.topByDivision.length === 0 && (
-              <p className="px-2 py-2 text-body-md text-text-muted">No data yet.</p>
-            )}
+          <div className="mt-4">
+            <EloDistributionChart buckets={elo.distribution} />
           </div>
         </div>
       </div>
+
+      <div className="mt-6 rounded-lg border border-border bg-bg-elevated p-4">
+        <p className="font-display text-heading-md text-text-primary">
+          Highest Elo by division
+        </p>
+        <div className="mt-3 flex flex-col gap-1">
+          {elo.topByDivision.map((f: EloDivisionLeader) => (
+            <Link
+              key={f.id}
+              href={`/fighters/${f.slug}`}
+              className="flex items-center justify-between rounded-md px-2 py-2 transition-standard hover:bg-bg-elevated-2"
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-32 shrink-0 text-xs text-text-muted">{f.weightClass}</span>
+                <span className="text-body-md text-text-primary">{f.name}</span>
+              </div>
+              <span className="text-body-md font-medium tabular-nums text-gold-300">
+                {f.elo}
+              </span>
+            </Link>
+          ))}
+          {elo.topByDivision.length === 0 && (
+            <p className="px-2 py-2 text-body-md text-text-muted">No data yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
+      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
+      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+        <h1 className="font-display text-heading-lg text-text-primary">
+          Statistics
+        </h1>
+        <p className="mt-1 text-body-md text-text-secondary">
+          Real leaderboards computed from every recorded UFC fight in the database.
+        </p>
+      </div>
+
+      <StatisticsTabs records={recordsSection} milestones={milestonesSection} elo={eloSection} />
       </main>
     </>
   );

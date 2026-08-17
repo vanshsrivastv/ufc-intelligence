@@ -5,6 +5,7 @@ import { api } from "@/lib/api-client";
 import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
 import { EloHistoryChart } from "@/components/charts/elo-history-chart";
+import { FighterRadarChart } from "@/components/charts/fighter-radar-chart";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PhotoAttribution } from "@/components/ui/photo-attribution";
@@ -148,6 +149,17 @@ export default async function FighterDetailPage({
               </h2>
               <div className="mt-4 rounded-lg border border-border bg-bg-elevated p-4">
                 <EloHistoryChart history={fighter.eloHistory} />
+              </div>
+            </div>
+          )}
+
+          {fighter.percentileProfile && (
+            <div className="mt-12">
+              <h2 className="font-display text-heading-md text-text-primary">
+                Performance profile
+              </h2>
+              <div className="mt-4 rounded-lg border border-border bg-bg-elevated p-4">
+                <FighterRadarChart fighterName={fighter.name} percentiles={fighter.percentileProfile} />
               </div>
             </div>
           )}

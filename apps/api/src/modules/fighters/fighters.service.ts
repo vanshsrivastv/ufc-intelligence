@@ -208,6 +208,25 @@ export class FightersService {
     const rosterPercentiles = await computeRosterPercentiles();
     const percentileProfile = rosterPercentiles.get(fighter.id);
     const performanceProfile = percentileProfile ? capTags(computePerformanceTags(percentileProfile)) : [];
+    // Strip FighterPercentileProfile's two extra fields (completedFightsCount,
+    // fightCountPercentile) down to the plain StatPercentiles shape the
+    // radar chart expects - same shape getComparePercentiles below returns.
+    const statPercentiles: StatPercentiles | null = percentileProfile
+      ? {
+          elo: percentileProfile.elo,
+          strikeAccuracy: percentileProfile.strikeAccuracy,
+          takedownAccuracy: percentileProfile.takedownAccuracy,
+          takedownDefense: percentileProfile.takedownDefense,
+          finishRate: percentileProfile.finishRate,
+          winRate: percentileProfile.winRate,
+          strikesLandedPerMin: percentileProfile.strikesLandedPerMin,
+          takedownAvg: percentileProfile.takedownAvg,
+          submissionAvg: percentileProfile.submissionAvg,
+          koRate: percentileProfile.koRate,
+          submissionRate: percentileProfile.submissionRate,
+          decisionRate: percentileProfile.decisionRate,
+        }
+      : null;
 
     return {
       id: fighter.id,
@@ -264,6 +283,7 @@ export class FightersService {
       recentFights: recentFights.map(toFightSummaryDto),
       upcomingFight: upcomingFight ? toFightSummaryDto(upcomingFight) : null,
       performanceProfile,
+      percentileProfile: statPercentiles,
     };
   }
 

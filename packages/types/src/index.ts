@@ -71,6 +71,11 @@ export interface FighterDetailDto extends FighterSummaryDto {
   // tag to be statistically meaningful. See apps/api's
   // performance-profile.ts for the full threshold spec.
   performanceProfile: PerformanceTagDto[];
+  // Same roster-wide percentile engine behind performanceProfile and the
+  // Compare page's radar chart (see StatPercentiles) - null whenever this
+  // fighter isn't in the rated population, same condition that empties
+  // performanceProfile above.
+  percentileProfile: StatPercentiles | null;
 }
 
 export type PerformanceTagCategory = "striking" | "wrestling" | "grappling" | "finishing" | "overall";
