@@ -13,6 +13,7 @@ Everything under `packages/database/prisma/*.ts`, run via `npm run <script> --wo
 | `cleanup-stubs` / `remove-blank-fighters` | Removes empty fighter stub rows left behind by earlier, less careful scraping. |
 | `fetch-photos` | Wikimedia Commons photo enrichment. |
 | `enrich-nationality` | Conservative Wikidata-based nationality enrichment — dry-run/apply, never guesses an ambiguous match. |
+| `backfill-fight-stats` | Added 2026-08-17. Fills `FightStat` (sig strikes, takedowns, control time, knockdowns, submission attempts) for `COMPLETED` fights that have zero stats rows — every fight `sync-results`/`backfill-missing-events` has ever created, since neither writes `FightStat` at all; only `import-data` (the CSV) ever has. Source: [Cito API](https://citoapi.com), an independent third-party MMA stats API (not UFC-affiliated). Chosen over scraping ufcstats.com directly, which runs a genuine client-side proof-of-work anti-bot challenge. Requires `CITO_API_KEY` in the environment (free tier: 500 calls/month). Hard-capped at `CITO_MAX_CALLS` (default 450, leaving headroom under the monthly cap) — stops cleanly mid-run rather than exceeding budget, and is fully resumable: rerun next month and it only ever looks at fights still missing stats. Only writes `round: 0` (fight totals) rows — round-by-round has never been populated by anything and nothing in the app reads it. First real run (2026-08-17): 147/166 fights updated, 19 unmatched (bout not yet on Cito), using 162/450 calls. |
 
 ## Live scrapers (ufc.com, 15s crawl-delay, shared bot identity)
 
