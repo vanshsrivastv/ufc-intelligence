@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { EventSummaryDto } from "@ufc-intelligence/types";
+import { displayEventName, isTbdEventName } from "@/lib/tbd";
 
 export function EventCard({ event }: { event: EventSummaryDto }) {
   const date = new Date(event.date).toLocaleDateString("en-US", {
@@ -14,8 +15,12 @@ export function EventCard({ event }: { event: EventSummaryDto }) {
       className="group block rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:-translate-y-0.5 hover:border-gold-500 hover:shadow-[0_0_0_1px_var(--color-gold-500),0_0_12px_rgba(201,160,80,0.15)]"
     >
       <div className="flex items-center justify-between">
-        <p className="font-display text-[16px] font-medium text-text-primary">
-          {event.name}
+        <p
+          className={`font-display text-[16px] font-medium ${
+            isTbdEventName(event.name) ? "italic text-text-muted" : "text-text-primary"
+          }`}
+        >
+          {displayEventName(event.name)}
         </p>
         <EventStatusBadge status={event.status} />
       </div>

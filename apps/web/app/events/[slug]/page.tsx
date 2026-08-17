@@ -7,6 +7,7 @@ import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { METHOD_LABEL } from "@/lib/method-label";
+import { displayEventName, isTbdFighter } from "@/lib/tbd";
 
 // Fights are imported with cardPosition 1 = main event, ascending down the
 // card. There's no explicit "segment" field, so main card / prelims is a
@@ -48,7 +49,7 @@ export default async function EventDetailPage({
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-display-md text-text-primary">
-            {event.name}
+            {displayEventName(event.name)}
           </h1>
           <p className="mt-2 text-body-md text-text-secondary">
             {date}
@@ -146,6 +147,22 @@ function FighterSide({
   won: boolean;
   align: "left" | "right";
 }) {
+  // The shared stub fighter created for an announced-but-unmatched bout
+  // (see lib/tbd.ts) - no profile worth linking to, so this renders as
+  // plain text instead of a link to an empty /fighters/tbd page.
+  if (isTbdFighter(fighter)) {
+    return (
+      <div
+        className={`flex items-center gap-2 text-body-md text-text-muted ${
+          align === "right" ? "flex-row-reverse text-right" : ""
+        }`}
+      >
+        <div className="h-9 w-9 shrink-0 rounded-full border border-dashed border-border-strong" />
+        <span className="italic">TBD</span>
+      </div>
+    );
+  }
+
   const content = (
     <>
       <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-border-strong">

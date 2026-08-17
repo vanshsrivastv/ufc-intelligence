@@ -10,6 +10,7 @@ import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { HorizontalScroller } from "@/components/ui/horizontal-scroller";
+import { displayEventName, isTbdFighter } from "@/lib/tbd";
 
 export default async function HomePage() {
   let overview: StatsOverview = { fighters: 0, fights: 0, events: 0, weightClasses: 0 };
@@ -109,7 +110,9 @@ export default async function HomePage() {
                   href={`/fights/${dashboard.headliner.fightId}`}
                   className="mt-1 block font-display text-heading-md text-text-primary transition-standard hover:text-gold-300"
                 >
-                  {dashboard.headliner.fighterA.name} vs {dashboard.headliner.fighterB.name}
+                  {isTbdFighter(dashboard.headliner.fighterA) || isTbdFighter(dashboard.headliner.fighterB)
+                    ? "Matchup not yet announced"
+                    : `${dashboard.headliner.fighterA.name} vs ${dashboard.headliner.fighterB.name}`}
                 </Link>
               </div>
               <CountdownTimer targetDate={dashboard.headliner.eventDate} />
@@ -138,7 +141,7 @@ export default async function HomePage() {
                   href={`/events/${e.slug}`}
                   className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
                 >
-                  <p className="font-display text-body-lg text-text-primary">{e.name}</p>
+                  <p className="font-display text-body-lg text-text-primary">{displayEventName(e.name)}</p>
                   <p className="mt-1 text-xs text-text-secondary">
                     {new Date(e.date).toLocaleDateString("en-US", {
                       month: "short",
