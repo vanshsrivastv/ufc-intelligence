@@ -23,7 +23,8 @@
     "remove-blank-fighters": "tsx prisma/remove-blank-fighters.ts",
     "enrich-nationality": "tsx prisma/enrich-fighter-nationality.ts",
     "relink-stub-fighters": "tsx prisma/relink-stub-fighters.ts",
-    "backfill-missing-events": "tsx prisma/backfill-missing-events.ts"
+    "backfill-missing-events": "tsx prisma/backfill-missing-events.ts",
+    "backfill-fight-stats": "tsx prisma/backfill-fight-stats.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
