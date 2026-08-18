@@ -28,7 +28,7 @@ export function StatisticsTabs({
 
   return (
     <div>
-      <div className="mt-8 flex flex-wrap gap-2" role="tablist" aria-label="Statistics category">
+      <div className="mt-8 flex gap-6 border-b border-border pb-3" role="tablist" aria-label="Statistics category">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -36,10 +36,10 @@ export function StatisticsTabs({
             role="tab"
             aria-selected={active === tab.id}
             onClick={() => setActive(tab.id)}
-            className={`rounded-md border px-4 py-2 text-body-md transition-standard ${
+            className={`text-body-md transition-standard ${
               active === tab.id
-                ? "border-gold-500 bg-gold-900 text-gold-300"
-                : "border-border text-text-secondary hover:border-border-strong"
+                ? "font-medium text-text-primary underline decoration-gold-500 decoration-2 underline-offset-4"
+                : "text-text-secondary hover:text-text-primary"
             }`}
           >
             {tab.label}

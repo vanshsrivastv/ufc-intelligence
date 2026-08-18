@@ -93,7 +93,7 @@ export function RankingsBoard({
           aria-expanded={modeMenuOpen}
           aria-label={`Ranking type: ${MODE_LABEL[mode]}. Click to change.`}
           onClick={() => setModeMenuOpen((v) => !v)}
-          className="flex items-center gap-2.5 rounded-md border border-glass bg-glass px-4 py-2 text-left backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
+          className="flex items-center gap-2.5 rounded-md border border-border bg-bg-elevated px-4 py-2 text-left transition-standard hover:border-gold-500"
         >
           <Trophy size={15} strokeWidth={1.75} className="text-gold-300" />
           <span className="text-body-md font-medium text-text-primary">{MODE_LABEL[mode]}</span>
@@ -108,7 +108,7 @@ export function RankingsBoard({
           <div
             role="listbox"
             aria-label="Ranking type"
-            className="absolute left-0 top-full z-10 mt-2 w-64 overflow-hidden rounded-md border border-glass bg-glass-strong backdrop-blur-2xl backdrop-saturate-150 shadow-glass"
+            className="absolute left-0 top-full z-10 mt-2 w-64 overflow-hidden rounded-md border border-border-strong bg-bg-elevated-2 shadow-lg"
           >
             {(["official", "elo"] as const).map((option) => (
               <button
@@ -188,7 +188,7 @@ export function RankingsBoard({
       )}
 
       <div
-        className={`mt-8 divide-y divide-border rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard ${
+        className={`mt-8 divide-y divide-border rounded-lg border border-border bg-bg-elevated transition-standard ${
           visible && !isPending ? "opacity-100" : "opacity-0"
         }`}
       >

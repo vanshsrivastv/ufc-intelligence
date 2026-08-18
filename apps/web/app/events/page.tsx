@@ -4,7 +4,6 @@ import { EventCard } from "@/components/ui/event-card";
 import { EventSearch } from "@/components/ui/event-search";
 import { EventFilters } from "@/components/ui/event-filters";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 
 interface EventsSearchParams {
   page?: string;
@@ -32,26 +31,22 @@ export default async function EventsPage({
   const totalPages = Math.ceil(result.total / result.pageSize);
 
   return (
-    <>
-      <PageAtmosphere src="/images/octagon.jpg" alt="" focalPosition="50% 40%" />
-      <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-        <h1 className="font-display text-heading-lg text-text-primary">
-          Events
-        </h1>
-        <p className="mt-1 text-body-md text-text-secondary">
-          {result.total} events
-        </p>
+    <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
+      <h1 className="font-display text-heading-lg text-text-primary">
+        Events
+      </h1>
+      <p className="mt-1 text-body-md text-text-secondary">
+        {result.total} events
+      </p>
 
-        <div className="mt-6">
-          <EventSearch />
-        </div>
-        <div className="mt-4">
-          <EventFilters />
-        </div>
+      <div className="mt-6">
+        <EventSearch />
+      </div>
+      <div className="mt-4">
+        <EventFilters />
       </div>
 
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="mt-8 divide-y divide-border">
         {result.items.map((event) => (
           <EventCard key={event.id} event={event} />
         ))}
@@ -74,8 +69,7 @@ export default async function EventsPage({
           </PageLink>
         </div>
       )}
-      </main>
-    </>
+    </main>
   );
 }
 

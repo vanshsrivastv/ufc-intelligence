@@ -2,7 +2,6 @@ import Link from "next/link";
 import { api } from "@/lib/api-client";
 import type { EloDivisionLeader, LeaderboardEntry } from "@/lib/api-client";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { EloDistributionChart } from "@/components/charts/elo-distribution-chart";
 import { StatisticsTabs } from "@/components/ui/statistics-tabs";
 
@@ -16,13 +15,10 @@ export default async function StatisticsPage() {
     ]);
   } catch {
     return (
-      <>
-        <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
-        <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
-          <h1 className="font-display text-heading-lg text-text-primary">Statistics</h1>
-          <EmptyState message="Couldn't load statistics right now — try refreshing in a moment." />
-        </main>
-      </>
+      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
+        <h1 className="font-display text-heading-lg text-text-primary">Statistics</h1>
+        <EmptyState message="Couldn't load statistics right now — try refreshing in a moment." />
+      </main>
     );
   }
   const { methodBreakdown } = lb;
@@ -33,7 +29,7 @@ export default async function StatisticsPage() {
 
   const recordsSection = (
     <>
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid divide-border rounded-lg border border-border bg-bg-elevated sm:grid-cols-2 sm:divide-x lg:grid-cols-3">
         <Leaderboard title="Most wins" entries={lb.mostWins} valueKey="wins" />
         <Leaderboard title="Most finishes" entries={lb.mostFinishes} valueKey="finishes" />
         <Leaderboard title="Longest win streak" entries={lb.longestWinStreak} valueKey="streak" />
@@ -43,7 +39,7 @@ export default async function StatisticsPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div>
+        <div className="rounded-lg border border-border bg-bg-elevated">
           <Leaderboard
             title="Best striking accuracy (200+ attempts)"
             entries={lb.bestStrikeAccuracy}
@@ -75,7 +71,7 @@ export default async function StatisticsPage() {
   );
 
   const milestonesSection = (
-    <div className="grid gap-6 lg:grid-cols-3">
+    <div className="grid divide-border rounded-lg border border-border bg-bg-elevated sm:grid-cols-3 sm:divide-x">
       <Leaderboard title="Most title fights" entries={lb.mostTitleFights} valueKey="titleFights" />
       <Leaderboard
         title="Youngest champions"
@@ -101,7 +97,9 @@ export default async function StatisticsPage() {
       </p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Leaderboard title="Elo leaderboard" entries={elo.leaderboard} valueKey="elo" />
+        <div className="rounded-lg border border-border bg-bg-elevated">
+          <Leaderboard title="Elo leaderboard" entries={elo.leaderboard} valueKey="elo" />
+        </div>
 
         <div className="rounded-lg border border-border bg-bg-elevated p-6">
           <p className="font-display text-heading-md text-text-primary">Rating distribution</p>
@@ -154,21 +152,16 @@ export default async function StatisticsPage() {
   );
 
   return (
-    <>
-      <PageAtmosphere src="/images/chama.jpg" alt="" focalPosition="50% 25%" />
-      <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-        <h1 className="font-display text-heading-lg text-text-primary">
-          Statistics
-        </h1>
-        <p className="mt-1 text-body-md text-text-secondary">
-          Real leaderboards computed from every recorded UFC fight in the database.
-        </p>
-      </div>
+    <main className="mx-auto max-w-[1200px] px-4 py-12 md:px-8">
+      <h1 className="font-display text-heading-lg text-text-primary">
+        Statistics
+      </h1>
+      <p className="mt-1 text-body-md text-text-secondary">
+        Real leaderboards computed from every recorded UFC fight in the database.
+      </p>
 
       <StatisticsTabs records={recordsSection} milestones={milestonesSection} elo={eloSection} />
-      </main>
-    </>
+    </main>
   );
 }
 
@@ -184,28 +177,26 @@ function Leaderboard({
   suffix?: string;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-border-strong">
-      <p className="font-display text-heading-md text-text-primary">{title}</p>
+    <div className="px-4 py-4">
+      <p className="font-display text-heading-sm text-text-primary">{title}</p>
       <div className="mt-3 flex flex-col gap-1">
         {entries.map((entry, i) => (
           <Link
             key={entry.id}
             href={`/fighters/${entry.slug}`}
-            className="flex items-center justify-between rounded-md px-2 py-2 transition-standard hover:bg-bg-elevated-2"
+            className="flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 text-body-md transition-standard hover:bg-bg-elevated-2"
           >
-            <div className="flex items-center gap-3">
-              <span className="w-5 text-xs text-text-muted">{i + 1}</span>
-              <span className="text-body-md text-text-primary">{entry.name}</span>
-            </div>
-            <span className="text-body-md font-medium text-gold-300">
+            <span className="truncate text-text-primary">
+              <span className="mr-2 text-xs text-text-muted">{i + 1}</span>
+              {entry.name}
+            </span>
+            <span className="shrink-0 pl-2 font-medium tabular-nums text-gold-300">
               {entry[valueKey]}
               {suffix}
             </span>
           </Link>
         ))}
-        {entries.length === 0 && (
-          <p className="px-2 py-2 text-body-md text-text-muted">No data yet.</p>
-        )}
+        {entries.length === 0 && <p className="text-body-md text-text-muted">No data yet.</p>}
       </div>
     </div>
   );

@@ -7,11 +7,57 @@ import { FighterAvatar } from "./fighter-avatar";
 export function FighterCard({
   fighter,
   initiallyFavorited = false,
+  variant = "default",
 }: {
   fighter: FighterSummaryDto;
   initiallyFavorited?: boolean;
+  // "portrait" is the 2026-08-18 visual-audit treatment (portrait photo
+  // instead of a wide 3:1 crop, flat surface instead of glass, plain-text
+  // record/rank instead of stacked badges) - opt-in only, used by the
+  // Fighters list page. Defaults to the original card so every other
+  // caller (Favorites) is completely unaffected.
+  variant?: "default" | "portrait";
 }) {
   const record = `${fighter.record.wins}-${fighter.record.losses}-${fighter.record.draws}`;
+
+  if (variant === "portrait") {
+    return (
+      <Link
+        href={`/fighters/${fighter.slug}`}
+        className="group block overflow-hidden rounded-lg border border-border bg-bg-elevated transition-standard hover:border-border-strong"
+      >
+        <div className="relative aspect-[3/4] w-full overflow-hidden bg-bg-elevated-2">
+          <FighterAvatar name={fighter.name} photoUrl={fighter.photoUrl} />
+          <div className="absolute right-1 top-1 rounded-full bg-bg-primary/60 backdrop-blur-sm">
+            <FavoriteButton fighterId={fighter.id} initiallyFavorited={initiallyFavorited} />
+          </div>
+        </div>
+        <div className="p-3">
+          <p className="truncate font-display text-[14px] font-medium text-text-primary">
+            {fighter.name}
+          </p>
+          <p className="mt-0.5 truncate text-xs text-text-secondary">
+            {record}
+            {fighter.weightClass ? ` · ${fighter.weightClass.name}` : ""}
+          </p>
+          <div className="mt-1.5 flex items-center justify-between text-xs">
+            {fighter.elo !== null ? (
+              <span className="font-medium tabular-nums text-text-primary">
+                Elo {Math.round(fighter.elo)}
+              </span>
+            ) : (
+              <span />
+            )}
+            {fighter.rank !== null && (
+              <span className="font-medium text-gold-300">
+                {fighter.rank === 0 ? "Champion" : `#${fighter.rank}`}
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <Link

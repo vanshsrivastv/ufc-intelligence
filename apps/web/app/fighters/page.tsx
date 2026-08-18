@@ -3,7 +3,6 @@ import { api } from "@/lib/api-client";
 import { FighterCard } from "@/components/ui/fighter-card";
 import { FighterListSearch } from "@/components/ui/fighter-list-search";
 import { FighterFilters } from "@/components/ui/fighter-filters";
-import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getFavoritedFighterIds } from "@/lib/favorites";
 import { sortDivisions } from "@/lib/ranking-divisions";
@@ -49,32 +48,29 @@ export default async function FightersPage({
   const weightClasses = sortDivisions(allWeightClasses);
 
   return (
-    <>
-      <PageAtmosphere src="/images/jj.jpg" alt="" focalPosition="50% 20%" />
-      <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
-      <div className="rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-        <h1 className="font-display text-heading-lg text-text-primary">
-          Fighters
-        </h1>
-        <p className="mt-1 text-body-md text-text-secondary">
-          {result.total} fighters
-        </p>
+    <main className="mx-auto max-w-[1440px] px-4 py-12 md:px-8">
+      <h1 className="font-display text-heading-lg text-text-primary">
+        Fighters
+      </h1>
+      <p className="mt-1 text-body-md text-text-secondary">
+        {result.total} fighters
+      </p>
 
-        <div className="mt-6">
-          <FighterListSearch />
-        </div>
-
-        <div className="mt-4">
-          <FighterFilters weightClasses={weightClasses} />
-        </div>
+      <div className="mt-6">
+        <FighterListSearch />
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-4">
+        <FighterFilters weightClasses={weightClasses} />
+      </div>
+
+      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {result.items.map((fighter) => (
           <FighterCard
             key={fighter.id}
             fighter={fighter}
             initiallyFavorited={favoritedIds.has(fighter.id)}
+            variant="portrait"
           />
         ))}
       </div>
@@ -96,8 +92,7 @@ export default async function FightersPage({
           </PageLink>
         </div>
       )}
-      </main>
-    </>
+    </main>
   );
 }
 

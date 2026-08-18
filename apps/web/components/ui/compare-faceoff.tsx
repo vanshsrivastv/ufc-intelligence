@@ -28,11 +28,17 @@ export function CompareFaceOff({
   fighterB,
   asOfA,
   asOfB,
+  flat = false,
 }: {
   fighterA: FighterDetailDto;
   fighterB: FighterDetailDto;
   asOfA?: FighterAtFightTimeDto;
   asOfB?: FighterAtFightTimeDto;
+  // Opt-in per the 2026-08-18 visual audit: a flat bg-elevated surface
+  // instead of glass/blur. Defaults to false so the Compare page (which
+  // shares this component) is completely unaffected - only the
+  // fight-detail page passes true.
+  flat?: boolean;
 }) {
   const ageA = asOfA ? asOfA.age : ageFromDob(fighterA.dob);
   const ageB = asOfB ? asOfB.age : ageFromDob(fighterB.dob);
@@ -96,13 +102,25 @@ export function CompareFaceOff({
           Records and age shown as they stood entering this fight, not their current numbers.
         </p>
       )}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-lg border border-glass bg-glass p-7 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+      <div
+        className={`grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-lg border p-7 ${
+          flat
+            ? "border-border bg-bg-elevated"
+            : "border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass"
+        }`}
+      >
         <FighterHeader fighter={fighterA} recordText={recordOf(recordA)} />
         <span className="font-display text-xl italic text-text-muted">VS</span>
         <FighterHeader fighter={fighterB} recordText={recordOf(recordB)} align="right" />
       </div>
 
-      <div className="mt-4 rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+      <div
+        className={`mt-4 rounded-lg border ${
+          flat
+            ? "border-border bg-bg-elevated"
+            : "border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass"
+        }`}
+      >
         {rows.map((row) => (
           <CompareRow key={row.label} {...row} />
         ))}

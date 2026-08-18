@@ -62,6 +62,7 @@ export default async function FightDetailPage({
             fighterB={fighterB}
             asOfA={fight.fighterAAtFightTime}
             asOfB={fight.fighterBAtFightTime}
+            flat
           />
         </div>
       ) : (
@@ -94,14 +95,11 @@ export default async function FightDetailPage({
           </p>
 
           {prediction.topFactors.length > 0 && (
-            <div className="mt-5 flex flex-col gap-2 border-t border-border pt-5">
+            <div className="mt-5 divide-y divide-border border-t border-border">
               {prediction.topFactors.map((factor) => (
-                <div
-                  key={factor.factor}
-                  className="rounded-md border border-border bg-bg-elevated-2 px-3 py-2"
-                >
-                  <p className="text-body-md text-text-primary">{factor.explanation}</p>
-                </div>
+                <p key={factor.factor} className="py-2.5 text-body-md text-text-primary">
+                  {factor.explanation}
+                </p>
               ))}
             </div>
           )}
