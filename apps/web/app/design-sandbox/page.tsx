@@ -21,13 +21,30 @@ export default function DesignSandboxIndex() {
           real site. Delete <code className="text-text-primary">apps/web/app/design-sandbox/</code>{" "}
           to remove it completely.
         </p>
-        <Link
-          href="/design-sandbox/homepage"
-          className="mt-6 inline-block rounded-md bg-gold-300 px-5 py-2.5 text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
-        >
-          View: Homepage prototype →
-        </Link>
+        <div className="mt-6 grid gap-2 sm:grid-cols-2">
+          {PROTOTYPES.map((p) => (
+            <Link
+              key={p.href}
+              href={p.href}
+              className="rounded-md border border-border bg-bg-elevated px-4 py-3 text-body-md text-text-primary transition-standard hover:border-gold-500 hover:text-gold-300"
+            >
+              {p.label} →
+            </Link>
+          ))}
+        </div>
       </div>
     </main>
   );
 }
+
+const PROTOTYPES = [
+  { href: "/design-sandbox/homepage", label: "Homepage" },
+  { href: "/design-sandbox/fighters", label: "Fighters (list)" },
+  { href: "/design-sandbox/fighter-profile", label: "Fighter Profile" },
+  { href: "/design-sandbox/compare", label: "Compare" },
+  { href: "/design-sandbox/predictions", label: "Predictions" },
+  { href: "/design-sandbox/rankings", label: "Rankings" },
+  { href: "/design-sandbox/statistics", label: "Statistics" },
+  { href: "/design-sandbox/events", label: "Events" },
+  { href: "/design-sandbox/fight-detail", label: "Fight Detail" },
+];
