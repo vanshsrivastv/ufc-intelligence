@@ -5,7 +5,7 @@ import { SandboxBanner } from "../_components/sandbox-banner";
 
 // DESIGN SANDBOX - visual prototype only, real events data.
 export default async function EventsSandbox() {
-  const result = await api.events.list({ pageSize: 14 }).catch(() => ({ items: [], total: 0, page: 1, pageSize: 14 }));
+  const result = await api.events.list({}).catch(() => ({ items: [], total: 0, page: 1, pageSize: 20 }));
 
   return (
     <main className="mx-auto max-w-[1000px] px-4 py-10 md:px-8">
