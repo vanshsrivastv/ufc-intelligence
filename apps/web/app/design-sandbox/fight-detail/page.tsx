@@ -2,6 +2,7 @@ import { api } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { METHOD_LABEL } from "@/lib/method-label";
 import { SandboxBanner } from "../_components/sandbox-banner";
+import { PhotoHeader } from "../_components/photo-header";
 
 const SAMPLE_FIGHT_ID = "7f56dd0b16f7"; // Topuria vs Gaethje, UFC Freedom 250
 
@@ -31,10 +32,15 @@ export default async function FightDetailSandbox() {
           "Faceoff card: flat surface instead of glass/blur (finding #1)",
           "Record/age shown entering this fight: plain text, gold only on the eventual winner's name (finding #2)",
           "Fight-statistics section unchanged — it was already flat/well-scoped, kept as-is",
+          "Header photo: octagon.jpg at raised opacity (\"option B\") — the live fight page has no photo header today, this is a new addition to test",
         ]}
       />
 
-      <div className="mt-8 text-xs text-text-secondary">← {fight.event.name}</div>
+      <div className="mt-8">
+        <PhotoHeader src="/images/octagon.jpg" focalPosition="50% 40%" title={fight.event.name} />
+      </div>
+
+      <div className="mt-4 text-xs text-text-secondary">← {fight.event.name}</div>
       <div className="mt-2 flex items-center gap-2">
         {fight.isTitleFight && <span className="text-[11px] font-medium text-gold-300">Title Fight</span>}
         {fight.weightClass && <span className="text-[11px] text-text-secondary">{fight.weightClass.name}</span>}

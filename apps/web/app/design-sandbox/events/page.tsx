@@ -2,6 +2,7 @@ import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { displayEventName, isTbdEventName } from "@/lib/tbd";
 import { SandboxBanner } from "../_components/sandbox-banner";
+import { PhotoHeader } from "../_components/photo-header";
 
 // DESIGN SANDBOX - visual prototype only, real events data.
 export default async function EventsSandbox() {
@@ -21,8 +22,12 @@ export default async function EventsSandbox() {
       />
 
       <div className="mt-8">
-        <h1 className="font-display text-heading-lg text-text-primary">Events</h1>
-        <p className="mt-1 text-body-md text-text-secondary">{result.total.toLocaleString()} events</p>
+        <PhotoHeader
+          src="/images/octagon.jpg"
+          focalPosition="50% 40%"
+          title="Events"
+          description={`${result.total.toLocaleString()} events`}
+        />
       </div>
 
       <div className="mt-6 divide-y divide-border">
