@@ -2,7 +2,6 @@ import { api } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { sortDivisions } from "@/lib/ranking-divisions";
 import { SandboxBanner } from "../_components/sandbox-banner";
-import { PhotoHeader } from "../_components/photo-header";
 
 // DESIGN SANDBOX - visual prototype only, real rankings data.
 export default async function RankingsSandbox() {
@@ -25,12 +24,8 @@ export default async function RankingsSandbox() {
       />
 
       <div className="mt-8">
-        <PhotoHeader
-          src="/images/chama.jpg"
-          focalPosition="50% 25%"
-          title="Rankings"
-          description="Current divisional rankings, by weight class."
-        />
+        <h1 className="font-display text-heading-lg text-text-primary">Rankings</h1>
+        <p className="mt-1 text-body-md text-text-secondary">Current divisional rankings, by weight class.</p>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-b border-border pb-4 text-body-md">

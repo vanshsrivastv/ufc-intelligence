@@ -1,7 +1,6 @@
 import { api } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { SandboxBanner } from "../_components/sandbox-banner";
-import { PhotoHeader } from "../_components/photo-header";
 
 const SLUG_A = "ilia-topuria";
 const SLUG_B = "justin-gaethje";
@@ -40,12 +39,11 @@ export default async function PredictionsSandbox() {
       />
 
       <div className="mt-8">
-        <PhotoHeader
-          src="/images/conor-mcgregor.jpg"
-          focalPosition="50% 15%"
-          title="Fantasy Matchup Predictor"
-          description="Pick any two fighters for an explainable win-probability breakdown, built from real career stats."
-        />
+        <h1 className="font-display text-heading-lg text-text-primary">Fantasy Matchup Predictor</h1>
+        <p className="mt-2 text-body-md text-text-secondary">
+          Pick any two fighters for an explainable win-probability breakdown, built from real career
+          stats.
+        </p>
       </div>
 
       <div className="mt-6 rounded-lg border border-border bg-bg-elevated p-6">

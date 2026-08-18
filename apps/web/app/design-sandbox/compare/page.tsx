@@ -2,7 +2,6 @@ import { api } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { StatRadarChart } from "@/components/charts/stat-radar-chart";
 import { SandboxBanner } from "../_components/sandbox-banner";
-import { PhotoHeader } from "../_components/photo-header";
 
 const SLUG_A = "ilia-topuria";
 const SLUG_B = "justin-gaethje";
@@ -49,12 +48,8 @@ export default async function CompareSandbox() {
       />
 
       <div className="mt-8">
-        <PhotoHeader
-          src="/images/jj.jpg"
-          focalPosition="50% 20%"
-          title="Compare Fighters"
-          description="Pick any two fighters for a full side-by-side breakdown."
-        />
+        <h1 className="font-display text-heading-lg text-text-primary">Compare Fighters</h1>
+        <p className="mt-1 text-body-md text-text-secondary">Pick any two fighters for a full side-by-side breakdown.</p>
       </div>
 
       <div className="mt-6 rounded-lg border border-border bg-bg-elevated p-6">

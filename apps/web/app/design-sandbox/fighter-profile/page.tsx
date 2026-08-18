@@ -6,7 +6,6 @@ import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart
 import { FighterRadarChart } from "@/components/charts/fighter-radar-chart";
 import { METHOD_LABEL } from "@/lib/method-label";
 import { SandboxBanner } from "../_components/sandbox-banner";
-import { PhotoHeader } from "../_components/photo-header";
 import type { FightSummaryDto } from "@ufc-intelligence/types";
 
 const SAMPLE_SLUG = "ilia-topuria";
@@ -45,13 +44,8 @@ export default async function FighterProfileSandbox() {
           "Performance tags: a plain flowing list instead of 5 individual pill badges (finding #5)",
           "Stat grid: values sized up relative to labels, not just gold-colored (finding #9)",
           "Gold restrained to rank badge, Elo number, and the winning method — not every link/hover (finding #2)",
-          "Header photo: octagon.jpg at raised opacity (\"option B\") — the live profile page has no photo header today, this is a new addition to test",
         ]}
       />
-
-      <div className="mt-8">
-        <PhotoHeader src="/images/octagon.jpg" focalPosition="50% 40%" title={fighter.name} description={fighter.weightClass?.name} />
-      </div>
 
       <div className="mt-8 grid gap-8 md:grid-cols-[300px_1fr]">
         <div>

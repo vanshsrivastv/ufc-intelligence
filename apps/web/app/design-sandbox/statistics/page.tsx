@@ -1,7 +1,6 @@
 import { api } from "@/lib/api-client";
 import type { LeaderboardEntry } from "@/lib/api-client";
 import { SandboxBanner } from "../_components/sandbox-banner";
-import { PhotoHeader } from "../_components/photo-header";
 
 // DESIGN SANDBOX - visual prototype only, real leaderboard data. Shows
 // only the "Records" tab's content (statically) to demonstrate the card
@@ -32,12 +31,10 @@ export default async function StatisticsSandbox() {
       />
 
       <div className="mt-8">
-        <PhotoHeader
-          src="/images/chama.jpg"
-          focalPosition="50% 25%"
-          title="Statistics"
-          description="Real leaderboards computed from every recorded UFC fight in the database."
-        />
+        <h1 className="font-display text-heading-lg text-text-primary">Statistics</h1>
+        <p className="mt-1 text-body-md text-text-secondary">
+          Real leaderboards computed from every recorded UFC fight in the database.
+        </p>
 
         <div className="mt-5 flex gap-6 border-b border-border pb-3 text-body-md">
           <span className="cursor-default font-medium text-text-primary underline decoration-gold-500 decoration-2 underline-offset-4">

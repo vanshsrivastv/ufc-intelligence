@@ -2,7 +2,6 @@ import Link from "next/link";
 import { api } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { SandboxBanner } from "../_components/sandbox-banner";
-import { PhotoHeader } from "../_components/photo-header";
 import type { FighterSummaryDto } from "@ufc-intelligence/types";
 
 // DESIGN SANDBOX - visual prototype only. Real data via the same api
@@ -31,12 +30,8 @@ export default async function FightersSandbox() {
       />
 
       <div className="mt-8">
-        <PhotoHeader
-          src="/images/jj.jpg"
-          focalPosition="50% 20%"
-          title="Fighters"
-          description={`${result.total.toLocaleString()} fighters`}
-        />
+        <h1 className="font-display text-heading-lg text-text-primary">Fighters</h1>
+        <p className="mt-1 text-body-md text-text-secondary">{result.total.toLocaleString()} fighters</p>
 
         <div className="mt-5 flex flex-wrap items-center gap-4 border-b border-border pb-4">
           <input
