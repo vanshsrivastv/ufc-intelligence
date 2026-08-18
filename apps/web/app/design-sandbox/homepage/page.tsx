@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Users, Swords, CalendarDays, Layers, TrendingUp } from "lucide-react";
 import { api, type StatsOverview, type ChampionSummary, type DashboardData } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
@@ -197,13 +198,15 @@ function ProposedHomepage({
 }) {
   return (
     <div>
-      {/* Hero - the one place a glass panel + background photo is kept,
-          per the audit's recommendation to reserve atmosphere/glass for a
-          single deliberate moment rather than every page/section. No
-          PageAtmosphere component reused here (that would touch a shared
-          file's usage pattern outside this sandbox) - a plain gradient
-          scrim stands in for what a real, more-visible hero photo would
-          do. */}
+      {/* Hero - the one place a photo/glass moment is kept at all, per the
+          audit's recommendation to reserve atmosphere for a single
+          deliberate section rather than every page. Two options shown
+          stacked so they can be compared directly - neither replaces the
+          other yet, this is exactly the open question the audit left
+          unresolved (raise the photo's visibility, or drop it). */}
+      <p className="mb-2 text-center text-[11px] uppercase tracking-wide text-text-muted">
+        Hero — option A: gradient only, no photo
+      </p>
       <section className="relative overflow-hidden rounded-lg border border-border p-10 text-center">
         <div
           className="pointer-events-none absolute inset-0 -z-10"
@@ -218,6 +221,38 @@ function ProposedHomepage({
           one place.
         </p>
         <span className="mt-6 inline-block rounded-md bg-gold-300 px-6 py-3 font-sans text-body-md font-medium text-text-on-gold">
+          Browse fighters
+        </span>
+      </section>
+
+      {/* Option B - the same octagon.jpg the production homepage already
+          uses via PageAtmosphere, but at real, visible opacity (0.55 vs
+          production's 0.3) and a lighter scrim (35% vs 50%), so the photo
+          is actually legible rather than nearly gone. Bounded to this
+          section only (not a page-wide fixed background like
+          PageAtmosphere) so it stays a deliberate hero moment, not
+          something every section inherits. */}
+      <p className="mb-2 mt-6 text-center text-[11px] uppercase tracking-wide text-text-muted">
+        Hero — option B: real photo, raised opacity
+      </p>
+      <section className="relative overflow-hidden rounded-lg border border-border p-10 text-center">
+        <Image
+          src="/images/octagon.jpg"
+          alt=""
+          fill
+          sizes="100vw"
+          className="-z-20 object-cover opacity-55"
+          style={{ objectPosition: "50% 40%" }}
+        />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-bg-primary/35" />
+        <h1 className="relative font-display text-display-lg text-text-primary drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+          UFC Intelligence
+        </h1>
+        <p className="relative mx-auto mt-3 max-w-lg text-body-lg text-text-secondary drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+          Career-deep fighter stats, real event history, and explainable fight predictions — in
+          one place.
+        </p>
+        <span className="relative mt-6 inline-block rounded-md bg-gold-300 px-6 py-3 font-sans text-body-md font-medium text-text-on-gold">
           Browse fighters
         </span>
       </section>
