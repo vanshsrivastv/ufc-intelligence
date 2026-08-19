@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 import { auth, signOut } from "@/auth";
 import { NavLinks } from "./nav-links";
 import { MobileNavToggle } from "./mobile-nav-toggle";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 export async function Nav() {
   const session = await auth();
@@ -39,6 +40,7 @@ function AuthActions({
   mobile?: boolean;
 }) {
   if (session?.user) {
+    const username = (session.user as any).username as string | undefined;
     return (
       <div className={mobile ? "flex flex-col gap-1" : "flex items-center gap-3"}>
         <Link
@@ -52,6 +54,17 @@ function AuthActions({
           <Heart size={mobile ? 16 : 14} strokeWidth={1.75} />
           Favorites
         </Link>
+        <Link
+          href="/account"
+          className={
+            mobile
+              ? "flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
+              : "flex items-center gap-1.5 rounded-full bg-bg-elevated py-1 pl-1 pr-3 text-xs text-text-secondary transition-standard hover:text-gold-300"
+          }
+        >
+          <UserAvatar username={username ?? session.user.email ?? ""} className={mobile ? "h-6 w-6" : "h-5 w-5"} />
+          {username ?? session.user.email}
+        </Link>
         <form
           action={async () => {
             "use server";
@@ -63,10 +76,10 @@ function AuthActions({
             className={
               mobile
                 ? "flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
-                : "rounded-full bg-bg-elevated px-3 py-1.5 text-xs text-text-secondary transition-standard hover:text-gold-300"
+                : "text-xs text-text-secondary transition-standard hover:text-gold-300"
             }
           >
-            {session.user.email}
+            Sign out
           </button>
         </form>
       </div>

@@ -48,7 +48,12 @@ export default function SignInPage() {
           />
         </div>
         <div>
-          <label className="text-caption text-text-secondary">Password</label>
+          <div className="flex items-center justify-between">
+            <label className="text-caption text-text-secondary">Password</label>
+            <Link href="/forgot-password" className="text-[11px] text-text-secondary hover:text-gold-300">
+              Forgot password?
+            </Link>
+          </div>
           <input
             type="password"
             required

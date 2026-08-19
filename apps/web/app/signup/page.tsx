@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 export default function SignUpPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export default function SignUpPage() {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, username, password }),
     });
 
     if (!res.ok) {
@@ -47,6 +48,20 @@ export default function SignUpPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="mt-1 w-full rounded-md border border-border bg-bg-elevated px-3 py-2 text-body-md text-text-primary outline-none transition-standard focus:border-gold-500"
+          />
+        </div>
+        <div>
+          <label className="text-caption text-text-secondary">Username</label>
+          <input
+            type="text"
+            required
+            minLength={3}
+            maxLength={20}
+            pattern="[a-zA-Z][a-zA-Z0-9_]{2,19}"
+            title="3-20 characters, start with a letter, letters/numbers/underscores only"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-1 w-full rounded-md border border-border bg-bg-elevated px-3 py-2 text-body-md text-text-primary outline-none transition-standard focus:border-gold-500"
           />
         </div>
