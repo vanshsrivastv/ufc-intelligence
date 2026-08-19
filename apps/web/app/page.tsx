@@ -83,6 +83,7 @@ export default async function HomePage() {
         <h2 className="font-display text-heading-md text-text-primary">
           Current champions
         </h2>
+        <div className="mt-4 rounded-lg border border-border bg-bg-elevated p-4">
         <HorizontalScroller>
           {champions.map((c) => (
             <Link
@@ -108,6 +109,7 @@ export default async function HomePage() {
             </p>
           )}
         </HorizontalScroller>
+        </div>
       </section>
         </>
       )}
@@ -182,6 +184,7 @@ export default async function HomePage() {
             <p className="mt-1 text-xs text-text-muted">
               Top-3-ranked fighters with the most recent fight activity.
             </p>
+            <div className="mt-4 rounded-lg border border-border bg-bg-elevated p-4">
             <HorizontalScroller>
               {dashboard.trendingFighters.map((f) => (
                 <Link
@@ -201,6 +204,7 @@ export default async function HomePage() {
                 </Link>
               ))}
             </HorizontalScroller>
+            </div>
           </section>
         )}
 
