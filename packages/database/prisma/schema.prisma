@@ -286,11 +286,17 @@ model Prediction {
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
+  // Public handle, distinct from email - shown in the nav, on the
+  // account page, and (later, Phase 5) anywhere a prediction record
+  // might go public. Never derived from email so a public username
+  // never leaks it. 3-20 chars, validated at the API boundary.
+  username    String   @unique
   passwordHash String
   displayName String?
   role        UserRole @default(USER)
 
-  favorites UserFavorite[]
+  favorites   UserFavorite[]
+  resetTokens PasswordResetToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -308,4 +314,23 @@ model UserFavorite {
 
   @@id([userId, fighterId])
   @@map("user_favorites")
+}
+
+// One-time-use, short-lived tokens for the forgot/reset-password flow.
+// Only the SHA-256 hash of the token is ever stored - same reasoning as
+// passwordHash itself: a DB read (backup leak, admin query, etc.) should
+// never hand over something usable to reset an account, only bcrypt/
+// sha256 output. The raw token exists only in the emailed/returned link,
+// never persisted.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
