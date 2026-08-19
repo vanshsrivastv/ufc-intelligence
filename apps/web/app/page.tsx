@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Users, Swords, CalendarDays, Layers, TrendingUp } from "lucide-react";
 import {
   api,
@@ -7,7 +8,6 @@ import {
   type DashboardData,
 } from "@/lib/api-client";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
-import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { CountdownTimer } from "@/components/ui/countdown-timer";
 import { HorizontalScroller } from "@/components/ui/horizontal-scroller";
 import { displayEventName, isTbdFighter } from "@/lib/tbd";
@@ -28,21 +28,35 @@ export default async function HomePage() {
   }
 
   return (
-    <>
-      <PageAtmosphere src="/images/octagon.jpg" alt="" focalPosition="50% 40%" />
-      <main className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
-        {/* Hero */}
-        <section className="rounded-lg border border-glass bg-glass p-10 text-center backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-          <h1 className="font-display text-display-lg text-text-primary">
+    <main className="mx-auto max-w-[1440px] px-4 py-10 md:px-8">
+        {/* Hero - the one deliberate photo/glass moment on the site (per
+            the 2026-08-18 visual audit); the octagon.jpg photo this used
+            to render at 0.3 opacity under a 0.5 dark scrim as a full-page
+            fixed background (PageAtmosphere) was barely visible - raised
+            to 0.55 opacity / 0.35 scrim and bounded to just this section
+            instead, so it's actually legible. Every other section below
+            is flat, no glass/blur. */}
+        <section className="relative overflow-hidden rounded-lg border border-border p-10 text-center">
+          <Image
+            src="/images/octagon.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            priority
+            className="-z-20 object-cover opacity-55"
+            style={{ objectPosition: "50% 40%" }}
+          />
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-bg-primary/35" />
+          <h1 className="relative font-display text-display-lg text-text-primary drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
             UFC Intelligence
           </h1>
-          <p className="mx-auto mt-3 max-w-lg text-body-lg text-text-secondary">
+          <p className="relative mx-auto mt-3 max-w-lg text-body-lg text-text-secondary drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
             Career-deep fighter stats, real event history, and explainable fight
             predictions — in one place.
           </p>
           <Link
             href="/fighters"
-            className="mt-6 inline-block rounded-md bg-gold-300 px-6 py-3 font-sans text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
+            className="relative mt-6 inline-block rounded-md bg-gold-300 px-6 py-3 font-sans text-body-md font-medium text-text-on-gold transition-standard hover:bg-gold-100"
           >
             Browse fighters
           </Link>
@@ -54,15 +68,17 @@ export default async function HomePage() {
         </p>
       ) : (
         <>
-      {/* Stats row */}
-      <section className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Stats row - one flat strip with hairline dividers instead of 4
+          separately bordered/shadowed cards. */}
+      <section className="mt-6 flex divide-x divide-border rounded-lg border border-border bg-bg-elevated">
         <StatCard icon={Users} label="Fighters" value={overview.fighters} />
         <StatCard icon={Swords} label="Fights recorded" value={overview.fights} />
         <StatCard icon={CalendarDays} label="Events" value={overview.events} />
         <StatCard icon={Layers} label="Weight classes" value={overview.weightClasses} />
       </section>
 
-      {/* Champions strip */}
+      {/* Champions strip - plain text, gold reserved for the "Champion"
+          word itself rather than a filled pill badge. */}
       <section className="mt-10">
         <h2 className="font-display text-heading-md text-text-primary">
           Current champions
@@ -72,18 +88,18 @@ export default async function HomePage() {
             <Link
               key={c.fighterId}
               href={`/fighters/${c.slug}`}
-              className="flex min-w-[160px] flex-col items-center gap-2 rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
+              className="flex min-w-[150px] flex-col items-center gap-2 text-center transition-standard hover:opacity-80"
             >
               <div className="h-16 w-16 overflow-hidden rounded-full border border-border-strong">
                 <FighterAvatar name={c.name} photoUrl={c.photoUrl} />
               </div>
-              <p className="text-center text-body-md font-medium text-text-primary">
+              <p className="text-body-md font-medium text-text-primary">
                 {c.name}
               </p>
-              <span className="rounded-sm bg-gold-900 px-2 py-0.5 text-[10px] font-medium text-gold-300">
-                {c.weightClass} Champion
-              </span>
-              <p className="text-xs text-text-secondary">{c.record}</p>
+              <p className="text-xs text-text-secondary">
+                <span className="font-medium text-gold-300">{c.weightClass} Champion</span>
+              </p>
+              <p className="text-xs text-text-muted">{c.record}</p>
             </Link>
           ))}
           {champions.length === 0 && (
@@ -98,7 +114,7 @@ export default async function HomePage() {
 
         {/* Headliner / fight countdown */}
         {dashboard.headliner && (
-          <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+          <section className="mt-10 rounded-lg border border-border bg-bg-elevated p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-caption text-text-secondary">
@@ -139,7 +155,7 @@ export default async function HomePage() {
                 <Link
                   key={e.id}
                   href={`/events/${e.slug}`}
-                  className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
+                  className="rounded-lg border border-border bg-bg-elevated p-4 transition-standard hover:border-border-strong"
                 >
                   <p className="font-display text-body-lg text-text-primary">{displayEventName(e.name)}</p>
                   <p className="mt-1 text-xs text-text-secondary">
@@ -171,16 +187,16 @@ export default async function HomePage() {
                 <Link
                   key={f.slug}
                   href={`/fighters/${f.slug}`}
-                  className="flex min-w-[150px] flex-col items-center gap-2 rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass transition-standard hover:border-gold-500"
+                  className="flex min-w-[130px] flex-col items-center gap-2 text-center transition-standard hover:opacity-80"
                 >
                   <div className="h-14 w-14 overflow-hidden rounded-full border border-border-strong">
                     <FighterAvatar name={f.name} photoUrl={f.photoUrl} />
                   </div>
-                  <p className="text-center text-body-md font-medium text-text-primary">
+                  <p className="text-body-md font-medium text-text-primary">
                     {f.name}
                   </p>
                   <p className="text-xs text-text-secondary">
-                    {f.weightClass} · {f.rank === 0 ? "Champion" : `#${f.rank}`}
+                    {f.weightClass} · <span className="text-gold-300">{f.rank === 0 ? "Champion" : `#${f.rank}`}</span>
                   </p>
                 </Link>
               ))}
@@ -189,7 +205,7 @@ export default async function HomePage() {
         )}
 
         {/* Prediction spotlight */}
-        <section className="mt-10 rounded-lg border border-glass bg-glass p-6 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+        <section className="mt-10 rounded-lg border border-border bg-bg-elevated p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="font-display text-heading-md text-text-primary">
@@ -208,8 +224,7 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
-      </main>
-    </>
+    </main>
   );
 }
 
@@ -223,9 +238,9 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="rounded-lg border border-glass bg-glass p-4 backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
-      <Icon size={18} strokeWidth={1.5} className="text-gold-300" />
-      <p className="mt-2 font-display text-2xl font-medium tabular-nums text-text-primary">
+    <div className="flex-1 p-4">
+      <Icon size={16} strokeWidth={1.75} className="text-text-muted" />
+      <p className="mt-2 font-display text-heading-lg font-medium tabular-nums text-text-primary">
         {value.toLocaleString()}
       </p>
       <p className="text-xs text-text-secondary">{label}</p>
