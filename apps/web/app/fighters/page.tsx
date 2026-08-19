@@ -39,6 +39,11 @@ export default async function FightersPage({
       championOnly,
       documentedOnly,
       sort: params.sort ?? "elo_desc",
+      // 24, not the default 20 - divides evenly into every column count
+      // the grid below uses (2/3/4/6), so the last row is always full
+      // instead of leaving 2 cards stranded on their own row at the
+      // xl:grid-cols-6 breakpoint.
+      pageSize: 24,
     }),
     getFavoritedFighterIds(),
     api.rankings.listWeightClasses(),
