@@ -71,13 +71,13 @@ function AuthActions({
     // actually rendered anywhere).
     const shownName = profile.displayName || profile.username;
     return (
-      <div className={mobile ? "flex flex-col gap-1" : "flex items-center gap-3"}>
+      <div className={mobile ? "flex flex-col gap-1" : "flex items-center gap-1"}>
         <Link
           href="/favorites"
           className={
             mobile
               ? "flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
-              : "flex items-center gap-1.5 text-xs text-text-secondary transition-standard hover:text-gold-300"
+              : "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
           }
         >
           <Heart size={mobile ? 16 : 14} strokeWidth={1.75} />
@@ -88,7 +88,7 @@ function AuthActions({
           className={
             mobile
               ? "flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
-              : "flex items-center gap-1.5 text-xs text-text-secondary transition-standard hover:text-gold-300"
+              : "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
           }
         >
           <Target size={mobile ? 16 : 14} strokeWidth={1.75} />
