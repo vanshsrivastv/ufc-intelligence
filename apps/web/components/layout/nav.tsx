@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, Target } from "lucide-react";
 import { prisma } from "@ufc-intelligence/database";
 import { auth, signOut } from "@/auth";
 import { NavLinks } from "./nav-links";
@@ -82,6 +82,17 @@ function AuthActions({
         >
           <Heart size={mobile ? 16 : 14} strokeWidth={1.75} />
           Favorites
+        </Link>
+        <Link
+          href="/my-predictions"
+          className={
+            mobile
+              ? "flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
+              : "flex items-center gap-1.5 text-xs text-text-secondary transition-standard hover:text-gold-300"
+          }
+        >
+          <Target size={mobile ? 16 : 14} strokeWidth={1.75} />
+          My Predictions
         </Link>
         <Link
           href="/account"
