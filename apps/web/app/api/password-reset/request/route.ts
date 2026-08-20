@@ -47,5 +47,14 @@ export async function POST(request: Request) {
   const resetUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
   await sendPasswordResetEmail(email, resetUrl);
 
-  return NextResponse.json(genericResponse);
+  // Real delivery is wired up (see lib/mailer.ts), but Resend's sandbox
+  // mode only allows delivery to the account's own verified email until
+  // a sending domain is verified - which needs a domain we don't have
+  // yet. Until then, also surface the link directly (non-production
+  // only) so the reset flow itself stays testable locally. Remove this
+  // once a domain is verified and delivery works for real recipients.
+  return NextResponse.json({
+    ...genericResponse,
+    ...(process.env.NODE_ENV !== "production" ? { devResetUrl: resetUrl } : {}),
+  });
 }
