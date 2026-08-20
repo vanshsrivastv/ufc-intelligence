@@ -38,12 +38,10 @@ export default function AccountPage() {
 
 function ProfileSection() {
   const { update } = useSession();
-  const router = useRouter();
   const [info, setInfo] = useState<AccountInfo | null>(null);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -59,7 +57,6 @@ function ProfileSection() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSuccess(false);
     setSaving(true);
 
     const res = await fetch("/api/account", {
@@ -76,17 +73,18 @@ function ProfileSection() {
       return;
     }
 
-    // JWT sessions don't re-read the DB on their own - trigger a session
-    // refresh (routes through the jwt callback's trigger === "update"
-    // branch in auth.ts) so the client-side session (this page) picks up
-    // the new username immediately instead of only after the next
-    // sign-in. That alone isn't enough for the nav bar, though - Nav is
-    // a Server Component that reads the session server-side on render,
-    // so it stays stale until Next.js actually re-fetches it - hence
-    // router.refresh() right after, which is what makes that happen.
+    // JWT sessions don't re-read the DB on their own - update() re-signs
+    // the JWT cookie (routes through the jwt callback's
+    // trigger === "update" branch in auth.ts) so it carries the new
+    // username. router.refresh() alone turned out not to reliably
+    // re-render Nav (a Server Component in the root layout) afterward -
+    // a full reload sidesteps that entirely: it's a real new navigation,
+    // so Nav re-renders from the now-current cookie with no ambiguity
+    // about RSC cache timing. Heavier than a soft refresh, but this is a
+    // "save settings" action, not a hot path.
     await update();
-    router.refresh();
-    setSuccess(true);
+    window.location.reload();
+    return;
   }
 
   if (!info) {
@@ -131,7 +129,6 @@ function ProfileSection() {
         </div>
 
         {error && <p className="text-xs text-danger">{error}</p>}
-        {success && <p className="text-xs text-success">Profile updated.</p>}
 
         <button
           type="submit"
