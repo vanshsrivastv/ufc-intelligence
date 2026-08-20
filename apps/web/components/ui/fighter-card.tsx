@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 import type { FighterSummaryDto } from "@ufc-intelligence/types";
 import { FavoriteButton } from "./favorite-button";
 import { FighterAvatar } from "./fighter-avatar";
@@ -8,6 +9,8 @@ export function FighterCard({
   fighter,
   initiallyFavorited = false,
   variant = "default",
+  eloTrend,
+  footer,
 }: {
   fighter: FighterSummaryDto;
   initiallyFavorited?: boolean;
@@ -17,14 +20,35 @@ export function FighterCard({
   // Fighters list page. Defaults to the original card so every other
   // caller (Favorites) is completely unaffected.
   variant?: "default" | "portrait";
+  // Portrait-only, opt-in (My Roster passes these; Fighters list doesn't).
+  // A trend arrow next to Elo needs a second data point (recent
+  // EloHistory) the caller already has to fetch anyway to decide whether
+  // it's meaningful to show at all (e.g. hidden for inactive fighters) -
+  // simpler for the card to just render what it's given than to fetch
+  // history itself.
+  eloTrend?: "up" | "down" | "flat";
+  // Portrait-only. A second link (e.g. "Next: vs X") can't nest inside
+  // the card's own <Link>, so when provided the whole card gets wrapped
+  // in a plain outer <div> instead of returning the <Link> as the root -
+  // callers that don't pass a footer are completely unaffected.
+  footer?: React.ReactNode;
 }) {
   const record = `${fighter.record.wins}-${fighter.record.losses}-${fighter.record.draws}`;
 
   if (variant === "portrait") {
-    return (
+    // When a footer is present, the outer wrapper owns the border/rounded
+    // corners/hover state instead - otherwise the inner Link's own border
+    // would double up with the wrapper's, showing as a visible seam right
+    // above the footer.
+    const card = (
       <Link
         href={`/fighters/${fighter.slug}`}
-        className="group block overflow-hidden rounded-lg border border-border bg-bg-elevated transition-standard hover:border-border-strong"
+        draggable={false}
+        className={
+          footer
+            ? "group block overflow-hidden bg-bg-elevated"
+            : "group block overflow-hidden rounded-lg border border-border bg-bg-elevated transition-standard hover:border-border-strong"
+        }
       >
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-bg-elevated-2">
           <FighterAvatar name={fighter.name} photoUrl={fighter.photoUrl} />
@@ -42,8 +66,11 @@ export function FighterCard({
           </p>
           <div className="mt-1.5 flex items-center justify-between text-xs">
             {fighter.elo !== null ? (
-              <span className="font-medium tabular-nums text-text-primary">
+              <span className="flex items-center gap-1 font-medium tabular-nums text-text-primary">
                 Elo {Math.round(fighter.elo)}
+                {eloTrend === "up" && <ArrowUp size={12} className="text-success" />}
+                {eloTrend === "down" && <ArrowDown size={12} className="text-danger" />}
+                {eloTrend === "flat" && <Minus size={12} className="text-text-muted" />}
               </span>
             ) : (
               <span />
@@ -56,6 +83,15 @@ export function FighterCard({
           </div>
         </div>
       </Link>
+    );
+
+    if (!footer) return card;
+
+    return (
+      <div className="overflow-hidden rounded-lg border border-border bg-bg-elevated transition-standard hover:border-border-strong">
+        {card}
+        {footer}
+      </div>
     );
   }
 

@@ -72,7 +72,8 @@ export function FighterAvatar({
         alt={name}
         width={200}
         height={200}
-        className={`h-full w-full object-cover ${className}`}
+        draggable={false}
+        className={`h-full w-full select-none object-cover ${className}`}
       />
     );
   }

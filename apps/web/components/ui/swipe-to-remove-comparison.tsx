@@ -73,9 +73,19 @@ export function SwipeToRemoveComparison({
         drag={removing ? false : "x"}
         dragConstraints={{ left: -REVEAL_WIDTH, right: 0 }}
         dragElastic={0.05}
+        dragMomentum={false}
         animate={controls}
         onDragEnd={handleDragEnd}
-        className="relative bg-bg-elevated"
+        // Note: framer-motion remaps onDragStart to its OWN gesture
+        // callback, not the native HTML5 dragstart DOM event - it can't
+        // be used here to block native drag. The actual fix is
+        // draggable={false} on the Link/img children themselves (an <a
+        // href> and an <img> are natively draggable by default in every
+        // browser, which is what shows up as the OS "copy" ghost/cursor
+        // fighting framer-motion's own pointer-based drag) plus
+        // select-none so a mouse-drag can't start a text selection
+        // instead of the swipe gesture.
+        className="relative select-none bg-bg-elevated [-webkit-user-drag:none] [touch-action:pan-y]"
       >
         {children}
       </motion.div>
