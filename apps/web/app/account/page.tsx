@@ -73,16 +73,17 @@ function ProfileSection() {
       return;
     }
 
-    // JWT sessions don't re-read the DB on their own - update() re-signs
-    // the JWT cookie (routes through the jwt callback's
-    // trigger === "update" branch in auth.ts) so it carries the new
-    // username. router.refresh() alone turned out not to reliably
-    // re-render Nav (a Server Component in the root layout) afterward -
-    // a full reload sidesteps that entirely: it's a real new navigation,
-    // so Nav re-renders from the now-current cookie with no ambiguity
-    // about RSC cache timing. Heavier than a soft refresh, but this is a
-    // "save settings" action, not a hot path.
-    await update();
+    // The actual root cause of the nav staying stale: next-auth/react's
+    // update() only POSTs to /api/auth/session (which is what actually
+    // triggers the jwt callback's trigger === "update" branch in
+    // auth.ts) when called WITH an argument. Called as update() with no
+    // argument, its internal fetchData() sees an empty request object,
+    // never sets a body, and silently sends a GET instead - which just
+    // returns the still-stale session with no server round-trip that
+    // could ever refresh it. Confirmed directly against the two raw
+    // requests before landing on this fix, not guessed. Passing {}
+    // (any non-undefined value works) is enough to make it a real POST.
+    await update({});
     window.location.reload();
     return;
   }
