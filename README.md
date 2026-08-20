@@ -56,7 +56,7 @@ npm run dev
 - **Performance profile** — 3-5 data-driven skill tags per fighter (e.g. "Elite Wrestler — 97th percentile in takedown avg"), computed from roster-wide percentiles against a fixed threshold spec, shown on the fighter detail page
 - **Predictions** — matchup win-probability model using Elo, physical, and fight-history features
 - **Statistics** — league-wide leaderboards, method-of-victory breakdown, Elo distribution
-- Auth (Auth.js) with sign in/up and a favorites list
+- **Accounts** (Auth.js) — sign up/in, username + deterministic avatar, a favorites list, an account settings page (profile + change password), and a forgot/reset-password flow (one-time-use tokens; no email provider is wired up yet, so the reset link is returned directly in the API response and logged server-side as a stand-in for real delivery). Sensitive endpoints (register, login, password reset/change) are rate-limited via a small in-memory limiter.
 - Elo ratings computed and stored as a first-class stat (nullable — only for fighters with enough graded fight history), surfaced across cards, detail pages, sorting, rankings, and statistics
 - Scheduled sync jobs (NestJS `@nestjs/schedule`) that keep results and stub-fighter relinking up to date automatically
 - CI pipeline (lint, typecheck, test, build) against a real Postgres service container
@@ -66,7 +66,8 @@ npm run dev
 - Weight-class-scoped percentiles (radar chart and performance profile are both roster-wide only)
 - Admin panel (discussed, not started)
 - Caching, background job queue, search
-- Known data-quality issue: a handful of duplicate-name fighters (e.g. two fighters both named "Bruno Silva") can have fight history cross-attributed during import — tracked, not yet fixed
+- Real email delivery for password reset (see Accounts above)
+- Prediction history tied to real scheduled fights (the current Predictions page is a stateless what-if calculator between any two fighters, not tied to a real upcoming card)
 
 ## Docs
 
