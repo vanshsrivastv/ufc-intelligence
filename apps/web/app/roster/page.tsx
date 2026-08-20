@@ -39,6 +39,21 @@ export default async function RosterPage() {
 
   const rosterFighterIds = new Set(favorites.map((f) => f.fighter.id));
 
+  // Same "active" definition the Fighters list filter uses (fighters.service.ts):
+  // fought within 18 months of the most recent event in the dataset. An
+  // inactive fighter's last two EloHistory points are both old news by
+  // definition, so a trend arrow there would read as "recent form" when
+  // it's really just ancient history - only compute/show trend for
+  // fighters who are actually still active.
+  const mostRecentEvent = await prisma.event.findFirst({
+    orderBy: { date: "desc" },
+    select: { date: true },
+  });
+  const activityCutoff = new Date(mostRecentEvent?.date ?? new Date());
+  activityCutoff.setMonth(activityCutoff.getMonth() - 18);
+  const isActive = (lastFightDate: Date | null) =>
+    lastFightDate !== null && lastFightDate >= activityCutoff;
+
   // One query covers both "next fight per fighter" and the rematch
   // tracker below - every SCHEDULED fight touching any roster fighter,
   // sliced two different ways in JS rather than two separate queries.
@@ -134,7 +149,7 @@ export default async function RosterPage() {
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {favorites.map(({ fighter }) => {
                 const nextFight = nextFightByFighterId.get(fighter.id);
-                const trend = trendByFighterId.get(fighter.id);
+                const trend = isActive(fighter.lastFightDate) ? trendByFighterId.get(fighter.id) : undefined;
                 const opponent = nextFight
                   ? nextFight.fighterAId === fighter.id
                     ? nextFight.fighterB
