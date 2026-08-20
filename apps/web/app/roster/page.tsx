@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@ufc-intelligence/database";
 import { FighterAvatar } from "@/components/ui/fighter-avatar";
 import { FavoriteButton } from "@/components/ui/favorite-button";
-import { RemoveSavedComparisonButton } from "@/components/ui/remove-saved-comparison-button";
+import { SwipeToRemoveComparison } from "@/components/ui/swipe-to-remove-comparison";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 
@@ -192,12 +192,16 @@ export default async function RosterPage() {
           {savedComparisons.length === 0 ? (
             <EmptyState message="No saved comparisons yet — save a matchup from the Compare page." />
           ) : (
-            <div className="mt-4 divide-y divide-border rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
+            <div className="mt-4 divide-y divide-border overflow-hidden rounded-lg border border-glass bg-glass backdrop-blur-2xl backdrop-saturate-150 shadow-glass">
               {savedComparisons.map((sc) => (
-                <div key={`${sc.fighterAId}-${sc.fighterBId}`} className="flex items-center justify-between gap-3 p-4">
+                <SwipeToRemoveComparison
+                  key={`${sc.fighterAId}-${sc.fighterBId}`}
+                  fighterAId={sc.fighterAId}
+                  fighterBId={sc.fighterBId}
+                >
                   <Link
                     href={`/compare?fighters=${sc.fighterA.slug},${sc.fighterB.slug}`}
-                    className="flex flex-1 items-center gap-3 text-body-md text-text-primary transition-standard hover:text-gold-300"
+                    className="flex items-center gap-3 p-4 text-body-md text-text-primary transition-standard hover:text-gold-300"
                   >
                     <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
                       <FighterAvatar name={sc.fighterA.name} photoUrl={sc.fighterA.photoUrl} />
@@ -209,8 +213,7 @@ export default async function RosterPage() {
                       <FighterAvatar name={sc.fighterB.name} photoUrl={sc.fighterB.photoUrl} />
                     </div>
                   </Link>
-                  <RemoveSavedComparisonButton fighterAId={sc.fighterAId} fighterBId={sc.fighterBId} />
-                </div>
+                </SwipeToRemoveComparison>
               ))}
             </div>
           )}
