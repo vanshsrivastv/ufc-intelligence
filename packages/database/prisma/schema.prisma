@@ -126,6 +126,8 @@ model Fighter {
   favoritedBy      UserFavorite[]
   eloHistory       EloHistory[]
   userPredictions  UserPrediction[]
+  savedAsA         SavedComparison[] @relation("SavedComparisonA")
+  savedAsB         SavedComparison[] @relation("SavedComparisonB")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -297,9 +299,10 @@ model User {
   displayName String?
   role        UserRole @default(USER)
 
-  favorites   UserFavorite[]
-  resetTokens PasswordResetToken[]
-  predictions UserPrediction[]
+  favorites        UserFavorite[]
+  savedComparisons SavedComparison[]
+  resetTokens      PasswordResetToken[]
+  predictions      UserPrediction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -317,6 +320,24 @@ model UserFavorite {
 
   @@id([userId, fighterId])
   @@map("user_favorites")
+}
+
+// A saved fighter-pair from the Compare page. fighterAId/fighterBId are
+// always written in canonical order (lower fighter.id first) so "A vs B"
+// and "B vs A" collapse to the same saved row - the composite key would
+// otherwise let a user save the same pair twice in reversed order.
+model SavedComparison {
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fighterAId String
+  fighterA   Fighter @relation("SavedComparisonA", fields: [fighterAId], references: [id], onDelete: Cascade)
+  fighterBId String
+  fighterB   Fighter @relation("SavedComparisonB", fields: [fighterBId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, fighterAId, fighterBId])
+  @@map("saved_comparisons")
 }
 
 // One-time-use, short-lived tokens for the forgot/reset-password flow.
