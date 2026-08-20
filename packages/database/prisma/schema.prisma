@@ -118,13 +118,14 @@ model Fighter {
   weightClassId String?
   weightClass   WeightClass? @relation(fields: [weightClassId], references: [id])
 
-  fightsAsA     Fight[]      @relation("FighterA")
-  fightsAsB     Fight[]      @relation("FighterB")
-  fightsWon     Fight[]      @relation("FightWinner")
-  fightStats    FightStat[]
-  rankings      Ranking[]
-  favoritedBy   UserFavorite[]
-  eloHistory    EloHistory[]
+  fightsAsA        Fight[]          @relation("FighterA")
+  fightsAsB        Fight[]          @relation("FighterB")
+  fightsWon        Fight[]          @relation("FightWinner")
+  fightStats       FightStat[]
+  rankings         Ranking[]
+  favoritedBy      UserFavorite[]
+  eloHistory       EloHistory[]
+  userPredictions  UserPrediction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -175,9 +176,10 @@ model Fight {
   winnerId String?
   winner   Fighter? @relation("FightWinner", fields: [winnerId], references: [id])
 
-  stats       FightStat[]
-  predictions Prediction[]
-  eloHistory  EloHistory[]
+  stats           FightStat[]
+  predictions     Prediction[]
+  eloHistory      EloHistory[]
+  userPredictions UserPrediction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -297,6 +299,7 @@ model User {
 
   favorites   UserFavorite[]
   resetTokens PasswordResetToken[]
+  predictions UserPrediction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -333,4 +336,52 @@ model PasswordResetToken {
 
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+// Deliberately NOT the same as the existing (unused) Prediction model
+// above - that one is the ML model's own cached output, keyed by
+// fightId + modelVersion, with no userId anywhere. This is a real
+// person's pick on a real scheduled fight.
+//
+// No LOCKED value in the status enum on purpose - "is this still
+// pickable" is derived at read/write time from comparing the fight's
+// event date to now (same pattern events/fights already use for
+// UPCOMING/LIVE/COMPLETED display status - see event-status.ts),
+// not a value written by a cron sweep. The API surfaces "Locked" to
+// the user by computing it, never by storing it. WON/LOST/VOID are
+// the only transitions actually written to this column, both done by
+// sync-results.ts in the same transaction where it resolves the real
+// Fight row - see that file for the grading logic.
+enum UserPredictionStatus {
+  OPEN
+  WON
+  LOST
+  VOID
+}
+
+model UserPrediction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fightId String
+  fight   Fight  @relation(fields: [fightId], references: [id], onDelete: Cascade)
+
+  pickedFighterId String
+  pickedFighter   Fighter @relation(fields: [pickedFighterId], references: [id])
+
+  status UserPredictionStatus @default(OPEN)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+
+  // One pick per user per fight, enforced at the DB level - the API
+  // still checks eligibility/locking before writing, but this is the
+  // real guard against a race (two near-simultaneous requests) ever
+  // producing two rows for the same (user, fight).
+  @@unique([userId, fightId])
+  @@index([fightId])
+  @@index([userId])
+  @@map("user_predictions")
 }
