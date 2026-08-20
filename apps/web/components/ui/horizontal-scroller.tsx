@@ -47,7 +47,7 @@ export function HorizontalScroller({ children }: { children: React.ReactNode }) 
       <div
         ref={ref}
         onScroll={updateArrows}
-        className="no-scrollbar flex gap-4 overflow-x-auto pb-2"
+        className="no-scrollbar flex divide-x divide-border overflow-x-auto pb-2"
       >
         {children}
       </div>

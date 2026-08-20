@@ -89,7 +89,7 @@ export default async function HomePage() {
             <Link
               key={c.fighterId}
               href={`/fighters/${c.slug}`}
-              className="flex min-w-[150px] flex-col items-center gap-2 text-center transition-standard hover:opacity-80"
+              className="flex min-w-[150px] flex-col items-center gap-2 px-4 text-center transition-standard first:pl-0 last:pr-0 hover:opacity-80"
             >
               <div className="h-16 w-16 overflow-hidden rounded-full border border-border-strong">
                 <FighterAvatar name={c.name} photoUrl={c.photoUrl} />
@@ -190,7 +190,7 @@ export default async function HomePage() {
                 <Link
                   key={f.slug}
                   href={`/fighters/${f.slug}`}
-                  className="flex min-w-[130px] flex-col items-center gap-2 text-center transition-standard hover:opacity-80"
+                  className="flex min-w-[130px] flex-col items-center gap-2 px-4 text-center transition-standard first:pl-0 last:pr-0 hover:opacity-80"
                 >
                   <div className="h-14 w-14 overflow-hidden rounded-full border border-border-strong">
                     <FighterAvatar name={f.name} photoUrl={f.photoUrl} />
