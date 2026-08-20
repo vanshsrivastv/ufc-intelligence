@@ -38,6 +38,7 @@ export default function AccountPage() {
 
 function ProfileSection() {
   const { update } = useSession();
+  const router = useRouter();
   const [info, setInfo] = useState<AccountInfo | null>(null);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -77,9 +78,14 @@ function ProfileSection() {
 
     // JWT sessions don't re-read the DB on their own - trigger a session
     // refresh (routes through the jwt callback's trigger === "update"
-    // branch in auth.ts) so the nav's username updates immediately
-    // instead of only after the next sign-in.
+    // branch in auth.ts) so the client-side session (this page) picks up
+    // the new username immediately instead of only after the next
+    // sign-in. That alone isn't enough for the nav bar, though - Nav is
+    // a Server Component that reads the session server-side on render,
+    // so it stays stale until Next.js actually re-fetches it - hence
+    // router.refresh() right after, which is what makes that happen.
     await update();
+    router.refresh();
     setSuccess(true);
   }
 
