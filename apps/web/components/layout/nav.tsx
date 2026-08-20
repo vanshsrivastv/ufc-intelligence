@@ -38,7 +38,7 @@ export async function Nav() {
           UFC Intelligence
         </Link>
 
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
           <NavLinks />
           <AuthActions signedIn={!!session?.user} profile={profile} />
         </div>
