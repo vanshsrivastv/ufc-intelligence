@@ -244,6 +244,29 @@ async function main() {
                 prisma.fighter.update({ where: { id: fight.fighterBId }, data: { draws: { increment: 1 } } }),
               ]
             : []),
+        // Grades every outstanding UserPrediction on this fight in the
+        // same transaction the real result is written in - see that
+        // model's own schema comment for why this lives here instead of
+        // a separate job. A draw/no-contest (winnerId null) VOIDs every
+        // pick rather than scoring anyone a loss for something nobody
+        // could have called.
+        ...(winnerId
+          ? [
+              prisma.userPrediction.updateMany({
+                where: { fightId: fight.id, pickedFighterId: winnerId },
+                data: { status: "WON", resolvedAt: new Date() },
+              }),
+              prisma.userPrediction.updateMany({
+                where: { fightId: fight.id, pickedFighterId: { not: winnerId } },
+                data: { status: "LOST", resolvedAt: new Date() },
+              }),
+            ]
+          : [
+              prisma.userPrediction.updateMany({
+                where: { fightId: fight.id },
+                data: { status: "VOID", resolvedAt: new Date() },
+              }),
+            ]),
       ]);
 
       console.log(
@@ -255,7 +278,52 @@ async function main() {
     }
   }
 
-  console.log(`\nDone. ${fightsUpdated} fight(s) updated, ${fightsStillPending} still pending.`);
+  const cancelledCount = await voidStaleScheduledFights();
+
+  console.log(
+    `\nDone. ${fightsUpdated} fight(s) updated, ${fightsStillPending} still pending, ${cancelledCount} stale fight(s) marked cancelled.`,
+  );
+}
+
+// A fight that fell off a card entirely (a real, ordinary occurrence -
+// injuries, weight misses, etc.) never shows up in extractResults() at
+// all, so findMatchingResult() above returns null for it forever - it
+// would otherwise sit SCHEDULED indefinitely with no path to ever
+// resolving. Nothing in this pipeline scrapes for an explicit
+// "cancelled" signal (that would mean diffing the full card against
+// what's stored, real but heavier work than this project needs yet);
+// the cheap, honest proxy is: if a fight is still SCHEDULED a full week
+// after its own event's date, with every OTHER fight on that same card
+// already resolved or already handled by this same check, it isn't
+// coming back. VOIDs any outstanding UserPrediction on it rather than
+// leaving a pick stuck OPEN/LOCKED forever with no way to ever grade it.
+const STALE_SCHEDULED_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
+
+async function voidStaleScheduledFights(): Promise<number> {
+  const staleFights = await prisma.fight.findMany({
+    where: {
+      status: "SCHEDULED",
+      event: { date: { lt: new Date(Date.now() - STALE_SCHEDULED_THRESHOLD_MS) } },
+    },
+    include: { event: true, fighterA: true, fighterB: true },
+  });
+
+  for (const fight of staleFights) {
+    await prisma.$transaction([
+      prisma.fight.update({ where: { id: fight.id }, data: { status: "CANCELLED" } }),
+      prisma.userPrediction.updateMany({
+        where: { fightId: fight.id },
+        data: { status: "VOID", resolvedAt: new Date() },
+      }),
+    ]);
+    console.log(
+      `  ! ${fight.fighterA.name} vs ${fight.fighterB.name} (${fight.event.name}): still Scheduled ${Math.round(
+        (Date.now() - fight.event.date.getTime()) / (24 * 60 * 60 * 1000),
+      )} days after its event - marked Cancelled.`,
+    );
+  }
+
+  return staleFights.length;
 }
 
 main()
