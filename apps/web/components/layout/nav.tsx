@@ -73,7 +73,7 @@ function AuthActions({
     return (
       <div className={mobile ? "flex flex-col gap-1" : "flex items-center gap-1"}>
         <Link
-          href="/favorites"
+          href="/roster"
           className={
             mobile
               ? "flex items-center gap-2 rounded-md px-3 py-2.5 text-sm text-text-secondary transition-standard hover:bg-bg-elevated hover:text-gold-300"
@@ -81,7 +81,7 @@ function AuthActions({
           }
         >
           <Heart size={mobile ? 16 : 14} strokeWidth={1.75} />
-          Favorites
+          My Roster
         </Link>
         <Link
           href="/my-predictions"

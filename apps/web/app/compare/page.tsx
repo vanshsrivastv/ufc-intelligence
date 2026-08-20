@@ -1,9 +1,12 @@
 import { api } from "@/lib/api-client";
+import { auth } from "@/auth";
+import { prisma } from "@ufc-intelligence/database";
 import { ComparePicker } from "@/components/ui/compare-picker";
 import { CompareFaceOff } from "@/components/ui/compare-faceoff";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { StatRadarChart } from "@/components/charts/stat-radar-chart";
+import { SaveComparisonButton } from "@/components/ui/save-comparison-button";
 
 export default async function ComparePage({
   searchParams,
@@ -38,6 +41,24 @@ export default async function ComparePage({
       ? await api.fighters.getComparePercentiles(fighterA.slug, fighterB.slug).catch(() => null)
       : null;
 
+  let alreadySaved = false;
+  if (fighterA && fighterB && !genderMismatch) {
+    const session = await auth();
+    if (session?.user) {
+      const [a, b] = [fighterA.id, fighterB.id].sort();
+      const existing = await prisma.savedComparison.findUnique({
+        where: {
+          userId_fighterAId_fighterBId: {
+            userId: (session.user as any).id,
+            fighterAId: a,
+            fighterBId: b,
+          },
+        },
+      });
+      alreadySaved = !!existing;
+    }
+  }
+
   return (
     <>
       <PageAtmosphere src="/images/jj.jpg" alt="" focalPosition="50% 20%" />
@@ -61,7 +82,16 @@ export default async function ComparePage({
 
       {fighterA && fighterB && !genderMismatch && (
         <div className="mt-10">
-          <CompareFaceOff fighterA={fighterA} fighterB={fighterB} />
+          <div className="flex justify-end">
+            <SaveComparisonButton
+              fighterAId={fighterA.id}
+              fighterBId={fighterB.id}
+              initiallySaved={alreadySaved}
+            />
+          </div>
+          <div className="mt-3">
+            <CompareFaceOff fighterA={fighterA} fighterB={fighterB} />
+          </div>
         </div>
       )}
 

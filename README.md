@@ -56,7 +56,8 @@ npm run dev
 - **Performance profile** — 3-5 data-driven skill tags per fighter (e.g. "Elite Wrestler — 97th percentile in takedown avg"), computed from roster-wide percentiles against a fixed threshold spec, shown on the fighter detail page
 - **Predictions** — matchup win-probability model using Elo, physical, and fight-history features
 - **Statistics** — league-wide leaderboards, method-of-victory breakdown, Elo distribution
-- **Accounts** (Auth.js) — sign up/in, username + deterministic avatar, a favorites list, an account settings page (profile + change password), and a forgot/reset-password flow (one-time-use tokens; no email provider is wired up yet, so the reset link is returned directly in the API response and logged server-side as a stand-in for real delivery). Sensitive endpoints (register, login, password reset/change) are rate-limited via a small in-memory limiter.
+- **Accounts** (Auth.js) — sign up/in, username + deterministic avatar, an account settings page (profile + change password), and a forgot/reset-password flow (one-time-use tokens, real delivery via Resend — currently sandboxed to the Resend account's own email until a sending domain is verified, so the reset link is also still returned directly in the API response and logged server-side as a local-testing fallback in the meantime). Sensitive endpoints (register, login, password reset/change) are rate-limited via a small in-memory limiter.
+- **My Roster** — followed fighters (formerly a plain favorites list) each showing their next scheduled fight and Elo trend, saved fighter-pair comparisons from the Compare page, and a rematch tracker that flags when two of your own roster fighters end up booked against each other.
 - **My Predictions** — pick a winner on any real, currently-scheduled fight; picks lock at the event's own start time (no per-fight timestamp exists in this dataset, so locking is card-level, not bout-level) and can be freely changed until then. `sync-results.ts` grades every outstanding pick (WON/LOST/VOID on a draw) in the same transaction where it resolves the real fight, and auto-cancels (voiding any picks) a fight still stuck Scheduled a full week after its own event date. Includes a personal accuracy record and a "you vs. UFC Intelligence" comparison against the existing prediction model's own pick for the same fights — computed with today's fighter stats for both sides, not true point-in-time data, which the page says outright rather than implying more precision than it has.
 - Elo ratings computed and stored as a first-class stat (nullable — only for fighters with enough graded fight history), surfaced across cards, detail pages, sorting, rankings, and statistics
 - Scheduled sync jobs (NestJS `@nestjs/schedule`) that keep results and stub-fighter relinking up to date automatically
@@ -67,8 +68,8 @@ npm run dev
 - Weight-class-scoped percentiles (radar chart and performance profile are both roster-wide only)
 - Admin panel (discussed, not started)
 - Caching, background job queue, search
-- Real email delivery for password reset (see Accounts above)
-- Prediction streaks, notifications, achievements, and public/community features (leaderboards, public profiles) — all deferred until there's a real user base to make them meaningful, per the Phase 3-5 account-system roadmap
+- Real email delivery to arbitrary recipients for password reset — Resend is wired up but sandboxed until a sending domain is verified (see Accounts above)
+- Prediction streaks, notifications, achievements, and public/community features (leaderboards, public profiles) — all deferred until there's a real user base to make them meaningful, per the Phase 4-5 account-system roadmap
 
 ## Docs
 
