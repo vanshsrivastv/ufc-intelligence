@@ -37,7 +37,6 @@ export default function AccountPage() {
 }
 
 function ProfileSection() {
-  const { update } = useSession();
   const [info, setInfo] = useState<AccountInfo | null>(null);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -73,17 +72,12 @@ function ProfileSection() {
       return;
     }
 
-    // The actual root cause of the nav staying stale: next-auth/react's
-    // update() only POSTs to /api/auth/session (which is what actually
-    // triggers the jwt callback's trigger === "update" branch in
-    // auth.ts) when called WITH an argument. Called as update() with no
-    // argument, its internal fetchData() sees an empty request object,
-    // never sets a body, and silently sends a GET instead - which just
-    // returns the still-stale session with no server round-trip that
-    // could ever refresh it. Confirmed directly against the two raw
-    // requests before landing on this fix, not guessed. Passing {}
-    // (any non-undefined value works) is enough to make it a real POST.
-    await update({});
+    // Nav (and anywhere else username/displayName might show) now reads
+    // both live from the DB on every server render instead of trusting
+    // the session/JWT - see nav.tsx's own comment for why. That means a
+    // plain reload is enough here; nothing needs to go through
+    // next-auth's session.update() mechanism at all anymore, which
+    // turned out not to be reliably refreshing in-session in practice.
     window.location.reload();
     return;
   }

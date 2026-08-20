@@ -1,13 +1,35 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import type { Session } from "next-auth";
+import { prisma } from "@ufc-intelligence/database";
 import { auth, signOut } from "@/auth";
 import { NavLinks } from "./nav-links";
 import { MobileNavToggle } from "./mobile-nav-toggle";
 import { UserAvatar } from "@/components/ui/user-avatar";
 
+interface NavProfile {
+  username: string;
+  displayName: string | null;
+}
+
 export async function Nav() {
   const session = await auth();
+
+  // Deliberately NOT read from the session/JWT here - session.user.id is
+  // stable (never changes without a fresh sign-in) and used as the
+  // lookup key, but username/displayName are read live from the DB on
+  // every render instead. The JWT strategy's session.update() mechanism
+  // turned out to be unreliable in practice for keeping those two
+  // fields fresh in-session (see git history for the investigation) -
+  // a live DB read on every nav render sidesteps that class of bug
+  // entirely rather than continuing to chase it. This is one small,
+  // cheap indexed query per page load, not a real cost at this scale.
+  const userId = (session?.user as any)?.id as string | undefined;
+  const profile: NavProfile | null = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true, displayName: true },
+      })
+    : null;
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-bg-primary/95 px-6 py-3 backdrop-blur-sm">
@@ -18,13 +40,13 @@ export async function Nav() {
 
         <div className="hidden items-center gap-6 md:flex">
           <NavLinks />
-          <AuthActions session={session} />
+          <AuthActions signedIn={!!session?.user} profile={profile} />
         </div>
 
         <MobileNavToggle>
           <NavLinks mobile />
           <div className="mt-3 flex flex-col gap-1 border-t border-border pt-3">
-            <AuthActions session={session} mobile />
+            <AuthActions signedIn={!!session?.user} profile={profile} mobile />
           </div>
         </MobileNavToggle>
       </div>
@@ -33,14 +55,21 @@ export async function Nav() {
 }
 
 function AuthActions({
-  session,
+  signedIn,
+  profile,
   mobile = false,
 }: {
-  session: Session | null;
+  signedIn: boolean;
+  profile: NavProfile | null;
   mobile?: boolean;
 }) {
-  if (session?.user) {
-    const username = (session.user as any).username as string | undefined;
+  if (signedIn && profile) {
+    // Twitter-style: a friendlier display name shown up front when set,
+    // with the stable username as the fallback - the whole reason
+    // displayName exists as a separate field from username at all
+    // (previously collected on signup/account settings but never
+    // actually rendered anywhere).
+    const shownName = profile.displayName || profile.username;
     return (
       <div className={mobile ? "flex flex-col gap-1" : "flex items-center gap-3"}>
         <Link
@@ -62,8 +91,8 @@ function AuthActions({
               : "flex items-center gap-1.5 rounded-full bg-bg-elevated py-1 pl-1 pr-3 text-xs text-text-secondary transition-standard hover:text-gold-300"
           }
         >
-          <UserAvatar username={username ?? session.user.email ?? ""} className={mobile ? "h-6 w-6" : "h-5 w-5"} />
-          {username ?? session.user.email}
+          <UserAvatar username={profile.username} className={mobile ? "h-6 w-6" : "h-5 w-5"} />
+          {shownName}
         </Link>
         <form
           action={async () => {
