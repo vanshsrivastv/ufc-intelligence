@@ -2,15 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@ufc-intelligence/database";
 import { generateResetToken, RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
 import { checkRateLimit, clientIpFrom } from "@/lib/rate-limit";
+import { sendPasswordResetEmail } from "@/lib/mailer";
 
-// No email-sending service is wired up anywhere in this codebase (no
-// Resend/SES/nodemailer - nothing), and signing up for one isn't
-// something this assistant can do on the user's behalf. Until a real
-// provider is added, the reset link is returned directly in the
-// response (non-production only) and logged server-side - a stand-in
-// for delivery, not a substitute for it. Swap this for a real send()
-// call once a provider is configured; nothing else in this route needs
-// to change.
 export async function POST(request: Request) {
   const ip = clientIpFrom(request);
   // 5 requests per 15 minutes per IP - a real "I forgot my password" user
@@ -52,11 +45,7 @@ export async function POST(request: Request) {
   });
 
   const resetUrl = `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}/reset-password?token=${token}`;
-  // eslint-disable-next-line no-console
-  console.log(`[password-reset] Reset link for ${email}: ${resetUrl}`);
+  await sendPasswordResetEmail(email, resetUrl);
 
-  return NextResponse.json({
-    ...genericResponse,
-    ...(process.env.NODE_ENV !== "production" ? { devResetUrl: resetUrl } : {}),
-  });
+  return NextResponse.json(genericResponse);
 }

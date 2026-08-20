@@ -6,9 +6,6 @@ import Link from "next/link";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  // Only ever populated in non-production - see api/password-reset/request's
-  // own comment for why this stands in for real email delivery for now.
-  const [devResetUrl, setDevResetUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -27,8 +24,6 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    const body = await res.json();
-    setDevResetUrl(body.devResetUrl ?? null);
     setSubmitted(true);
   }
 
@@ -42,18 +37,8 @@ export default function ForgotPasswordPage() {
       {submitted ? (
         <div className="mt-6 rounded-md border border-border bg-bg-elevated p-4">
           <p className="text-body-md text-text-primary">
-            If an account exists for that email, a reset link has been created.
+            If an account exists for that email, a reset link has been sent.
           </p>
-          {devResetUrl && (
-            <div className="mt-3 border-t border-border pt-3">
-              <p className="text-[11px] text-text-muted">
-                No email service is configured yet - here's the link directly (dev only):
-              </p>
-              <Link href={devResetUrl} className="mt-1 block break-all text-xs text-gold-300 hover:underline">
-                {devResetUrl}
-              </Link>
-            </div>
-          )}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
