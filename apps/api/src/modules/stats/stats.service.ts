@@ -180,10 +180,18 @@ export class StatsService {
         let current = 0;
         let best = 0;
         for (const fight of fights) {
+          // A loss ends a win streak - so does a draw/no-contest. Only a
+          // real win extends it; anything else resets to 0, full stop.
+          // (Previously only checked winnerId !== null, which let a
+          // no-contest pass through as a silent non-event and chain two
+          // separate win runs into one inflated streak - confirmed wrong
+          // against Jon Jones's real record: his 2017 no-contest vs.
+          // Cormier splits a 13-fight run from a later 6-fight run, not
+          // one continuous 19.)
           if (fight.winnerId === fighterId) {
             current++;
             best = Math.max(best, current);
-          } else if (fight.winnerId !== null) {
+          } else {
             current = 0;
           }
         }
