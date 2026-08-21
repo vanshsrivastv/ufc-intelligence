@@ -1,6 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": [".env"],
+  "globalEnv": [
+    "DATABASE_URL",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_WEB_URL",
+    "AUTH_SECRET",
+    "AUTH_URL",
+    "NEXTAUTH_URL",
+    "RESEND_API_KEY",
+    "PASSWORD_RESET_FROM",
+    "PRISMA_QUERY_ENGINE_LIBRARY",
+    "PORT",
+    "API_PORT",
+    "NODE_ENV"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
