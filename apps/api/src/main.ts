@@ -34,7 +34,10 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const port = process.env.API_PORT ?? 4000;
+  // Render (and most hosts) inject the port to bind via PORT, not our own
+  // API_PORT - PORT takes priority so a deploy doesn't silently listen on
+  // the wrong port with no error, just an unreachable service.
+  const port = process.env.PORT ?? process.env.API_PORT ?? 4000;
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`API listening on http://localhost:${port}/api/v1`);
