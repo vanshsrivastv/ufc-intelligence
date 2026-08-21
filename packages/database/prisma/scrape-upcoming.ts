@@ -15,15 +15,16 @@
 // re-import already handles well; this script's only job is "what's on
 // the calendar that the last import didn't know about."
 //
-// PPV/numbered events (ufc-329, ufc-330, ...) get reduced-detail treatment:
-// their own /event/<slug> pages returned a large block of obfuscated,
-// dynamically script-injecting JavaScript when fetched directly here —
-// behavior consistent with either an aggressive bot-mitigation cloak or a
-// compromised third-party script, not a normal template difference. This
-// script never requests those specific pages. Instead it pulls name, date,
-// and main-card matchups for them from the (verified clean) /events
-// listing page alone — no weight class, no prelims for that subset, which
-// is the tradeoff for not touching a page that behaved like that.
+// PPV/numbered events (ufc-329, ufc-330, ...) used to get reduced-detail
+// treatment here: their own /event/<slug> pages once returned a large
+// block of obfuscated, dynamically script-injecting JavaScript when
+// fetched directly, behavior consistent with either an aggressive bot-
+// mitigation cloak or a compromised third-party script. That's since been
+// re-verified as unfounded - sync-results.ts fetches these same PPV pages
+// routinely (see its own header comment) and gets clean static HTML, no
+// obfuscation - so every event now gets its full /event/<slug> detail page
+// fetched the same way, with the /events listing page kept only as a
+// same-run fallback if a specific detail-page fetch ever fails.
 import * as cheerio from "cheerio";
 import crypto from "crypto";
 import { PrismaClient, FightMethod } from "@prisma/client";
@@ -322,19 +323,6 @@ async function findOrCreateFighter(name: string): Promise<string> {
   return created.id;
 }
 
-// PPV/numbered events (ufc-329, ufc-330, ...) and other specially-branded
-// cards don't follow the "ufc-fight-night-*" slug pattern. Their own
-// detail pages returned a large block of obfuscated, dynamically
-// script-injecting JavaScript when fetched directly - behavior consistent
-// with either an aggressive bot-mitigation cloak or a compromised
-// third-party script, not a normal template variation. This script never
-// requests those pages. Only the (verified clean) /events listing page is
-// used for them, which carries enough for a reduced record: event name,
-// date, and main-card matchups by name - no weight class, no prelims.
-function isFightNightSlug(slug: string): boolean {
-  return /^ufc-fight-night-/.test(slug);
-}
-
 async function main() {
   console.log(`Fetching event list from ${BASE_URL}/events ...`);
   const previews = await getEventPreviews();
@@ -344,21 +332,19 @@ async function main() {
   let fightsUpserted = 0;
 
   for (const preview of previews) {
-    const fightNight = isFightNightSlug(preview.slug);
     let scraped: ScrapedEvent | null = null;
 
-    if (fightNight) {
-      await sleep(CRAWL_DELAY_MS);
-      try {
-        scraped = await getEventDetail(preview.slug);
-      } catch (err) {
-        console.warn(`  Skipping ${preview.slug} detail page: ${(err as Error).message}`);
-      }
+    await sleep(CRAWL_DELAY_MS);
+    try {
+      scraped = await getEventDetail(preview.slug);
+    } catch (err) {
+      console.warn(`  Skipping ${preview.slug} detail page: ${(err as Error).message}`);
     }
+    const usedDetailPage = scraped !== null;
 
     if (!scraped) {
-      // Listing-page-only path - used for every PPV/numbered event, and
-      // as a fallback if a Fight Night detail page fetch failed above.
+      // Listing-page-only fallback - only reached if this event's own
+      // detail page fetch failed or the page had no card data on it.
       if (!preview.timestamp) continue;
       const date = new Date(Number(preview.timestamp) * 1000);
       const mainCard: ScrapedBout[] = preview.mainCardLabels
@@ -386,7 +372,7 @@ async function main() {
 
     console.log(
       `Processing: ${scraped.name} (${scraped.date.toISOString().slice(0, 10)})${
-        fightNight ? "" : " [listing-page data only]"
+        usedDetailPage ? "" : " [listing-page data only]"
       }`,
     );
 
