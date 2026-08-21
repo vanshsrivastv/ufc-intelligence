@@ -153,7 +153,7 @@ function FighterSide({
   if (isTbdFighter(fighter)) {
     return (
       <div
-        className={`flex items-center gap-2 text-body-md text-text-muted ${
+        className={`flex min-w-0 items-center gap-2 text-body-md text-text-muted ${
           align === "right" ? "flex-row-reverse text-right" : ""
         }`}
       >
@@ -179,7 +179,7 @@ function FighterSide({
   return (
     <Link
       href={`/fighters/${fighter.slug}`}
-      className={`flex items-center gap-2 transition-standard hover:text-gold-300 ${
+      className={`flex min-w-0 items-center gap-2 transition-standard hover:text-gold-300 ${
         align === "right" ? "flex-row-reverse text-right" : ""
       }`}
     >

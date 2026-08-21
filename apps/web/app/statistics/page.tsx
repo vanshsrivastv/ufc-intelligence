@@ -127,12 +127,12 @@ export default async function StatisticsPage() {
         <p className="font-display text-heading-md text-text-primary">
           Highest Elo by division
         </p>
-        <div className="mt-3 flex flex-col gap-1">
+        <div className="mt-3 divide-y divide-border">
           {elo.topByDivision.map((f: EloDivisionLeader) => (
             <Link
               key={f.id}
               href={`/fighters/${f.slug}`}
-              className="flex items-center justify-between rounded-md px-2 py-2 transition-standard hover:bg-bg-elevated-2"
+              className="flex items-center justify-between px-2 py-2 transition-standard hover:bg-bg-elevated-2"
             >
               <div className="flex items-center gap-3">
                 <span className="w-32 shrink-0 text-xs text-text-muted">{f.weightClass}</span>
@@ -179,12 +179,12 @@ function Leaderboard({
   return (
     <div className="px-4 py-4">
       <p className="font-display text-heading-sm text-text-primary">{title}</p>
-      <div className="mt-3 flex flex-col gap-1">
+      <div className="mt-3 divide-y divide-border">
         {entries.map((entry, i) => (
           <Link
             key={entry.id}
             href={`/fighters/${entry.slug}`}
-            className="flex items-center justify-between rounded-md px-2 py-1.5 -mx-2 text-body-md transition-standard hover:bg-bg-elevated-2"
+            className="flex items-center justify-between px-2 py-1.5 -mx-2 text-body-md transition-standard hover:bg-bg-elevated-2"
           >
             <span className="truncate text-text-primary">
               <span className="mr-2 text-xs text-text-muted">{i + 1}</span>
