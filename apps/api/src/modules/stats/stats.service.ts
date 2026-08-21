@@ -132,28 +132,20 @@ export class StatsService {
   }
 
   async getLeaderboards() {
-    const mostWins = await prisma.fighter.findMany({
-      orderBy: { wins: "desc" },
-      take: 10,
-      select: { id: true, slug: true, name: true, wins: true },
-    });
-
-    const mostFinishes = await this.methodLeaderboard(["TKO", "SUBMISSION"], "finishes");
-    const mostKOWins = await this.methodLeaderboard(["TKO"], "kos");
-    const mostSubmissionWins = await this.methodLeaderboard(["SUBMISSION"], "submissions");
-
-    // Longest win streak, and (further down) most-active-fighters, both
-    // need every completed fight - one fetch covers both instead of two.
-    // Win streak used to be scoped to the top 150 fighters BY TOTAL WIN
-    // COUNT as a cost-saving heuristic, but that's the wrong proxy: streak
-    // length and career win total are only loosely related, and it was
-    // silently excluding exactly the fighters people expect to see here
-    // (e.g. Jon Jones/Islam Makhachev/Khabib have far fewer total wins
-    // than a decades-long regional-MMA journeyman like Travis Fulton, who
-    // dominates the "most wins" list without having anything close to the
-    // longest streak). Confirmed computing this over the full dataset
-    // (~4,500 fighters, ~8,800 completed fights) runs in well under a
-    // second - not expensive enough to justify the wrong answer.
+    // Every leaderboard on this page needs to answer "who leads in the
+    // UFC," not across a fighter's whole MMA career - and those are two
+    // different numbers. Fighter.wins/losses/draws are copied straight
+    // from the CSV's own career-total columns at import time (see
+    // import-dataset.ts), which for a decades-long regional-MMA
+    // journeyman like Travis Fulton includes ~250 wins across every
+    // promotion he ever fought in - only 2 of which are actual Fight rows
+    // in this database (our Fight table is UFC-only). Same wrong-proxy
+    // bug the win-streak fix above already found and fixed for that stat;
+    // "most wins" had the identical issue, just using the raw cached
+    // field directly instead of a candidate-pool heuristic. Computing win
+    // counts from actual Fight rows here fixes it, and reuses this same
+    // completed-fights fetch for the win-streak and most-active-fighters
+    // stats further down instead of querying three times.
     const allCompletedFights = await prisma.fight.findMany({
       where: { status: "COMPLETED" },
       select: {
@@ -167,13 +159,36 @@ export class StatsService {
 
     const fightsByFighter = new Map<string, typeof allCompletedFights>();
     const fightCounts = new Map<string, number>();
+    const winCounts = new Map<string, number>();
     for (const fight of allCompletedFights) {
       for (const fid of [fight.fighterAId, fight.fighterBId]) {
         if (!fightsByFighter.has(fid)) fightsByFighter.set(fid, []);
         fightsByFighter.get(fid)!.push(fight);
         fightCounts.set(fid, (fightCounts.get(fid) ?? 0) + 1);
       }
+      if (fight.winnerId) {
+        winCounts.set(fight.winnerId, (winCounts.get(fight.winnerId) ?? 0) + 1);
+      }
     }
+
+    const topWinIds = Array.from(winCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([id]) => id);
+    const winFighters = await prisma.fighter.findMany({
+      where: { id: { in: topWinIds } },
+      select: { id: true, slug: true, name: true },
+    });
+    const mostWins = topWinIds
+      .map((id) => {
+        const fighter = winFighters.find((f) => f.id === id);
+        return fighter ? { ...fighter, wins: winCounts.get(id)! } : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+
+    const mostFinishes = await this.methodLeaderboard(["TKO", "SUBMISSION"], "finishes");
+    const mostKOWins = await this.methodLeaderboard(["TKO"], "kos");
+    const mostSubmissionWins = await this.methodLeaderboard(["SUBMISSION"], "submissions");
 
     const streakEntries = Array.from(fightsByFighter.entries())
       .map(([fighterId, fights]) => {
