@@ -224,6 +224,18 @@ async function main() {
           where: { id: fight.id },
           data: { status: "COMPLETED", method, round: result.round, time: result.time, winnerId },
         }),
+        // lastFightDate is a cached field (see its schema comment) that
+        // import-dataset.ts sets on a full re-import, but nothing kept it
+        // current for a fight resolved here in between imports - it would
+        // silently freeze at whatever a fighter's last fight was before
+        // this one, which is exactly what makes them look inactive (see
+        // the Fighters list activity filter and My Roster's Elo-trend
+        // arrow, both keyed off this field) even right after fighting.
+        // GREATEST(..., event.date) instead of a flat overwrite so this
+        // can never move the cached value backward if fights ever
+        // resolve out of chronological order across runs.
+        prisma.$executeRaw`UPDATE fighters SET "lastFightDate" = GREATEST("lastFightDate", ${event.date}) WHERE id = ${fight.fighterAId}`,
+        prisma.$executeRaw`UPDATE fighters SET "lastFightDate" = GREATEST("lastFightDate", ${event.date}) WHERE id = ${fight.fighterBId}`,
         // The wins/losses/draws counters are absolute snapshots the
         // Kaggle re-import overwrites wholesale (see import-dataset.ts),
         // so bumping them here is a safe bridge: the next re-import
