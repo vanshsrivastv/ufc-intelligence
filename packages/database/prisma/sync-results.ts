@@ -55,6 +55,20 @@ interface ScrapedResult {
   round: number | null;
   time: string | null;
   methodRaw: string | null;
+  isTitleFight: boolean;
+}
+
+// Same detection scrape-upcoming.ts/backfill-missing-events.ts use when a
+// fight is first created - duplicated here rather than shared, matching
+// how those two already each keep their own copy rather than a shared
+// module. isTitleFight is otherwise never revisited after creation, and
+// ufc.com doesn't always carry "Title Bout" wording in the card listing
+// yet at creation time (sometimes only added once the bout gets closer,
+// occasionally not until after the event) - re-deriving it here, from
+// the same event page this script already fetches to resolve the
+// result, is what actually keeps it correct once the real result is in.
+function isTitleFightFromClassText(classText: string): boolean {
+  return /title/i.test(classText) || /interim/i.test(classText);
 }
 
 // Reads the win/loss/draw pill ufc.com renders in each corner once a
@@ -95,6 +109,7 @@ function extractResults($: cheerio.CheerioAPI): ScrapedResult[] {
     const round = $el.find(".c-listing-fight__result-text.round").first().text().trim();
     const time = $el.find(".c-listing-fight__result-text.time").first().text().trim();
     const methodRaw = $el.find(".c-listing-fight__result-text.method").first().text().trim();
+    const classText = $el.find(".c-listing-fight__class-text").first().text().trim();
 
     results.push({
       fighterA,
@@ -104,6 +119,7 @@ function extractResults($: cheerio.CheerioAPI): ScrapedResult[] {
       round: round ? Number(round) || null : null,
       time: time || null,
       methodRaw: methodRaw || null,
+      isTitleFight: isTitleFightFromClassText(classText),
     });
   });
   return results;
@@ -222,7 +238,14 @@ async function main() {
       await prisma.$transaction([
         prisma.fight.update({
           where: { id: fight.id },
-          data: { status: "COMPLETED", method, round: result.round, time: result.time, winnerId },
+          data: {
+            status: "COMPLETED",
+            method,
+            round: result.round,
+            time: result.time,
+            winnerId,
+            isTitleFight: result.isTitleFight,
+          },
         }),
         // lastFightDate is a cached field (see its schema comment) that
         // import-dataset.ts sets on a full re-import, but nothing kept it
