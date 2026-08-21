@@ -35,7 +35,7 @@ export class StatsService {
     const [upcomingEvents, headliner, trendingFighters] = await Promise.all([
       this.getUpcomingEvents(3),
       this.getHeadliner(),
-      this.getTrendingFighters(6),
+      this.getTrendingFighters(15),
     ]);
     return { upcomingEvents, headliner, trendingFighters };
   }
