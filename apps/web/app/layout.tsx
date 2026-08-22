@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: "UFC Intelligence",
   description:
     "Career-deep fighter stats, live event coverage, and explainable fight predictions.",
+  verification: {
+    google: "wf_7Wj4ff2DWylU2BCdaZectfVIeoYzmXMWZY_bifkI",
+  },
 };
 
 // Without this, mobile browsers assume the page is a desktop-width
