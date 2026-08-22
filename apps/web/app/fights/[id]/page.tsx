@@ -1,9 +1,30 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import { CompareFaceOff } from "@/components/ui/compare-faceoff";
 import { EmptyState } from "@/components/ui/empty-state";
 import { METHOD_LABEL } from "@/lib/method-label";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const fight = await api.fights.getById(id).catch(() => null);
+  if (!fight) return { title: "Fight not found" };
+
+  const title = `${fight.fighterA.name} vs ${fight.fighterB.name} — ${fight.event.name}`;
+  const description =
+    fight.status === "COMPLETED"
+      ? `${fight.fighterA.name} vs ${fight.fighterB.name} at ${fight.event.name}. Result: ${
+          METHOD_LABEL[fight.method] ?? fight.method
+        }${fight.round ? ` (Round ${fight.round})` : ""}.`
+      : `${fight.fighterA.name} vs ${fight.fighterB.name} at ${fight.event.name}. Full stats, breakdown, and win-probability prediction on UFC Intelligence.`;
+
+  return { title, description, openGraph: { title, description } };
+}
 
 export default async function FightDetailPage({
   params,

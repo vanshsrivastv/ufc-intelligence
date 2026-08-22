@@ -1,9 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import { EventCard } from "@/components/ui/event-card";
 import { EventSearch } from "@/components/ui/event-search";
 import { EventFilters } from "@/components/ui/event-filters";
 import { EmptyState } from "@/components/ui/empty-state";
+
+export const metadata: Metadata = {
+  title: "UFC Events — Upcoming Cards & Past Results",
+  description: "Browse every UFC event, past and upcoming, with full fight cards and results.",
+};
 
 interface EventsSearchParams {
   page?: string;

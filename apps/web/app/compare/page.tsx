@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import { auth } from "@/auth";
 import { prisma } from "@ufc-intelligence/database";
@@ -7,6 +8,33 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageAtmosphere } from "@/components/ui/page-atmosphere";
 import { StatRadarChart } from "@/components/charts/stat-radar-chart";
 import { SaveComparisonButton } from "@/components/ui/save-comparison-button";
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ fighters?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const [slugA, slugB] = (params.fighters ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!slugA || !slugB) {
+    return {
+      title: "Compare UFC Fighters — Side-by-Side Stats",
+      description: "Pick any two UFC fighters for a full side-by-side breakdown of record, physical stats, and striking/grappling accuracy.",
+    };
+  }
+  const [fighterA, fighterB] = await Promise.all([
+    api.fighters.getBySlug(slugA).catch(() => null),
+    api.fighters.getBySlug(slugB).catch(() => null),
+  ]);
+  if (!fighterA || !fighterB) {
+    return { title: "Compare UFC Fighters — Side-by-Side Stats" };
+  }
+  const title = `${fighterA.name} vs ${fighterB.name} — Fighter Comparison`;
+  return {
+    title,
+    description: `Side-by-side comparison of ${fighterA.name} and ${fighterB.name}: record, physical stats, striking and grappling accuracy.`,
+  };
+}
 
 export default async function ComparePage({
   searchParams,

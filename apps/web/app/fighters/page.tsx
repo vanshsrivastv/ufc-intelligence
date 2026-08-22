@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import { FighterCard } from "@/components/ui/fighter-card";
 import { FighterListSearch } from "@/components/ui/fighter-list-search";
@@ -6,6 +7,12 @@ import { FighterFilters } from "@/components/ui/fighter-filters";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getFavoritedFighterIds } from "@/lib/favorites";
 import { sortDivisions } from "@/lib/ranking-divisions";
+
+export const metadata: Metadata = {
+  title: "UFC Fighters — Browse Every Roster, Rankings & Elo Ratings",
+  description:
+    "Browse every UFC fighter with real career stats, weight class, and Elo rating. Filter by division, gender, and activity.",
+};
 
 interface FightersSearchParams {
   page?: string;

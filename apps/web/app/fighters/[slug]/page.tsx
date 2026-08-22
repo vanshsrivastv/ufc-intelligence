@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GitCompare } from "lucide-react";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { MethodBreakdownChart } from "@/components/charts/method-breakdown-chart";
@@ -17,6 +18,29 @@ function opponentOf(fight: FightSummaryDto, fighterId: string) {
 
 function formatFightDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const fighter = await api.fighters.getBySlug(slug).catch(() => null);
+  if (!fighter) return { title: "Fighter not found" };
+
+  const record = `${fighter.record.wins}-${fighter.record.losses}-${fighter.record.draws}`;
+  const division = fighter.weightClass?.name ? ` ${fighter.weightClass.name}` : "";
+  const title = `${fighter.name} — UFC${division} Fighter Profile & Stats`;
+  const description = `${fighter.name} (${record})${
+    fighter.elo !== null ? ` — Elo ${Math.round(fighter.elo)}` : ""
+  }. Career stats, fight history, and Elo rating over time on UFC Intelligence.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, images: fighter.photoUrl ? [fighter.photoUrl] : undefined },
+  };
 }
 
 export default async function FighterDetailPage({

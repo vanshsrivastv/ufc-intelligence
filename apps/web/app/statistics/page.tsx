@@ -1,9 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import type { EloDivisionLeader, LeaderboardEntry } from "@/lib/api-client";
 import { EmptyState } from "@/components/ui/empty-state";
 import { EloDistributionChart } from "@/components/charts/elo-distribution-chart";
 import { StatisticsTabs } from "@/components/ui/statistics-tabs";
+
+export const metadata: Metadata = {
+  title: "UFC Statistics — Records, Leaderboards & Elo Ratings",
+  description:
+    "Real UFC leaderboards computed from every recorded fight: most wins, finishes, title fights, Elo ratings, and more.",
+};
 
 export default async function StatisticsPage() {
   let lb, elo, overview;

@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import { RankingsBoard } from "@/components/ui/rankings-board";
 import { sortDivisions } from "@/lib/ranking-divisions";
+
+export const metadata: Metadata = {
+  title: "UFC Rankings — Official & Elo-Based, By Division",
+  description: "Official UFC rankings and a computed Elo-based ranking for every weight class.",
+};
 
 export default async function RankingsPage({
   searchParams,

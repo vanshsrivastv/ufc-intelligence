@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { api } from "@/lib/api-client";
 import type { FightSummaryDto } from "@ufc-intelligence/types";
 import { EventStatusBadge } from "@/components/ui/event-card";
@@ -13,6 +14,27 @@ import { displayEventName, isTbdFighter } from "@/lib/tbd";
 // card. There's no explicit "segment" field, so main card / prelims is a
 // heuristic split at 5 fights — matches how most real UFC cards are sized.
 const MAIN_CARD_SIZE = 5;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await api.events.getBySlug(slug).catch(() => null);
+  if (!event) return { title: "Event not found" };
+
+  const name = displayEventName(event.name);
+  const date = new Date(event.date).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const title = `${name} — Full Card & Results`;
+  const description = `${name} on ${date}${event.venue ? ` at ${event.venue}` : ""}. Full fight card, results, and event details on UFC Intelligence.`;
+
+  return { title, description, openGraph: { title, description } };
+}
 
 export default async function EventDetailPage({
   params,
