@@ -2,8 +2,29 @@ import { Injectable } from "@nestjs/common";
 import { prisma } from "@ufc-intelligence/database";
 import { eventStatusWhere } from "../../common/event-status";
 
+// getLeaderboards/getEloStats each pull the entire completed-fights or
+// rated-fighters table (thousands of rows) to compute from scratch - fine
+// for one request, wasteful when every /statistics visit re-runs the same
+// full scan against data that only changes when sync-results/compute-elo
+// run (at most hourly). A TTL cache is the simple fix: no new
+// infrastructure (in-memory, same pattern as apps/web/lib/rate-limit.ts -
+// Redis isn't wired up here either), and correctness-wise a 15-minute-
+// stale leaderboard is a total non-issue for stats nobody expects to be
+// live-to-the-second. Per-process, not per-request - fine at this scale
+// (a single Render instance), and simpler than invalidating from the
+// separate sync-results/compute-elo scripts, which don't share a process
+// with this running server anyway.
+const STATS_CACHE_TTL_MS = 15 * 60 * 1000;
+
+interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
 @Injectable()
 export class StatsService {
+  private leaderboardsCache: CacheEntry<Awaited<ReturnType<StatsService["computeLeaderboards"]>>> | null = null;
+  private eloStatsCache: CacheEntry<Awaited<ReturnType<StatsService["computeEloStats"]>>> | null = null;
   async getOverview() {
     const [fighters, fights, events, weightClasses] = await Promise.all([
       prisma.fighter.count(),
@@ -132,6 +153,15 @@ export class StatsService {
   }
 
   async getLeaderboards() {
+    if (this.leaderboardsCache && this.leaderboardsCache.expiresAt > Date.now()) {
+      return this.leaderboardsCache.value;
+    }
+    const value = await this.computeLeaderboards();
+    this.leaderboardsCache = { value, expiresAt: Date.now() + STATS_CACHE_TTL_MS };
+    return value;
+  }
+
+  private async computeLeaderboards() {
     // Every leaderboard on this page needs to answer "who leads in the
     // UFC," not across a fighter's whole MMA career - and those are two
     // different numbers. Fighter.wins/losses/draws are copied straight
@@ -364,6 +394,15 @@ export class StatsService {
   // distribution buckets already answer that without a second, redundant
   // metric.
   async getEloStats() {
+    if (this.eloStatsCache && this.eloStatsCache.expiresAt > Date.now()) {
+      return this.eloStatsCache.value;
+    }
+    const value = await this.computeEloStats();
+    this.eloStatsCache = { value, expiresAt: Date.now() + STATS_CACHE_TTL_MS };
+    return value;
+  }
+
+  private async computeEloStats() {
     const rated = await prisma.fighter.findMany({
       where: { eloRating: { not: null } },
       select: { eloRating: true },
