@@ -226,13 +226,14 @@ function normalize(name: string): string {
 async function main() {
   console.log("Loading fighters for name matching...");
   const fighters = await prisma.fighter.findMany({
-    select: { id: true, name: true },
+    select: { id: true, name: true, weightClassId: true },
   });
-  const byNormalizedName = new Map(fighters.map((f) => [normalize(f.name), f.id]));
+  const byNormalizedName = new Map(fighters.map((f) => [normalize(f.name), f]));
 
   const unmatched: string[] = [];
   const now = new Date();
   let totalSeeded = 0;
+  let totalReassigned = 0;
 
   for (const [divisionName, names] of Object.entries(RANKINGS)) {
     const weightClass = await prisma.weightClass.findFirst({
@@ -251,26 +252,44 @@ async function main() {
     let seededInDivision = 0;
     for (let i = 0; i < names.length; i++) {
       const name = names[i];
-      const fighterId = byNormalizedName.get(normalize(name));
-      if (!fighterId) {
+      const fighter = byNormalizedName.get(normalize(name));
+      if (!fighter) {
         unmatched.push(`${divisionName}: ${name}`);
         continue;
       }
       await prisma.ranking.create({
         data: {
           weightClassId: weightClass.id,
-          fighterId,
+          fighterId: fighter.id,
           rank: i, // 0 = champion
           effectiveDate: now,
         },
       });
       seededInDivision++;
       totalSeeded++;
+
+      // The ranking list is the most current signal of which division a
+      // fighter actually competes in - more current than whatever
+      // weightClassId they were imported with, which is never touched
+      // again after import. A fighter who moved divisions (e.g. a
+      // lightweight champion moving up to challenge for a welterweight
+      // title) would otherwise show the wrong division on their own
+      // profile page forever, even though the rankings/homepage (which
+      // read from this table) already show the right one.
+      if (fighter.weightClassId !== weightClass.id) {
+        await prisma.fighter.update({
+          where: { id: fighter.id },
+          data: { weightClassId: weightClass.id },
+        });
+        totalReassigned++;
+        console.log(`  ~ reassigned "${name}" to ${divisionName} (weightClassId was stale)`);
+      }
     }
     console.log(`${divisionName}: seeded ${seededInDivision}/${names.length}`);
   }
 
   console.log(`\nTotal ranking rows seeded: ${totalSeeded}`);
+  console.log(`Total fighter weightClassId reassignments: ${totalReassigned}`);
   if (unmatched.length > 0) {
     console.warn(
       `\n${unmatched.length} fighter(s) in the ranking list had no match in the imported dataset (likely not in the CSV, or a name-formatting difference):`,
